@@ -1,0 +1,714 @@
+// Fill out your copyright notice in the Description page of Project Settings.
+
+
+#include "WarriorCharacter.h"
+#include "GameFramework/SpringArmComponent.h"
+#include "Camera/CameraComponent.h"
+#include "Kismet/GameplayStatics.h"
+#include "GameFramework/CharacterMovementComponent.h"
+#include "Components\SphereComponent.h"
+#include "Items\ItemActor.h"
+#include"Items\Weapons\Weapon.h"
+#include"Items\Weapons\Shield.h"
+#include"Enemy\Enemy.h"
+#include"Components/AttributeComponent.h"
+#include "Animation/AnimMontage.h"
+#include"HUD/PlayerHUD.h"
+#include "HUD\CharacterHUD.h"
+#include "SaveGames/EternaSaveGame.h"
+#include "EngineUtils.h"
+#include"GameMode\ArenaGameMode.h"
+#include"Runtime/Engine/Public/TimerManager.h"
+
+
+// Sets default values
+AWarriorCharacter::AWarriorCharacter()
+{	
+	// Set this character to call Tick() every frame.  You can turn this off to improve performance if you don't need it.
+	PrimaryActorTick.bCanEverTick = true;
+	bUseControllerRotationPitch = false;
+	bUseControllerRotationRoll = false;
+	bUseControllerRotationYaw = false;
+	GetCharacterMovement()->bOrientRotationToMovement = true;
+	GetCharacterMovement()->RotationRate = FRotator(0.f, 400.f, 0.f);
+	GetMesh()->SetCollisionObjectType(ECollisionChannel::ECC_WorldDynamic);
+	GetMesh()->SetCollisionResponseToAllChannels(ECollisionResponse::ECR_Ignore);
+	GetMesh()->SetCollisionResponseToChannel(ECollisionChannel::ECC_Visibility, ECollisionResponse::ECR_Block);
+	GetMesh()->SetCollisionResponseToChannel(ECollisionChannel::ECC_WorldDynamic, ECollisionResponse::ECR_Block),
+	GetMesh()->SetGenerateOverlapEvents(true);
+	CameraBoom = CreateDefaultSubobject<USpringArmComponent>(TEXT("CameraBoom"));
+	CameraBoom->SetupAttachment(GetRootComponent());
+	CameraBoom->TargetArmLength = 300.f;
+	ViewCamera = CreateDefaultSubobject<UCameraComponent>(TEXT("ViewCamera"));
+	ViewCamera->SetupAttachment(CameraBoom);
+	Sphere = CreateDefaultSubobject<USphereComponent>(TEXT("Sphere"));
+	Sphere->SetupAttachment(GetRootComponent());
+	Sphere->OnComponentBeginOverlap.AddDynamic(this, &AWarriorCharacter::SphereCollisionBeginOverlap);
+	Sphere->OnComponentEndOverlap.AddDynamic(this, &AWarriorCharacter::SphereCollisionEndOverlap);
+
+
+}
+
+void AWarriorCharacter::BeginPlay()
+{
+	Super::BeginPlay();
+	Tags.Add("WarriorCharacter");
+	LoadSaveGame();
+	SpawnDefaultShield();
+	SpawnDefaultWeapon();
+	InitializePlayerOverlay();
+	
+}
+
+void AWarriorCharacter::Save()
+{
+	
+	GameMode = GetWorld()->GetAuthGameMode();
+	ArenaGameMode = Cast<AArenaGameMode>(GameMode);
+	if (ArenaGameMode) ArenaGameMode->SaveGame();
+
+}
+
+void AWarriorCharacter::LoadSaveGame()
+{
+	 GameMode = GetWorld()->GetAuthGameMode();
+	ArenaGameMode = Cast<AArenaGameMode>(GameMode);
+	if (ArenaGameMode)ArenaGameMode->LoadGame();	
+}
+
+void AWarriorCharacter::SpawnDefaultWeapon()
+{
+	UWorld* World = GetWorld();
+	if (World && WeaponClass)
+	{
+		AWeapon* DefaultWeapon = World->SpawnActor<AWeapon>(WeaponClass);
+		DefaultWeapon->Equip(GetMesh(), FName("Sword"), this, this);
+		EquippedWeapon = DefaultWeapon;
+		CharacterStates = ECharacterStates::ECS_EquippedOnehand;
+		OverlappingItem = nullptr;
+	}
+}
+
+
+
+void AWarriorCharacter::GetHit_Implementation(const FVector& ImpactPoint, AActor* Hitter)
+{
+	
+	if (CheckShieldClose())
+	{
+		Super::GetHit_Implementation(ImpactPoint, Hitter);
+		SetWeaponCollisionEnabled(ECollisionEnabled::NoCollision);
+		if (Attributes && Attributes->HealthPercent() > 0.f)
+		{
+			ActionState = EActionState::EAS_HitReaction;
+		}
+
+	}
+	else if (CheckShieldOpen())
+	{
+		SpawnShieldHitParticles(ImpactPoint);
+		PLayShieldHitSound(ImpactPoint);
+		PlayShieldReactMontage();
+		ClearShieldRegenerateTimer();
+		StartShieldRegenerateTimer();
+
+	}
+	if (!ShieldAlive())
+	{
+		Super::GetHit_Implementation(ImpactPoint, Hitter);
+		CharacterStates = ECharacterStates::ECS_EquippedOnehand;
+		SetWeaponCollisionEnabled(ECollisionEnabled::NoCollision);
+		GetCharacterMovement()->MaxWalkSpeed = CharacterRunSpeed;
+		ComboCountReset();
+	}
+}
+
+void AWarriorCharacter::Jump()
+{
+	if (IsUnoccupied())
+	{
+	Super::Jump();
+	}
+
+}
+
+bool AWarriorCharacter::IsUnoccupied()
+{
+	return ActionState == EActionState::EAS_Unoccupied;
+}
+
+void AWarriorCharacter::Dodge()
+{
+	StaminaClearTime();
+	StaminaRegenerateTime();
+	
+
+	if (ActionState != EActionState::EAS_Unoccupied || !HasEnoughStamina()) return;
+		PlayDodgeMontage();
+		ActionState = EActionState::EAS_Dodge;
+		if (Attributes && PlayerOverlay)
+	    {
+		Attributes->ReciveStamina(Attributes->GetStaminaCost());
+	    }
+		
+}
+
+
+
+bool AWarriorCharacter::HasEnoughStamina()
+{
+	return Attributes->GetStamina() > Attributes->GetStaminaCost();
+}
+
+bool AWarriorCharacter::CheckShieldClose()
+{
+	return !BShieldOn || IsEnemyBehindCharacter();
+}
+
+bool AWarriorCharacter::CheckShieldOpen()
+{
+	return BShieldOn || !IsEnemyBehindCharacter() || ShieldAlive();
+}
+
+void AWarriorCharacter::RegenerateShield()
+{
+	Attributes->RegenerateShield();
+}
+
+void AWarriorCharacter::ClearShieldRegenerateTimer()
+{
+	GetWorld()->GetTimerManager().ClearTimer(Attributes->Timer);
+}
+
+void AWarriorCharacter::StartShieldRegenerateTimer()
+{
+	GetWorld()->GetTimerManager().SetTimer(shieldRegenerateTime, this, &AWarriorCharacter::RegenerateShield, 3, false);
+}
+
+void AWarriorCharacter::Staminadeneme(float DeltaTime)
+{
+		if (Attributes && PlayerOverlay)
+	{
+		Attributes->RegenStamina(DeltaTime);
+		//PlayerOverlay->SetStaminaBarPercent(Attributes->GetStamina());
+
+	}
+}
+
+void AWarriorCharacter::GetClosestEnemy()
+{
+	AEnemy* NewClosestEnemy = nullptr;
+	float MinDistance = FLT_MAX;
+	for (AEnemy* Enemy : EnemiesInRange)
+	{
+		float Distance = FVector::Dist(this->GetActorLocation(), Enemy->GetActorLocation());
+		if (Distance < MinDistance)
+		{
+			MinDistance = Distance;
+			NewClosestEnemy = Enemy;
+
+		}			
+	}
+
+
+	if (CloseEnemy != NewClosestEnemy)
+	{
+		if (CloseEnemy) {
+
+			USkeletalMeshComponent* EnemyMesh = CloseEnemy->GetMesh();
+			if (EnemyMesh)
+			{
+				EnemyMesh->SetMaterial(0, nullptr);
+			}
+				
+		}
+		if (NewClosestEnemy)
+		{
+			USkeletalMeshComponent* EnemyMesh = NewClosestEnemy->GetMesh();
+			if (EnemyMesh)
+			{
+				EnemyMesh->SetMaterial(0, OverlayMaterial);
+				
+
+			}
+		}
+	}
+	CloseEnemy = NewClosestEnemy;
+}
+
+void AWarriorCharacter::SpawnDefaultShield()
+{
+	UWorld* World = GetWorld();
+	if (World && ShieldClass)
+	{
+		AShield* Shield = World->SpawnActor<AShield>(ShieldClass) ;
+		Shield->Equip(GetMesh(), FName("Shield"),this,this);
+
+	}
+}
+
+float AWarriorCharacter::TakeDamage(float DamageAmount, FDamageEvent const& DamageEvent, AController* EventInstigator, AActor* DamageCauser)
+{
+
+   if (!IsEnemyBehindCharacter())
+	{
+		if (BShieldOn)
+		{
+			GEngine->AddOnScreenDebugMessage(1, 1.f, FColor::Emerald, FString::Printf(TEXT("3")));
+			HandleDamage(DamageAmount);
+		}
+	}
+
+	if (!BShieldOn)
+	{
+		HandleDamage(DamageAmount);
+		SetHealthBar();
+	}
+	return DamageAmount;
+}
+
+void AWarriorCharacter::SetHealthBar()
+{
+	if (PlayerOverlay && Attributes)
+	{
+		PlayerOverlay->SetHealthBarPercent(Attributes->HealthPercent());
+	}
+}
+
+void AWarriorCharacter::SetStaminaBar()
+{
+	if (PlayerOverlay && Attributes)
+	{
+		PlayerOverlay->SetStaminaBarPercent(Attributes->StaminaPercent());
+	}
+}
+
+void AWarriorCharacter::SetLevelBar()
+{
+	if (PlayerOverlay && Attributes)
+	{
+		PlayerOverlay->SetLevelBarPercent(Attributes->LevelBarPercent());
+	}
+}
+
+bool AWarriorCharacter::IsEnemyBehindCharacter()
+{
+
+        FVector WarriorCharacterLocation = GetActorLocation();
+		FVector EnemyLocation = CloseEnemy->GetActorLocation();
+		FVector WarriorForwardVector = GetActorForwardVector();
+		FVector DirectionToEnemy = EnemyLocation - WarriorCharacterLocation;
+		DirectionToEnemy.Normalize();
+		float DotProduct = FVector::DotProduct(WarriorForwardVector, DirectionToEnemy);
+		return DotProduct < 0;
+	
+}
+
+void AWarriorCharacter::AddKilledEnemyID(FString EnemName)
+{
+	if (KilledEnemiesNames.Contains(EnemName))
+	{
+		KilledEnemiesNames.Add(EnemName);
+	}
+
+}
+
+void AWarriorCharacter::InitializePlayerOverlay()
+{
+	APlayerController* PlayerController = Cast<APlayerController>(GetController());
+	if (PlayerController)
+	{
+		APlayerHUD* PlayerHUD = Cast<APlayerHUD>(PlayerController->GetHUD());
+
+		if (PlayerHUD)
+		{
+			PlayerOverlay = PlayerHUD->GetPlayerOverlay();
+			if (PlayerOverlay && Attributes)
+			{
+				PlayerOverlay->SetStaminaBarPercent(Attributes->StaminaPercent());
+				PlayerOverlay->SetHealthBarPercent(Attributes->HealthPercent());
+				PlayerOverlay->SetLevelBarPercent(Attributes->LevelBarPercent());
+				PlayerOverlay->SetGoldText(Attributes->GetGold());
+				PlayerOverlay->SetXpText(Attributes->GetExperience());
+				PlayerOverlay->SetLevelText(Attributes->GetLevel());
+				PlayerOverlay->SetMaxXpText(Attributes->GetMaxExperience());
+
+			}
+		}
+	}
+}
+
+/*MOVE FORWARD RIGHT TURN FLOAT FUNCS*/
+void AWarriorCharacter::MoveForward(float value)
+{
+	if (ActionState != EActionState::EAS_Unoccupied) return;
+	if(Controller && (value != 0.f))
+	{
+		const FRotator ControlRotation = GetControlRotation();
+		const FRotator YawRotation(0.f, ControlRotation.Yaw, 0.f);
+		const FVector Direction = FRotationMatrix(YawRotation).GetUnitAxis(EAxis::X);
+		AddMovementInput(Direction, value);
+	}
+}
+
+void AWarriorCharacter::MoveRight(float value)
+{
+	if (ActionState != EActionState::EAS_Unoccupied) return;
+	if (Controller && (value != 0.f))
+	{
+		const FRotator ControlRotation = GetControlRotation();
+		const FRotator YawRotation(0.f, ControlRotation.Yaw, 0.f);
+		const FVector Direction = FRotationMatrix(YawRotation).GetUnitAxis(EAxis::Y);
+		AddMovementInput(Direction, value);		
+	}
+
+}
+
+/*void AWarriorCharacter::Turn(float Value)
+{
+	AddControllerYawInput(Value);
+}*/
+
+/*
+void AWarriorCharacter::LookUp(float Value)
+{
+	AddControllerPitchInput(Value);
+}*/
+
+void AWarriorCharacter::EKeyPressed()
+{
+	AWeapon* OverlappingWeapon = Cast<AWeapon>(OverlappingItem);
+	if (OverlappingWeapon)
+	{
+		EquipWeapon(OverlappingWeapon);
+	}
+
+	else {
+		if (CanDisarm())
+		{
+			DisArm();
+
+		}
+		else if (CanArm())
+		{
+			Arm();
+		}
+
+	}
+}
+
+void AWarriorCharacter::Die()
+{
+	Super::Die();
+	ActionState = EActionState::EAS_Dead;
+}
+
+void AWarriorCharacter::DisArm()
+{
+	PlayEquipMontage(FName("Unequip"));
+	CharacterStates = ECharacterStates::ECS_UnEquipped;
+	ActionState = EActionState::EAS_EquippingWeapon;
+}
+
+void AWarriorCharacter::Arm()
+{
+	PlayEquipMontage(FName("Equip"));
+	CharacterStates = ECharacterStates::ECS_EquippedOnehand;
+	ActionState = EActionState::EAS_EquippingWeapon;
+}
+
+void AWarriorCharacter::PlayShieldReactMontage()
+{
+	UAnimInstance* AnimInstance = GetMesh()->GetAnimInstance();
+	if (ShieldReactMontage && AnimInstance)
+	{
+		AnimInstance->Montage_Play(ShieldReactMontage);
+	}
+
+}
+
+void AWarriorCharacter::EquipWeapon(AWeapon* Weapon)
+{
+	Weapon->Equip(GetMesh(), FName("Sword"), this, this);
+	CharacterStates = ECharacterStates::ECS_EquippedOnehand;
+	OverlappingItem = nullptr;
+	EquippedWeapon = Weapon;
+}
+
+void AWarriorCharacter::Attack()
+{
+	Super::Attack();
+
+	const bool bCanAttack = (ActionState == EActionState::EAS_Unoccupied && CharacterStates != ECharacterStates::ECS_UnEquipped);
+	if (bCanAttack)
+	{
+		WarriorAttackMontage();
+		bAttackTimerOpen = true;
+		ActionState = EActionState::EAS_Attacking;
+	}
+}
+
+void AWarriorCharacter::AttackEnd()
+{
+	ActionState = EActionState::EAS_Unoccupied;
+
+}
+
+void AWarriorCharacter::Shield()
+{
+	if (CharacterStates == ECharacterStates::ECS_UnEquipped) return;
+
+	if (ShieldAlive() && ActionState != EActionState::EAS_Dead)
+	{
+		UAnimInstance* AnimInstance = GetMesh()->GetAnimInstance();
+		if (AnimInstance && ShieldMontage)
+		{
+			AnimInstance->Montage_Play(ShieldMontage);
+		}
+		BShieldOn = true;
+		CharacterStates = ECharacterStates::ECS_EquippedShield;
+		ActionState = EActionState::EAS_Unoccupied;
+		GetCharacterMovement()->MaxWalkSpeed = CharacterWalkSpeed;
+	}
+}
+
+void AWarriorCharacter::ShieldRealesed()
+{
+	if (CharacterStates == ECharacterStates::ECS_UnEquipped) return;
+	CharacterStates = ECharacterStates::ECS_EquippedOnehand;
+	BShieldOn = false;
+	GetCharacterMovement()->MaxWalkSpeed = CharacterRunSpeed;
+}
+
+void AWarriorCharacter::PlayEquipMontage(const FName& SectionName)
+{
+	UAnimInstance* AnimInstance = GetMesh()->GetAnimInstance();
+	if (AnimInstance && EquipMontage)
+	{
+		AnimInstance->Montage_Play(EquipMontage);
+		AnimInstance->Montage_JumpToSection(SectionName, EquipMontage);
+	}
+}
+
+bool AWarriorCharacter::CanDisarm()
+{
+	return ActionState == EActionState::EAS_Unoccupied &&
+		CharacterStates != ECharacterStates::ECS_UnEquipped;
+		
+}
+
+bool AWarriorCharacter::CanArm()
+{
+	return ActionState == EActionState::EAS_Unoccupied&&
+		CharacterStates == ECharacterStates::ECS_UnEquipped&&
+	    EquippedWeapon;
+}
+
+void AWarriorCharacter::HandleDamage(float DamageAmount)
+{
+	if (Attributes && BShieldOn)
+	{
+		Attributes->ReciveShieldDamage(DamageAmount);
+	}
+	
+    if (Attributes && !BShieldOn)
+	{
+		Attributes->ReciveDamage(DamageAmount);
+	}
+}
+
+bool AWarriorCharacter::ShieldAlive()
+{
+	return Attributes && Attributes->IsShieldAlive();
+}
+
+void AWarriorCharacter::StaminaRegenerateTime()
+{
+	GetWorld()->GetTimerManager().SetTimer(StaminaRegenerateTimer, this, &AWarriorCharacter::StaminaRegen, 1, false);
+	
+}
+
+void AWarriorCharacter::StaminaClearTime()
+{
+	GetWorld()->GetTimerManager().ClearTimer(Attributes->StaminaTimers);
+}
+
+void AWarriorCharacter::AttachWeaponToBack()
+{
+	if (EquippedWeapon)
+	{
+		EquippedWeapon->AttachMeshToSocket(GetMesh(), FName("BackSword"));
+	}
+}
+
+void AWarriorCharacter::AttachWeaponToHand()
+{
+	if (EquippedWeapon) 
+	{
+		EquippedWeapon->AttachMeshToSocket(GetMesh(), FName("Sword"));
+		ActionState = EActionState::EAS_EquippingWeapon;
+	
+	}
+}
+void AWarriorCharacter::FinishEquipping()
+{
+	ActionState = EActionState::EAS_Unoccupied;
+}
+void AWarriorCharacter::HitReactEnd()
+{
+	ActionState = EActionState::EAS_Unoccupied;
+}
+void AWarriorCharacter::ComboCountReset()
+{
+	ComboCounts = 0;
+	bAttackTimerOpen = false;
+
+}
+
+void AWarriorCharacter::DodgeEnd()
+{
+	ActionState = EActionState::EAS_Unoccupied;
+
+}
+
+void AWarriorCharacter::SphereCollisionBeginOverlap(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult)
+{
+	if (OtherActor && (OtherActor != this)&& OtherComp)
+	{
+		AEnemy* Enemy = Cast<AEnemy>(OtherActor);
+		if (Enemy)
+		{		
+			if (Enemy->EnemyState != EEnemyState::EES_Dead)
+			{
+				EnemiesInRange.Add(Enemy);				
+			}
+			else
+			{
+				EnemiesInRange.Remove(Enemy);
+			}		
+		}
+	}
+}
+
+void AWarriorCharacter::SphereCollisionEndOverlap(UPrimitiveComponent* OverlappedComp, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex)
+{
+
+	if (OtherActor && (OtherActor != this)&& OtherComp)
+	{
+
+		AEnemy* Enemy = Cast<AEnemy>(OtherActor);
+		if (Enemy)
+		{
+			EnemiesInRange.Remove(Enemy);
+		}
+
+	}
+}
+
+void AWarriorCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputComponent)
+{
+	Super::SetupPlayerInputComponent(PlayerInputComponent);
+
+	PlayerInputComponent->BindAxis(FName("MoveForward"), this, &AWarriorCharacter::MoveForward);
+	PlayerInputComponent->BindAxis(FName("MoveRight"), this, &AWarriorCharacter::MoveRight);
+	//PlayerInputComponent->BindAxis(FName("Turn"), this, & AWarriorCharacter::Turn);
+   //PlayerInputComponent->BindAxis(FName("LookUp"), this, &AWarriorCharacter::LookUp);
+	PlayerInputComponent->BindAction(FName("Jump"), IE_Pressed, this, &ACharacter::Jump);
+	PlayerInputComponent->BindAction(FName("Use"), IE_Pressed, this, &AWarriorCharacter::EKeyPressed);
+	PlayerInputComponent->BindAction(FName("Attack"), IE_Pressed, this, &AWarriorCharacter::Attack);
+	PlayerInputComponent->BindAction(FName("Shield"), IE_Pressed, this, &AWarriorCharacter::Shield);
+	PlayerInputComponent->BindAction(FName("Shield"), IE_Released, this, &AWarriorCharacter::ShieldRealesed);
+	PlayerInputComponent->BindAction(FName("Dodge"), IE_Pressed, this, &AWarriorCharacter::Dodge);
+	PlayerInputComponent->BindAction(FName("SaveGame"), IE_Pressed, this, &AWarriorCharacter::Save);
+
+}
+void AWarriorCharacter::SetOverlappingItem(AItemActor* Item)
+{
+	OverlappingItem = Item;
+}
+void AWarriorCharacter::AddXp(AExperiencePoint* Xp)
+{
+	if (Attributes && PlayerOverlay)
+	{
+		SetExpPoint(Xp);
+
+		if (ExpGreaterMaxExp())
+		{
+			Attributes->LevelUp();
+			PlayerOverlay->SetXpText(Attributes->GetExperience());
+			PlayerOverlay->SetMaxXpText(Attributes->GetMaxExperience());
+			PlayerOverlay->SetLevelText(Attributes->GetLevel());
+		}
+		SetLevelBar();
+	}
+	
+}
+bool AWarriorCharacter::ExpGreaterMaxExp()
+{
+	return Attributes->GetExperience() >= Attributes->GetMaxExperience();
+}
+void AWarriorCharacter::SetExpPoint(AExperiencePoint* Xp)
+{
+
+	Attributes->AddExperience(Xp->GetExperience());
+	PlayerOverlay->SetXpText(Attributes->GetExperience());
+	PlayerOverlay->SetMaxXpText(Attributes->GetMaxExperience());
+
+}
+void AWarriorCharacter::AddGold(ATreasure* Treasure)
+{	
+	if (Attributes && PlayerOverlay)
+	{
+		Attributes->AddGold(Treasure->GetGold());
+		PlayerOverlay->SetGoldText(Attributes->GetGold());
+	}
+}
+void AWarriorCharacter::AddHealth(AHealthPoint* Health)
+{
+	if (Attributes && PlayerOverlay)
+	{
+		Attributes->AddHealth(Health->GetHealth());
+		SetHealthBar();
+	}
+
+}
+void AWarriorCharacter::Tick(float DeltaTime)
+{
+	Super::Tick(DeltaTime);
+	GetClosestEnemy();
+	ComboCountTimer(DeltaTime);
+	SetStaminaBar();
+}
+void AWarriorCharacter::ComboCountTimer(float DeltaTime)
+{
+	if (bAttackTimerOpen)
+	{
+
+		if (ActionState != EActionState::EAS_Attacking)
+		{
+			TimeElapsed += DeltaTime;
+		}
+
+
+		if (TimeElapsed >= ComboResetTimer)
+		{
+			ComboCountReset();
+			TimeElapsed = 0;
+
+		}
+	}
+
+}
+void AWarriorCharacter::StaminaRegen()
+{
+	if (Attributes)
+	{
+		Attributes->RegenerateStamina();
+	}	
+
+}
+
+
+
+
+
