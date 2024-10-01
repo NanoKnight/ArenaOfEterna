@@ -72,6 +72,7 @@ void AEnemy::Die()
 	GetCharacterMovement()->bOrientRotationToMovement = false;
 	SetWeaponCollisionEnabled(ECollisionEnabled::NoCollision);
 	SpawnExperience();
+
 }
 
 void AEnemy::SetEnemyDead()
