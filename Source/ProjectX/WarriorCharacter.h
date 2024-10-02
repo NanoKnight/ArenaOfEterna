@@ -199,6 +199,7 @@ private:
 	float CharacterWalkSpeed = 250.f;
 	void GetClosestEnemy();
 	void SpawnDefaultShield();
+	UPROPERTY(BlueprintReadWrite, meta = (AllowPrivateAccess = "true"))
 	ECharacterStates CharacterStates = ECharacterStates::ECS_UnEquipped;
 	UPROPERTY(BlueprintReadWrite, meta = (AllowPrivateAccess = "true"))
 	EActionState ActionState = EActionState::EAS_Unoccupied;
