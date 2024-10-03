@@ -50,6 +50,7 @@ public:
 	bool IsEnemyBehindCharacter();
 	void AddKilledEnemyID(FString EnemyName);
 
+
 	UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Category = "SaveGame")
 	TArray<FString>KilledEnemiesNames;
 	
