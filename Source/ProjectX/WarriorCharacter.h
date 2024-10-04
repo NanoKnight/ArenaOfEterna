@@ -204,6 +204,8 @@ private:
 	ECharacterStates CharacterStates = ECharacterStates::ECS_UnEquipped;
 	UPROPERTY(BlueprintReadWrite, meta = (AllowPrivateAccess = "true"))
 	EActionState ActionState = EActionState::EAS_Unoccupied;
+	UPROPERTY(BlueprintReadWrite, meta = (AllowPrivateAccess = "true"))
+	EMovementState MovementState = EMovementState::EMS_Idle;
 	UPROPERTY()
 	UCharacterHUD* PlayerOverlay;
 public:

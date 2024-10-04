@@ -351,7 +351,11 @@ void AWarriorCharacter::MoveForward(float value)
 		const FRotator YawRotation(0.f, ControlRotation.Yaw, 0.f);
 		const FVector Direction = FRotationMatrix(YawRotation).GetUnitAxis(EAxis::X);
 		AddMovementInput(Direction, value);
-	
+		MovementState = EMovementState::EMS_Run;
+	}
+	else
+	{
+		MovementState = EMovementState::EMS_Idle;
 	}
 }
 
@@ -364,7 +368,13 @@ void AWarriorCharacter::MoveRight(float value)
 		const FRotator YawRotation(0.f, ControlRotation.Yaw, 0.f);
 		const FVector Direction = FRotationMatrix(YawRotation).GetUnitAxis(EAxis::Y);
 		AddMovementInput(Direction, value);
-	
+		MovementState = EMovementState::EMS_Run;
+		GEngine->AddOnScreenDebugMessage(1, 2, FColor::Blue, FString(TEXT("RUN")));
+	}
+	else
+	{
+		MovementState = EMovementState::EMS_Idle;
+		GEngine->AddOnScreenDebugMessage(1, 2, FColor::Blue, FString(TEXT("Idle")));
 	}
 
 }
@@ -382,6 +392,7 @@ void AWarriorCharacter::LookUp(float Value)
 
 void AWarriorCharacter::EKeyPressed()
 {
+
 	AWeapon* OverlappingWeapon = Cast<AWeapon>(OverlappingItem);
 	if (OverlappingWeapon)
 	{
