@@ -39,6 +39,9 @@ public:
 	EActionState ActionState;
 
 	UPROPERTY(BlueprintReadOnly, Category = Movement)
+	EMovementState MovementState;
+
+	UPROPERTY(BlueprintReadOnly, Category = Movement)
 	TEnumAsByte<EDeadPose> DeathPose;
 
 
