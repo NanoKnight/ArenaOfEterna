@@ -381,11 +381,7 @@ void AWarriorCharacter::MoveRight(float value)
 		const FRotator YawRotation(0.f, ControlRotation.Yaw, 0.f);
 		const FVector Direction = FRotationMatrix(YawRotation).GetUnitAxis(EAxis::Y);
 		AddMovementInput(Direction, value);
-	
-		
-			MovementState = EMovementState::EMS_Run;
-
-		
+	   MovementState = EMovementState::EMS_Run;
 	}
 	else
 	{
