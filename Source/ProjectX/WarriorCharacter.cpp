@@ -345,17 +345,30 @@ void AWarriorCharacter::InitializePlayerOverlay()
 void AWarriorCharacter::MoveForward(float value)
 {
 	if (ActionState != EActionState::EAS_Unoccupied) return;
+
 	if(Controller && (value != 0.f))
+
 	{
 		const FRotator ControlRotation = GetControlRotation();
 		const FRotator YawRotation(0.f, ControlRotation.Yaw, 0.f);
 		const FVector Direction = FRotationMatrix(YawRotation).GetUnitAxis(EAxis::X);
 		AddMovementInput(Direction, value);
-		MovementState = EMovementState::EMS_Run;
+		GEngine->AddOnScreenDebugMessage(1, 2, FColor::Blue, FString(TEXT("fwd")));
+		bForward = true;
+		if (bForward == true)
+		{
+			MovementState = EMovementState::EMS_Run;
+
+		}
+		
 	}
+
 	else
 	{
+	
 		MovementState = EMovementState::EMS_Idle;
+		bForward = false;
+		GEngine->AddOnScreenDebugMessage(1, 2, FColor::Blue, FString(TEXT("fwd closeeeee")));
 	}
 }
 
@@ -368,13 +381,19 @@ void AWarriorCharacter::MoveRight(float value)
 		const FRotator YawRotation(0.f, ControlRotation.Yaw, 0.f);
 		const FVector Direction = FRotationMatrix(YawRotation).GetUnitAxis(EAxis::Y);
 		AddMovementInput(Direction, value);
-		MovementState = EMovementState::EMS_Run;
-		GEngine->AddOnScreenDebugMessage(1, 2, FColor::Blue, FString(TEXT("RUN")));
+	
+		
+			MovementState = EMovementState::EMS_Run;
+
+		
 	}
 	else
 	{
-		MovementState = EMovementState::EMS_Idle;
-		GEngine->AddOnScreenDebugMessage(1, 2, FColor::Blue, FString(TEXT("Idle")));
+		if (bForward == false)
+		{
+			MovementState = EMovementState::EMS_Idle;
+
+		}
 	}
 
 }
@@ -461,6 +480,7 @@ void AWarriorCharacter::Attack()
 		WarriorAttackMontage();
 		bAttackTimerOpen = true;
 		ActionState = EActionState::EAS_Attacking;
+		
 	}
 }
 

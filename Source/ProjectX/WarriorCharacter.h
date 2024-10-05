@@ -181,7 +181,7 @@ private:
 	float TimeElapsed = 0.f;
 	bool bAttackTimerOpen = false;
 	///////////////////////////
-
+	bool bForward = false;
 	float StaminaResetTimerCount = 3.f;
 	float StaminaTimeElapsed = 0.f;
 	bool bStaminaTimerOpen = false;
