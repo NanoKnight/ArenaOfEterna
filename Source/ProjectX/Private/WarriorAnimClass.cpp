@@ -25,12 +25,13 @@ void UWarriorAnimClass::NativeUpdateAnimation(float DeltaTime)
 	if (WarriorMovement)
 	{
 
-	
-	 GroundSpeed  = UKismetMathLibrary::VSizeXY(WarriorMovement->Velocity);
-	 IsFalling = WarriorMovement->IsFalling();
-	 CharacterStates = WarriroCharacter->GetCharacterStates();
-	 ActionState = WarriroCharacter->GetActionState();
-	 DeathPose = WarriroCharacter->GetDeathPose();
+
+		GroundSpeed = UKismetMathLibrary::VSizeXY(WarriorMovement->Velocity);
+		IsFalling = WarriorMovement->IsFalling();
+		CharacterStates = WarriroCharacter->GetCharacterStates();
+		ActionState = WarriroCharacter->GetActionState();
+		DeathPose = WarriroCharacter->GetDeathPose();
+		MovementState = WarriroCharacter->GetMovementState();
 	}
 
 }

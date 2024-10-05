@@ -221,5 +221,6 @@ public:
 	virtual void AddHealth(AHealthPoint* Health)override;
 	FORCEINLINE ECharacterStates GetCharacterStates() const { return CharacterStates; }
 	FORCEINLINE EActionState GetActionState() const { return ActionState; }
+	FORCEINLINE EMovementState GetMovementState() const { return MovementState; }
 
 };
