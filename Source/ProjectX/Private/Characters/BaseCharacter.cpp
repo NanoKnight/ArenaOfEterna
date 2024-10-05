@@ -8,6 +8,9 @@
 #include"Components/AttributeComponent.h"
 #include"Kismet/KismetSystemLibrary.h"
 #include"Kismet/GameplayStatics.h"
+#include "NiagaraFunctionLibrary.h"
+#include "NiagaraComponent.h"
+
 
 // Sets default values
 ABaseCharacter::ABaseCharacter()
@@ -254,11 +257,30 @@ void ABaseCharacter::SpawnHitParticles(const FVector& ImpactPoint)
 
 	if (HitParticles && GetWorld())
 	{
+
 		UGameplayStatics::SpawnEmitterAtLocation(
 			GetWorld(),
 			HitParticles,
 			ImpactPoint
 		);
+	}
+	FRotator Rotation = GetActorRotation();
+	FVector Scale = FVector(1.0f);
+	if (HitNiagaraSystem)
+	{
+		UNiagaraFunctionLibrary::SpawnSystemAtLocation(
+
+			GetWorld(),
+			HitNiagaraSystem,
+			ImpactPoint,
+			Rotation,
+			Scale,
+			true,
+			true,
+			ENCPoolMethod::AutoRelease,
+			true
+			);
+		
 	}
 }
 

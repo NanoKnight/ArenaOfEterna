@@ -6,7 +6,9 @@
 #include "GameFramework/Character.h"
 #include"./InterFaces/HitInterface.h"
 #include"../CharacterTypes.h"
+#include "NiagaraSystem.h"
 #include "BaseCharacter.generated.h"
+
 
 class AWeapon;
 class UAttributeComponent;
@@ -91,6 +93,9 @@ private:
 
 	UPROPERTY(EditAnywhere, Category = VFX)
 	UParticleSystem* HitParticles;
+
+	UPROPERTY(EditAnywhere, Category = VFX)
+	UNiagaraSystem* HitNiagaraSystem;
 
 
 	UPROPERTY(EditAnywhere, Category = VFX)
