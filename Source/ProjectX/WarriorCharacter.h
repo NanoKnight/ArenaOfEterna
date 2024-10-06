@@ -68,6 +68,8 @@ protected:
 	void MoveRight(float value);
 	//void Turn(float Value);
 	//void LookUp(float Value);
+	void CameraForward(float Value);
+	void CameraRight(float Value);
 	void EKeyPressed();
 	/*
 	* Combat
@@ -130,6 +132,21 @@ protected:
 	bool BShieldOn = false;
 	virtual void Die() override;
 
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Camera")
+	float CameraMoveSpeed = 10.f;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Camera")
+	float MinX = -10.f; // Minimum X sýnýrý
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Camera")
+	float MaxX = 10.f;  // Maximum X sýnýrý
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Camera")
+	float MinY = -10.f; // Minimum Y sýnýrý
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Camera")
+	float MaxY = 10.f;  // Maximum Y sýnýrý
+
 
 private:
 	void Save();
@@ -186,9 +203,10 @@ private:
 	float StaminaTimeElapsed = 0.f;
 	bool bStaminaTimerOpen = false;
 
-
-
 	double CombatTargetRadius = 500.f;
+
+
+
 
 	UPROPERTY(EditDefaultsOnly)
 	USphereComponent* Sphere;

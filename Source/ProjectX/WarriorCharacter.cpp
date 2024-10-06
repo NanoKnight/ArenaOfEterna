@@ -365,10 +365,8 @@ void AWarriorCharacter::MoveForward(float value)
 
 	else
 	{
-	
 		MovementState = EMovementState::EMS_Idle;
 		bForward = false;
-		GEngine->AddOnScreenDebugMessage(1, 2, FColor::Blue, FString(TEXT("fwd closeeeee")));
 	}
 }
 
@@ -396,15 +394,50 @@ void AWarriorCharacter::MoveRight(float value)
 
 /*void AWarriorCharacter::Turn(float Value)
 {
-	AddControllerYawInput(Value);
+	float TurnRate = 0.5f;
+	AddControllerYawInput(Value * TurnRate);
 }*/
 
-/*
-void AWarriorCharacter::LookUp(float Value)
+
+
+
+
+
+void AWarriorCharacter::CameraForward(float Value)
+{
+	if (Controller && (Value != 0.f))
+	{ 
+		FVector NewLocation = ViewCamera->GetRelativeLocation();
+		NewLocation.X += Value * CameraMoveSpeed;
+		GEngine->AddOnScreenDebugMessage(1, 1.f, FColor::Emerald, FString::Printf(TEXT("forward %f "),Value));
+		NewLocation.X = FMath::Clamp(NewLocation.X, MinX, MaxX);
+		ViewCamera->SetRelativeLocation(NewLocation);
+		
+	}
+}
+
+void AWarriorCharacter::CameraRight(float Value)
+{
+	if (Controller && (Value != 0.f))
+	{
+		FVector NewLocation = ViewCamera->GetRelativeLocation();
+		NewLocation.Y += Value * CameraMoveSpeed;
+		GEngine->AddOnScreenDebugMessage(1, 1.f, FColor::Emerald, FString::Printf(TEXT("forward %f "), Value));
+		NewLocation.Y = FMath::Clamp(NewLocation.Y, MinY, MaxY);
+		ViewCamera->SetRelativeLocation(NewLocation);
+		
+	}
+}
+
+
+
+
+
+/*void AWarriorCharacter::LookUp(float Value)
 {
 	AddControllerPitchInput(Value);
-}*/
-
+}
+*/
 void AWarriorCharacter::EKeyPressed()
 {
 
@@ -455,7 +488,6 @@ void AWarriorCharacter::PlayShieldReactMontage()
 	{
 		AnimInstance->Montage_Play(ShieldReactMontage);
 	}
-
 }
 
 void AWarriorCharacter::EquipWeapon(AWeapon* Weapon)
@@ -644,7 +676,10 @@ void AWarriorCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputCo
 	PlayerInputComponent->BindAxis(FName("MoveForward"), this, &AWarriorCharacter::MoveForward);
 	PlayerInputComponent->BindAxis(FName("MoveRight"), this, &AWarriorCharacter::MoveRight);
 	//PlayerInputComponent->BindAxis(FName("Turn"), this, & AWarriorCharacter::Turn);
-   //PlayerInputComponent->BindAxis(FName("LookUp"), this, &AWarriorCharacter::LookUp);
+    //PlayerInputComponent->BindAxis(FName("LookUp"), this, &AWarriorCharacter::LookUp);
+	PlayerInputComponent->BindAxis(FName("CameraForward"), this, &AWarriorCharacter::CameraForward);
+	PlayerInputComponent->BindAxis(FName("CameraRight"), this, &AWarriorCharacter::CameraRight);
+	PlayerInputComponent->BindAction(FName("Jump"), IE_Pressed, this, &ACharacter::Jump);
 	PlayerInputComponent->BindAction(FName("Jump"), IE_Pressed, this, &ACharacter::Jump);
 	PlayerInputComponent->BindAction(FName("Use"), IE_Pressed, this, &AWarriorCharacter::EKeyPressed);
 	PlayerInputComponent->BindAction(FName("Attack"), IE_Pressed, this, &AWarriorCharacter::Attack);
