@@ -133,19 +133,19 @@ protected:
 	virtual void Die() override;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Camera")
-	float CameraMoveSpeed = 10.f;
+	float CameraMoveSpeed = 2.f;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Camera")
-	float MinX = -10.f; // Minimum X sýnýrý
+	float MinX = -1.f; // Minimum X sýnýrý
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Camera")
-	float MaxX = 10.f;  // Maximum X sýnýrý
+	float MaxX = 400.f;  // Maximum X sýnýrý
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Camera")
-	float MinY = -10.f; // Minimum Y sýnýrý
+	float MinY = -300.f; // Minimum Y sýnýrý
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Camera")
-	float MaxY = 10.f;  // Maximum Y sýnýrý
+	float MaxY = 300.f;  // Maximum Y sýnýrý
 
 
 private:
