@@ -468,7 +468,6 @@ void AWarriorCharacter::MoveCameraReleased()
 {
 	bCanMoveCamera = false;
 
-	ViewCamera->SetRelativeLocation(defaultCameraLoc);
 }
 
 
@@ -757,6 +756,16 @@ void AWarriorCharacter::Tick(float DeltaTime)
 	GetClosestEnemy();
 	ComboCountTimer(DeltaTime);
 	SetStaminaBar();
+	
+	if (!bCanMoveCamera)
+	{
+		FVector Currentval = ViewCamera->GetRelativeLocation();
+		FVector Newloc = FMath::VInterpTo(Currentval, defaultCameraLoc, GetWorld()->DeltaTimeSeconds,7.f);
+		ViewCamera->SetRelativeLocation(Newloc);
+	}
+
+	
+
 }
 void AWarriorCharacter::ComboCountTimer(float DeltaTime)
 {
