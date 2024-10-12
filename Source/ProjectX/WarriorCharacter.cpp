@@ -60,6 +60,7 @@ void AWarriorCharacter::BeginPlay()
 	SpawnDefaultShield();
 	SpawnDefaultWeapon();
 	InitializePlayerOverlay();
+	defaultCameraLoc = ViewCamera->GetRelativeLocation();
 	
 }
 
@@ -257,7 +258,7 @@ float AWarriorCharacter::TakeDamage(float DamageAmount, FDamageEvent const& Dama
 	{
 		if (BShieldOn)
 		{
-			GEngine->AddOnScreenDebugMessage(1, 1.f, FColor::Emerald, FString::Printf(TEXT("3")));
+			
 			HandleDamage(DamageAmount);
 		}
 	}
@@ -353,7 +354,6 @@ void AWarriorCharacter::MoveForward(float value)
 		const FRotator YawRotation(0.f, ControlRotation.Yaw, 0.f);
 		const FVector Direction = FRotationMatrix(YawRotation).GetUnitAxis(EAxis::X);
 		AddMovementInput(Direction, value);
-		GEngine->AddOnScreenDebugMessage(1, 2, FColor::Blue, FString(TEXT("fwd")));
 		bForward = true;
 		if (bForward == true)
 		{
@@ -405,11 +405,10 @@ void AWarriorCharacter::MoveRight(float value)
 
 void AWarriorCharacter::CameraForward(float Value)
 {
-	if (Controller && (Value != 0.f))
+	if (Controller && (Value != 0.f) && bCanMoveCamera)
 	{ 
 		FVector NewLocation = ViewCamera->GetRelativeLocation();
 		NewLocation.X += Value * CameraMoveSpeed;
-		GEngine->AddOnScreenDebugMessage(1, 1.f, FColor::Emerald, FString::Printf(TEXT("forward %f "),Value));
 		NewLocation.X = FMath::Clamp(NewLocation.X, MinX, MaxX);
 		ViewCamera->SetRelativeLocation(NewLocation);
 		
@@ -418,11 +417,10 @@ void AWarriorCharacter::CameraForward(float Value)
 
 void AWarriorCharacter::CameraRight(float Value)
 {
-	if (Controller && (Value != 0.f))
+	if (Controller && (Value != 0.f) && bCanMoveCamera)
 	{
 		FVector NewLocation = ViewCamera->GetRelativeLocation();
 		NewLocation.Y += Value * CameraMoveSpeed;
-		GEngine->AddOnScreenDebugMessage(1, 1.f, FColor::Emerald, FString::Printf(TEXT("forward %f "), Value));
 		NewLocation.Y = FMath::Clamp(NewLocation.Y, MinY, MaxY);
 		ViewCamera->SetRelativeLocation(NewLocation);
 		
@@ -460,6 +458,19 @@ void AWarriorCharacter::EKeyPressed()
 
 	}
 }
+
+void AWarriorCharacter::MoveCamera()
+{
+	bCanMoveCamera = true;
+}
+
+void AWarriorCharacter::MoveCameraReleased()
+{
+	bCanMoveCamera = false;
+
+	ViewCamera->SetRelativeLocation(defaultCameraLoc);
+}
+
 
 void AWarriorCharacter::Die()
 {
@@ -679,7 +690,8 @@ void AWarriorCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputCo
     //PlayerInputComponent->BindAxis(FName("LookUp"), this, &AWarriorCharacter::LookUp);
 	PlayerInputComponent->BindAxis(FName("CameraForward"), this, &AWarriorCharacter::CameraForward);
 	PlayerInputComponent->BindAxis(FName("CameraRight"), this, &AWarriorCharacter::CameraRight);
-	PlayerInputComponent->BindAction(FName("Jump"), IE_Pressed, this, &ACharacter::Jump);
+	PlayerInputComponent->BindAction(FName("MoveCamera"), IE_Pressed, this, &AWarriorCharacter::MoveCamera);
+	PlayerInputComponent->BindAction(FName("MoveCamera"), IE_Released, this, &AWarriorCharacter::MoveCameraReleased);
 	PlayerInputComponent->BindAction(FName("Jump"), IE_Pressed, this, &ACharacter::Jump);
 	PlayerInputComponent->BindAction(FName("Use"), IE_Pressed, this, &AWarriorCharacter::EKeyPressed);
 	PlayerInputComponent->BindAction(FName("Attack"), IE_Pressed, this, &AWarriorCharacter::Attack);

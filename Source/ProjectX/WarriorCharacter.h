@@ -71,6 +71,8 @@ protected:
 	void CameraForward(float Value);
 	void CameraRight(float Value);
 	void EKeyPressed();
+	void MoveCamera();
+	void MoveCameraReleased();
 	/*
 	* Combat
 	*/
@@ -201,8 +203,9 @@ private:
 	bool bForward = false;
 	float StaminaResetTimerCount = 3.f;
 	float StaminaTimeElapsed = 0.f;
+	FVector defaultCameraLoc;
 	bool bStaminaTimerOpen = false;
-
+	bool bCanMoveCamera = false;
 	double CombatTargetRadius = 500.f;
 
 

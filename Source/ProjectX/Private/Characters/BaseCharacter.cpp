@@ -8,6 +8,8 @@
 #include"Components/AttributeComponent.h"
 #include"Kismet/KismetSystemLibrary.h"
 #include"Kismet/GameplayStatics.h"
+#include"CameraShakes\MainLegacyCameraShake.h"
+#include "Camera/PlayerCameraManager.h"
 #include "NiagaraFunctionLibrary.h"
 #include "NiagaraComponent.h"
 
@@ -46,6 +48,16 @@ void ABaseCharacter::GetHit_Implementation(const FVector& ImpactPoint,AActor* Hi
 	if (IsAlive() && Hitter) {
 
 		DirectionalHit(Hitter->GetActorLocation());
+	
+		if (Hitter->ActorHasTag("WarriorCharacter"))
+		{
+		
+			APlayerController* PlayerController = GetWorld()->GetFirstPlayerController();
+			if (PlayerController)
+			{
+				PlayerController->PlayerCameraManager->StartCameraShake(UMainLegacyCameraShake::StaticClass());
+			}
+		}
 	}
 	else
 	{
@@ -54,6 +66,10 @@ void ABaseCharacter::GetHit_Implementation(const FVector& ImpactPoint,AActor* Hi
 	PlayHitSound(ImpactPoint);
 	SpawnHitParticles(ImpactPoint);
 }
+
+	
+	
+
 
 void ABaseCharacter::Die()
 {
