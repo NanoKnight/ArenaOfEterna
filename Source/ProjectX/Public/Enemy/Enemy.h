@@ -135,6 +135,6 @@ private:
 	UPROPERTY(EditAnywhere, Category = Combat)
 	TSubclassOf<class AExperiencePoint> Experience;
 
-
+	
 	
 };

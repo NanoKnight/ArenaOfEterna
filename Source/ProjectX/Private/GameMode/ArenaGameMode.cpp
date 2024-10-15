@@ -7,6 +7,7 @@
 #include "SaveGames/EternaSaveGame.h"
 #include"Items\ItemActor.h"
 #include "Kismet/GameplayStatics.h"
+#include "./Items/EnemySpawner.h"
 #include"../WarriorCharacter.h"
 #include"Items/Weapons/Weapon.h"
 
@@ -17,7 +18,22 @@ AArenaGameMode::AArenaGameMode()
 
 void AArenaGameMode::BeginPlay()
 {
+	EnemyAlive = 0;
+	NextWaveEnemyCount = 3;
 
+	EnemySpawner = Cast<AEnemySpawner>(UGameplayStatics::GetActorOfClass(GetWorld(),AEnemySpawner::StaticClass()));
+
+	if (EnemySpawner)
+	{
+		EnemySpawner->SpawnEnemy(NextWaveEnemyCount);
+		EnemyAlive = NextWaveEnemyCount;
+	}
+}
+
+void AArenaGameMode::RespawnEnemy()
+{
+	GEngine->AddOnScreenDebugMessage(-1, 2.f, FColor::Blue, FString(TEXT("interfacecalisiyor")));
+	EnemySpawner->SpawnEnemy(NextWaveEnemyCount);
 }
 
 void AArenaGameMode::SaveGame()
@@ -48,10 +64,6 @@ void AArenaGameMode::SaveGame()
 			SaveGameObject->AddItems(AddedItemsa);
 		}
 
-		
-		
-			
-		
 			//WarriorCharacter->WeaponClass = WarriorCharacter->EquippedWeapon->GetClass();
 			SaveGameObject->EquippedWeapon  = WarriorCharacter->EquippedWeapon->GetClass();
 
@@ -129,7 +141,6 @@ void AArenaGameMode::RemoveItemFormWorld()
 {
 	TArray<AActor*> AllItems;
 	UGameplayStatics::GetAllActorsOfClass(GetWorld(), AItemActor::StaticClass(), AllItems);
-
 	for (AActor* Actor : AllItems)
 	{
 		AItemActor* Items = Cast<AItemActor>(Actor);
@@ -138,4 +149,32 @@ void AArenaGameMode::RemoveItemFormWorld()
 			Items->Destroy();
 		}
 	}
+}
+
+void AArenaGameMode::IncrementEnemyAlive()
+{
+	EnemyAlive++;
+	//GEngine->AddOnScreenDebugMessage(-1, 5.f, FColor::Green, FString::Printf(TEXT("yasayan dusman Count: %d"), EnemyAlive));
+
+}
+
+void AArenaGameMode::DecrementEnemyAlive()
+{
+	EnemyAlive--;
+	//GEngine->AddOnScreenDebugMessage(-1, 2.f, FColor::Green, FString::Printf(TEXT("yasayan dusman : %d "), EnemyAlive));
+	CheckEnemy();
+}
+
+
+void AArenaGameMode::CheckEnemy()
+{
+	if (EnemyAlive < 1 && EnemySpawner)
+	{
+		NextWaveEnemyCount += 2;
+		RespawnEnemy();
+		GEngine->AddOnScreenDebugMessage(-1, 2.f, FColor::Green, FString::Printf(TEXT("respawned")));
+
+	}
+
+	
 }

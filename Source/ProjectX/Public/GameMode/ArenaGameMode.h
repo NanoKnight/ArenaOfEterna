@@ -8,6 +8,7 @@
 #include "Kismet/GameplayStatics.h"
 #include"../Enemy/Enemy.h"
 #include"../SaveGames/EternaSaveGame.h"
+#include"../Interfaces/RespawnEnemyInterface.h"
 #include "ArenaGameMode.generated.h"
 
 class AEnemy;
@@ -16,7 +17,7 @@ class UAttributeComponent;
  * 
  */
 UCLASS()
-class PROJECTX_API AArenaGameMode : public AGameModeBase
+class PROJECTX_API AArenaGameMode : public AGameModeBase, public IRespawnEnemyInterface
 {
 	GENERATED_BODY()
 
@@ -26,6 +27,9 @@ public:
 	void LoadGame();
 	void RemoveEnemyFromWorld();
 	void RemoveItemFormWorld();
+	void IncrementEnemyAlive();
+	void DecrementEnemyAlive();
+	void CheckEnemy();
 	UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Category = "SaveGame")
 	TArray<FString>KilledEnemiesNames;
 
@@ -33,11 +37,22 @@ public:
 	TArray<FString> AddedItems;
 	UAttributeComponent* Attributes;
 
+	UPROPERTY(VisibleAnywhere)
+	int32 EnemyAlive;
+
+	UPROPERTY(VisibleAnywhere)
+     int32 NextWaveEnemyCount;
+
 protected:
 
 	virtual void BeginPlay()override;
+	virtual void RespawnEnemy()override;
+
+	class AEnemySpawner* EnemySpawner;
 
 private:
+
+
 	
 
 

@@ -16,7 +16,6 @@
 #include"Items\ExperiencePoint.h"
 
 
-
 // Sets default values
 AEnemy::AEnemy()
 {
@@ -36,6 +35,7 @@ AEnemy::AEnemy()
 	bUseControllerRotationPitch = false;
 	bUseControllerRotationRoll = false;
 	bUseControllerRotationYaw = false;
+
 }
 
 void AEnemy::BeginPlay()
@@ -45,7 +45,11 @@ void AEnemy::BeginPlay()
 	EnemyName = GetName();
 	if (PawnSensing) PawnSensing->OnSeePawn.AddDynamic(this, &AEnemy::PawnSeen);
 	InitializeEnemy();
-
+	AGameModeBase* GameMode = GetWorld()->GetAuthGameMode();
+	AArenaGameMode* ArenaGameMode = Cast<AArenaGameMode>(GameMode);
+	ArenaGameMode->IncrementEnemyAlive();
+	
+	
 	
 }
 
@@ -60,6 +64,7 @@ void AEnemy::InitializeEnemy()
 
 void AEnemy::Die()
 {
+	
 	if (IsDead()) return;
 	Super::Die();
 	GEngine->AddOnScreenDebugMessage(1, 2.f, FColor::Blue, EnemyName);
@@ -72,6 +77,12 @@ void AEnemy::Die()
 	GetCharacterMovement()->bOrientRotationToMovement = false;
 	SetWeaponCollisionEnabled(ECollisionEnabled::NoCollision);
 	SpawnExperience();
+	AGameModeBase* GameMode = GetWorld()->GetAuthGameMode();
+	AArenaGameMode* ArenaGameMode = Cast<AArenaGameMode>(GameMode);
+	ArenaGameMode->DecrementEnemyAlive();
+	
+
+
 
 }
 
@@ -171,6 +182,9 @@ void AEnemy::Tick(float DeltaTime)
 		FString EnemyIDString = FString::Printf(TEXT("Enemy ID: %d"), EnemyID);
 		GEngine->AddOnScreenDebugMessage(-1, 5.f, FColor::Green, EnemyIDString);
 	}*/
+
+	//GEngine->AddOnScreenDebugMessage(1, 1.f, FColor::Blue, FString::Printf(TEXT("Dusman sayisi : %d "), ));
+
 }
 
 float AEnemy::TakeDamage(float DamageAmount, FDamageEvent const & DamageEvent, AController* EventInstigator, AActor* DamageCauser)

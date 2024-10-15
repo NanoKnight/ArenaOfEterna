@@ -231,6 +231,7 @@ private:
 	UCharacterHUD* PlayerOverlay;
 public:
 	virtual void Tick(float DeltaTime) override;
+	void ResetCameraPosition();
 	void ComboCountTimer(float DeltaTime);
 	void StaminaRegen();
 	virtual void SetupPlayerInputComponent(class UInputComponent* PlayerInputComponent) override;

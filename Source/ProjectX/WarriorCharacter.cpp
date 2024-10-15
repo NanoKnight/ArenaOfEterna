@@ -61,6 +61,7 @@ void AWarriorCharacter::BeginPlay()
 	SpawnDefaultWeapon();
 	InitializePlayerOverlay();
 	defaultCameraLoc = ViewCamera->GetRelativeLocation();
+
 	
 }
 
@@ -342,7 +343,7 @@ void AWarriorCharacter::InitializePlayerOverlay()
 	}
 }
 
-/*MOVE FORWARD RIGHT TURN FLOAT FUNCS*/
+
 void AWarriorCharacter::MoveForward(float value)
 {
 	if (ActionState != EActionState::EAS_Unoccupied) return;
@@ -398,11 +399,6 @@ void AWarriorCharacter::MoveRight(float value)
 	AddControllerYawInput(Value * TurnRate);
 }*/
 
-
-
-
-
-
 void AWarriorCharacter::CameraForward(float Value)
 {
 	if (Controller && (Value != 0.f) && bCanMoveCamera)
@@ -426,10 +422,6 @@ void AWarriorCharacter::CameraRight(float Value)
 		
 	}
 }
-
-
-
-
 
 /*void AWarriorCharacter::LookUp(float Value)
 {
@@ -756,16 +748,19 @@ void AWarriorCharacter::Tick(float DeltaTime)
 	GetClosestEnemy();
 	ComboCountTimer(DeltaTime);
 	SetStaminaBar();
+	ResetCameraPosition();
+
 	
+
+}
+void AWarriorCharacter::ResetCameraPosition()
+{
 	if (!bCanMoveCamera)
 	{
 		FVector Currentval = ViewCamera->GetRelativeLocation();
-		FVector Newloc = FMath::VInterpTo(Currentval, defaultCameraLoc, GetWorld()->DeltaTimeSeconds,7.f);
+		FVector Newloc = FMath::VInterpTo(Currentval, defaultCameraLoc, GetWorld()->DeltaTimeSeconds, 7.f);
 		ViewCamera->SetRelativeLocation(Newloc);
 	}
-
-	
-
 }
 void AWarriorCharacter::ComboCountTimer(float DeltaTime)
 {
