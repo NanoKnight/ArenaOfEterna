@@ -22,14 +22,14 @@ public:
 protected:
 	// Called when the game starts or when spawned
 	virtual void BeginPlay() override;
-	virtual void RespawnEnemy()override;
+
 	
 
 public:	
 	// Called every frame
 	virtual void Tick(float DeltaTime) override;
 
-
+	virtual void RespawnEnemyStart_Implementation()override;
 	UFUNCTION(BlueprintCallable, Category = "Spawning")
 	void SpawnEnemy(int32 NumbwerOfEnemies);
 

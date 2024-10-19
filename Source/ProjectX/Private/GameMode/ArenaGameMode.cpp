@@ -10,6 +10,7 @@
 #include "./Items/EnemySpawner.h"
 #include"../WarriorCharacter.h"
 #include"Items/Weapons/Weapon.h"
+#include"Runtime/Engine/Public/TimerManager.h"
 
 AArenaGameMode::AArenaGameMode()
 {
@@ -18,6 +19,8 @@ AArenaGameMode::AArenaGameMode()
 
 void AArenaGameMode::BeginPlay()
 {
+	Super::BeginPlay();
+
 	EnemyAlive = 0;
 	NextWaveEnemyCount = 3;
 
@@ -25,15 +28,24 @@ void AArenaGameMode::BeginPlay()
 
 	if (EnemySpawner)
 	{
+		WaveCount = 1;
 		EnemySpawner->SpawnEnemy(NextWaveEnemyCount);
 		EnemyAlive = NextWaveEnemyCount;
 	}
 }
 
+void AArenaGameMode::RespawnEnemyStart_Implementation()
+{
+	WaveStarted = true;
+	GetWorld()->GetTimerManager().SetTimer(WaveStartTimer, this, &AArenaGameMode::RespawnEnemy, 10, false);
+}
+
 void AArenaGameMode::RespawnEnemy()
 {
-	GEngine->AddOnScreenDebugMessage(-1, 2.f, FColor::Blue, FString(TEXT("interfacecalisiyor")));
+	WaveStarted = false;
 	EnemySpawner->SpawnEnemy(NextWaveEnemyCount);
+	WaveCount = ++WaveCount;
+	GEngine->AddOnScreenDebugMessage(-1, 2.f, FColor::Green, FString::Printf(TEXT("Dalga : %d  "), WaveCount));
 }
 
 void AArenaGameMode::SaveGame()
@@ -171,7 +183,10 @@ void AArenaGameMode::CheckEnemy()
 	if (EnemyAlive < 1 && EnemySpawner)
 	{
 		NextWaveEnemyCount += 2;
-		RespawnEnemy();
+		if (Implements<URespawnEnemyInterface>())
+		{
+			IRespawnEnemyInterface::Execute_RespawnEnemyStart(this);
+		}
 		GEngine->AddOnScreenDebugMessage(-1, 2.f, FColor::Green, FString::Printf(TEXT("respawned")));
 
 	}

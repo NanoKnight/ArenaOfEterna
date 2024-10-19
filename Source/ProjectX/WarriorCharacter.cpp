@@ -187,7 +187,7 @@ void AWarriorCharacter::ClearShieldRegenerateTimer()
 
 void AWarriorCharacter::StartShieldRegenerateTimer()
 {
-	GetWorld()->GetTimerManager().SetTimer(shieldRegenerateTime, this, &AWarriorCharacter::RegenerateShield, 3, false);
+	
 }
 
 void AWarriorCharacter::Staminadeneme(float DeltaTime)
