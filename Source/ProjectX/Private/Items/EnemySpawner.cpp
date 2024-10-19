@@ -42,7 +42,7 @@ void AEnemySpawner::SpawnEnemy(int32 NumbwerOfEnemies)
         GetWorld()->SpawnActor<AEnemy>(EnemyClass, SpawnLocation, FRotator::ZeroRotator);
 
         SpawnLocation.X += 200.f;
-        SpawnLocation.Y += 150.f;
+        SpawnLocation.Y += 10.f;
     }
 
 
