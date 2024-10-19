@@ -5,6 +5,3 @@
 
 // Add default functionality here for any IRespawnEnemyInterface functions that are not pure virtual.
 
-void IRespawnEnemyInterface::RespawnEnemy()
-{
-}

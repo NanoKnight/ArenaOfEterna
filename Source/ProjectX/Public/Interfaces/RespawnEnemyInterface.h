@@ -22,6 +22,6 @@ class PROJECTX_API IRespawnEnemyInterface
 
 	// Add interface functions to this class. This is the class that will be inherited to implement this interface.
 public:
-
-	virtual void RespawnEnemy();
+	UFUNCTION(BlueprintNativeEvent, BlueprintCallable, Category = "Respawn")
+	void RespawnEnemyStart();
 };

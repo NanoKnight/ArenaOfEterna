@@ -20,7 +20,7 @@ void AEnemySpawner::BeginPlay()
  
 }
 
-void AEnemySpawner::RespawnEnemy()
+void AEnemySpawner::RespawnEnemyStart_Implementation()
 {
   
     GEngine->AddOnScreenDebugMessage(-1, 2.f, FColor::Green, FString(TEXT("denemee1")));
@@ -36,12 +36,13 @@ void AEnemySpawner::SpawnEnemy(int32 NumbwerOfEnemies)
 {
     FVector SpawnLocation = GetActorLocation();
     float offset = 200.f;
-
+   
     for (int32 i = 0; i < NumbwerOfEnemies; i++)
     {
         GetWorld()->SpawnActor<AEnemy>(EnemyClass, SpawnLocation, FRotator::ZeroRotator);
 
         SpawnLocation.X += 200.f;
+        SpawnLocation.Y += 150.f;
     }
 
 

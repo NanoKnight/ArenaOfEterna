@@ -42,17 +42,25 @@ public:
 
 	UPROPERTY(VisibleAnywhere)
      int32 NextWaveEnemyCount;
+	 
+	 UPROPERTY(VisibleAnywhere)
+	 int32 WaveCount;
+	 UPROPERTY()
+	 FTimerHandle WaveStartTimer;
 
+	 UPROPERTY(BlueprintReadOnly)
+	 bool WaveStarted;
 protected:
 
 	virtual void BeginPlay()override;
-	virtual void RespawnEnemy()override;
+	virtual void RespawnEnemyStart_Implementation() override;
+
 
 	class AEnemySpawner* EnemySpawner;
 
 private:
 
-
+	void RespawnEnemy();
 	
 
 
