@@ -22,7 +22,7 @@ void AArenaGameMode::BeginPlay()
 	Super::BeginPlay();
 
 	EnemyAlive = 0;
-	NextWaveEnemyCount = 3;
+	NextWaveEnemyCount = 1;
 
 	EnemySpawner = Cast<AEnemySpawner>(UGameplayStatics::GetActorOfClass(GetWorld(),AEnemySpawner::StaticClass()));
 
@@ -182,7 +182,7 @@ void AArenaGameMode::CheckEnemy()
 {
 	if (EnemyAlive < 1 && EnemySpawner)
 	{
-		NextWaveEnemyCount += 2;
+		NextWaveEnemyCount += 1;
 		if (Implements<URespawnEnemyInterface>())
 		{
 			IRespawnEnemyInterface::Execute_RespawnEnemyStart(this);
