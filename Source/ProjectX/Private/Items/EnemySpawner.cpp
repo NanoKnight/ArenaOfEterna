@@ -36,24 +36,22 @@ void AEnemySpawner::SpawnEnemy(int32 NumbwerOfEnemies)
 {
     FVector SpawnLocation = GetActorLocation();
     float offset = 200.f;
+    float Radius = 500.f;
+    float AngelStep = 360.f / NumbwerOfEnemies;
    
     for (int32 i = 0; i < NumbwerOfEnemies; i++)
     {
-        GetWorld()->SpawnActor<AEnemy>(EnemyClass, SpawnLocation, FRotator::ZeroRotator);
+        float Angle = i * AngelStep;
+        float x = SpawnLocation.X + Radius * FMath::Cos(FMath::DegreesToRadians(Angle));
+        float y = SpawnLocation.Y + Radius * FMath::Sin(FMath::DegreesToRadians(Angle));
 
-        SpawnLocation.X += 200.f;
-        SpawnLocation.Y += 10.f;
+        FVector NewspawnLocation(x, y, SpawnLocation.Z);
+
+        GetWorld()->SpawnActor<AEnemy>(EnemyClass, NewspawnLocation, FRotator::ZeroRotator);
+
+        SpawnLocation.X += 100.f;
+        SpawnLocation.Y += 50.f;
     }
-
-
-
-    /*
-    FVector SpawnLocation = GetActorLocation();
-    FRotator SpawnRotation = GetActorRotation();
-    FActorSpawnParameters SpawnParams;
-    SpawnParams.Owner = this;
-    AEnemy* SpawnedEnemy = GetWorld()->SpawnActor<AEnemy>(EnemyClass, SpawnLocation, SpawnRotation, SpawnParams);
-    */
 }
 
 void AEnemySpawner::GenerateSpawnerID()
