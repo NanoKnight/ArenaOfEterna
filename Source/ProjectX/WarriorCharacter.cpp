@@ -467,6 +467,30 @@ void AWarriorCharacter::Die()
 {
 	Super::Die();
 	ActionState = EActionState::EAS_Dead;
+
+	if (DeathWidgetClass)
+	{
+		DeathWidgetInstance = CreateWidget<UUserWidget>(GetWorld(), DeathWidgetClass);
+		if (DeathWidgetInstance)
+		{
+			DeathWidgetInstance->AddToViewport();
+
+			APlayerController* PlayerController = GetWorld()->GetFirstPlayerController();
+
+			if (PlayerController)
+			{
+				
+				PlayerController->bShowMouseCursor = true;
+
+				FInputModeUIOnly InputMode;
+				InputMode.SetWidgetToFocus(DeathWidgetInstance->TakeWidget());
+				PlayerController->SetInputMode(InputMode);
+			}
+
+		}
+	}
+	
+
 }
 
 void AWarriorCharacter::DisArm()

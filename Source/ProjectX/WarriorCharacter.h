@@ -5,6 +5,7 @@
 #include "CoreMinimal.h"
 #include "Public\CharacterTypes.h"
 #include "Public\Characters\BaseCharacter.h"
+#include"Blueprint/UserWidget.h"
 #include"Public\Interfaces\MotionWarpingInterface.h"
 #include"Public\Interfaces\PickUpInterface.h"
 #include "WarriorCharacter.generated.h"
@@ -60,7 +61,9 @@ public:
 	UPROPERTY(EditAnywhere)
 	TSubclassOf<class AWeapon> WeaponClass;
 
-
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "UI")
+	TSubclassOf<UUserWidget> DeathWidgetClass;
+	UUserWidget* DeathWidgetInstance;
 
 protected:
 	virtual void BeginPlay() override;
@@ -187,6 +190,10 @@ private:
 
 	UPROPERTY(EditDefaultsOnly, Category = Montages)
 	UAnimMontage* ShieldReactMontage;
+
+	
+
+
 
 	UPROPERTY()
 	AGameModeBase* GameMode;
