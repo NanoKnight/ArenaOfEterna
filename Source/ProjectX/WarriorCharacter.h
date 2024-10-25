@@ -6,7 +6,6 @@
 #include "Public\CharacterTypes.h"
 #include "Public\Characters\BaseCharacter.h"
 #include"Blueprint/UserWidget.h"
-#include"Public\Interfaces\MotionWarpingInterface.h"
 #include"Public\Interfaces\PickUpInterface.h"
 #include "WarriorCharacter.generated.h"
 
@@ -82,6 +81,7 @@ protected:
 	void EquipWeapon(AWeapon*Weapon);
 	virtual void Attack() override;
 	virtual void AttackEnd() override;
+	void UsingSkill();
 	void Shield();
 	void ShieldRealesed();
 	void PlayEquipMontage(const FName& SectionName);	
@@ -116,6 +116,12 @@ protected:
 	UFUNCTION(BlueprintCallable)
 	virtual void DodgeEnd() override;
 
+	UFUNCTION(BlueprintCallable)
+	void SkillEnd();
+
+
+	UFUNCTION(BlueprintCallable)
+	void SkillCanDamageF();
 	
 
 	UFUNCTION()
@@ -159,6 +165,7 @@ private:
 	void SpawnDefaultWeapon();
 	void DisArm();
 	void Arm();
+	void FirstSkill();
 	void PlayShieldReactMontage();
 	void InitializePlayerOverlay();
 	void SetHealthBar();
@@ -191,6 +198,8 @@ private:
 	UPROPERTY(EditDefaultsOnly, Category = Montages)
 	UAnimMontage* ShieldReactMontage;
 
+	UPROPERTY(EditDefaultsOnly,Category = Montages)
+	UAnimMontage* FirstSkillMontage;
 	
 
 
@@ -236,6 +245,11 @@ private:
 	EMovementState MovementState = EMovementState::EMS_Idle;
 	UPROPERTY()
 	UCharacterHUD* PlayerOverlay;
+	void ExecuteGetHit(FHitResult& BoxHit);
+	TArray <AActor*> IgnoreActors;
+	bool SkillCanDamage;
+
+	
 public:
 	virtual void Tick(float DeltaTime) override;
 	void ResetCameraPosition();

@@ -45,7 +45,6 @@ void AArenaGameMode::RespawnEnemy()
 	WaveStarted = false;
 	EnemySpawner->SpawnEnemy(NextWaveEnemyCount);
 	WaveCount = ++WaveCount;
-	GEngine->AddOnScreenDebugMessage(-1, 2.f, FColor::Green, FString::Printf(TEXT("Dalga : %d  "), WaveCount));
 }
 
 void AArenaGameMode::SaveGame()
@@ -166,14 +165,12 @@ void AArenaGameMode::RemoveItemFormWorld()
 void AArenaGameMode::IncrementEnemyAlive()
 {
 	EnemyAlive++;
-	//GEngine->AddOnScreenDebugMessage(-1, 5.f, FColor::Green, FString::Printf(TEXT("yasayan dusman Count: %d"), EnemyAlive));
 
 }
 
 void AArenaGameMode::DecrementEnemyAlive()
 {
 	EnemyAlive--;
-	//GEngine->AddOnScreenDebugMessage(-1, 2.f, FColor::Green, FString::Printf(TEXT("yasayan dusman : %d "), EnemyAlive));
 	CheckEnemy();
 }
 

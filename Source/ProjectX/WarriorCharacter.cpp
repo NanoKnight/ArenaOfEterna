@@ -13,6 +13,7 @@
 #include"Enemy\Enemy.h"
 #include"Components/AttributeComponent.h"
 #include "Animation/AnimMontage.h"
+#include"Interfaces\HitInterface.h"
 #include"HUD/PlayerHUD.h"
 #include "HUD\CharacterHUD.h"
 #include "SaveGames/EternaSaveGame.h"
@@ -347,7 +348,6 @@ void AWarriorCharacter::InitializePlayerOverlay()
 void AWarriorCharacter::MoveForward(float value)
 {
 	if (ActionState != EActionState::EAS_Unoccupied) return;
-
 	if(Controller && (value != 0.f))
 
 	{
@@ -370,6 +370,7 @@ void AWarriorCharacter::MoveForward(float value)
 		bForward = false;
 	}
 }
+
 
 void AWarriorCharacter::MoveRight(float value)
 {
@@ -507,6 +508,18 @@ void AWarriorCharacter::Arm()
 	ActionState = EActionState::EAS_EquippingWeapon;
 }
 
+void AWarriorCharacter::FirstSkill()
+{
+	if (ActionState == EActionState::EAS_UsingSkill) return;
+	UAnimInstance* AnimInstance = GetMesh()->GetAnimInstance();
+	if (AnimInstance)
+	{
+		AnimInstance->Montage_Play(FirstSkillMontage);
+		UsingSkill();
+	}	
+
+}
+
 void AWarriorCharacter::PlayShieldReactMontage()
 {
 	UAnimInstance* AnimInstance = GetMesh()->GetAnimInstance();
@@ -538,17 +551,85 @@ void AWarriorCharacter::Attack()
 	}
 }
 
+
+
+
+
 void AWarriorCharacter::AttackEnd()
 {
 	ActionState = EActionState::EAS_Unoccupied;
 
 }
 
+void AWarriorCharacter::UsingSkill()
+{
+	ActionState = EActionState::EAS_UsingSkill;
+}
+
+void AWarriorCharacter::SkillEnd()
+{
+
+
+	ActionState = EActionState::EAS_Unoccupied; 
+
+}
+
+void AWarriorCharacter::SkillCanDamageF()
+{
+
+		TArray<FHitResult> OutHits;
+		FVector Start = GetActorLocation();
+		FVector End = Start + GetActorForwardVector() * 100.f;
+		float SphereRadius = 500.f;
+
+		FCollisionQueryParams TraceParams;
+		TraceParams.AddIgnoredActor(this);
+
+		TArray<AActor*> IgnoredActors;
+		ECollisionChannel TraceChannel = ECC_WorldDynamic;
+		ETraceTypeQuery TraceType = UEngineTypes::ConvertToTraceType(TraceChannel);
+
+		bool bHit = UKismetSystemLibrary::SphereTraceMulti(
+			GetWorld(),
+			Start,
+			End,
+			SphereRadius,
+			TraceType,
+			false,
+			IgnoredActors,
+			EDrawDebugTrace::ForDuration,
+			OutHits,
+			true
+
+		);
+		if (bHit)
+		{
+			for (auto& hit : OutHits)
+			{
+				AActor* HitActor = hit.GetActor();
+				if (HitActor && HitActor->IsA(AEnemy::StaticClass()))
+				{
+					UGameplayStatics::ApplyDamage(HitActor, 100.f, GetInstigator()->GetController(), this, UDamageType::StaticClass());
+					FString Actorname = HitActor->GetName();
+					GEngine->AddOnScreenDebugMessage(1, 2.f, FColor::Emerald, FString::Printf(TEXT("carpan dusman = %s"), *Actorname));
+					ExecuteGetHit(hit);
+				}
+			}
+		}
+	}
+	
+
+
+
 void AWarriorCharacter::Shield()
 {
-	if (CharacterStates == ECharacterStates::ECS_UnEquipped) return;
+	
+	if (ActionState == EActionState::EAS_UsingSkill)return;
+	
+	if (CharacterStates == ECharacterStates::ECS_UnEquipped)return;
 
-	if (ShieldAlive() && ActionState != EActionState::EAS_Dead)
+
+	if (ShieldAlive() && ActionState != EActionState::EAS_Dead && ActionState != EActionState::EAS_UsingSkill)
 	{
 		UAnimInstance* AnimInstance = GetMesh()->GetAnimInstance();
 		if (AnimInstance && ShieldMontage)
@@ -714,6 +795,7 @@ void AWarriorCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputCo
 	PlayerInputComponent->BindAction(FName("Shield"), IE_Released, this, &AWarriorCharacter::ShieldRealesed);
 	PlayerInputComponent->BindAction(FName("Dodge"), IE_Pressed, this, &AWarriorCharacter::Dodge);
 	PlayerInputComponent->BindAction(FName("SaveGame"), IE_Pressed, this, &AWarriorCharacter::Save);
+	PlayerInputComponent->BindAction(FName("FirstSkill"), IE_Pressed, this, &AWarriorCharacter::FirstSkill);
 
 }
 void AWarriorCharacter::SetOverlappingItem(AItemActor* Item)
@@ -765,6 +847,18 @@ void AWarriorCharacter::AddHealth(AHealthPoint* Health)
 		SetHealthBar();
 	}
 
+}
+void AWarriorCharacter::ExecuteGetHit(FHitResult& BoxHit)
+{
+	IHitInterface* HitInterface = Cast<IHitInterface>(BoxHit.GetActor());
+
+	if (HitInterface)
+	{
+
+		HitInterface->Execute_GetHit(BoxHit.GetActor(), BoxHit.ImpactPoint, GetOwner());
+
+	}
+	IgnoreActors.AddUnique(BoxHit.GetActor());
 }
 void AWarriorCharacter::Tick(float DeltaTime)
 {
