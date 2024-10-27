@@ -508,18 +508,6 @@ void AWarriorCharacter::Arm()
 	ActionState = EActionState::EAS_EquippingWeapon;
 }
 
-void AWarriorCharacter::FirstSkill()
-{
-	if (ActionState == EActionState::EAS_UsingSkill) return;
-	UAnimInstance* AnimInstance = GetMesh()->GetAnimInstance();
-	if (AnimInstance)
-	{
-		AnimInstance->Montage_Play(FirstSkillMontage);
-		UsingSkill();
-	}	
-
-}
-
 void AWarriorCharacter::PlayShieldReactMontage()
 {
 	UAnimInstance* AnimInstance = GetMesh()->GetAnimInstance();
@@ -551,10 +539,6 @@ void AWarriorCharacter::Attack()
 	}
 }
 
-
-
-
-
 void AWarriorCharacter::AttackEnd()
 {
 	ActionState = EActionState::EAS_Unoccupied;
@@ -566,13 +550,19 @@ void AWarriorCharacter::UsingSkill()
 	ActionState = EActionState::EAS_UsingSkill;
 }
 
-void AWarriorCharacter::SkillEnd()
+
+void AWarriorCharacter::FirstSkill()
 {
-
-
-	ActionState = EActionState::EAS_Unoccupied; 
+	if (ActionState == EActionState::EAS_UsingSkill) return;
+	UAnimInstance* AnimInstance = GetMesh()->GetAnimInstance();
+	if (AnimInstance)
+	{
+		AnimInstance->Montage_Play(FirstSkillMontage);
+		UsingSkill();
+	}
 
 }
+
 
 void AWarriorCharacter::SkillCanDamageF()
 {
@@ -581,11 +571,14 @@ void AWarriorCharacter::SkillCanDamageF()
 		FVector Start = GetActorLocation();
 		FVector End = Start + GetActorForwardVector() * 100.f;
 		float SphereRadius = 500.f;
+		float SkillDamage = 50;
 
 		FCollisionQueryParams TraceParams;
 		TraceParams.AddIgnoredActor(this);
 
 		TArray<AActor*> IgnoredActors;
+		IgnoredActors.Add(this);
+		IgnoredActors.Add(EquippedWeapon);
 		ECollisionChannel TraceChannel = ECC_WorldDynamic;
 		ETraceTypeQuery TraceType = UEngineTypes::ConvertToTraceType(TraceChannel);
 
@@ -609,7 +602,7 @@ void AWarriorCharacter::SkillCanDamageF()
 				AActor* HitActor = hit.GetActor();
 				if (HitActor && HitActor->IsA(AEnemy::StaticClass()))
 				{
-					UGameplayStatics::ApplyDamage(HitActor, 100.f, GetInstigator()->GetController(), this, UDamageType::StaticClass());
+					UGameplayStatics::ApplyDamage(HitActor, SkillDamage, GetInstigator()->GetController(), this, UDamageType::StaticClass());
 					FString Actorname = HitActor->GetName();
 					GEngine->AddOnScreenDebugMessage(1, 2.f, FColor::Emerald, FString::Printf(TEXT("carpan dusman = %s"), *Actorname));
 					ExecuteGetHit(hit);
@@ -618,7 +611,13 @@ void AWarriorCharacter::SkillCanDamageF()
 		}
 	}
 	
+void AWarriorCharacter::SkillEnd()
+{
 
+
+	ActionState = EActionState::EAS_Unoccupied;
+
+}
 
 
 void AWarriorCharacter::Shield()

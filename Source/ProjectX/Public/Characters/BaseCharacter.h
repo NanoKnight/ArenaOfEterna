@@ -11,6 +11,7 @@
 
 
 class AWeapon;
+
 class UAttributeComponent;
 class UAnimMontage;
 class AEnemy;
@@ -27,6 +28,7 @@ public:
  
   UPROPERTY(VisibleAnywhere, Category = Weapon)
   AWeapon* EquippedWeapon;
+
 
 
 

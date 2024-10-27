@@ -64,6 +64,9 @@ public:
 	TSubclassOf<UUserWidget> DeathWidgetClass;
 	UUserWidget* DeathWidgetInstance;
 
+    
+
+
 protected:
 	virtual void BeginPlay() override;
 	void MoveForward(float value);
