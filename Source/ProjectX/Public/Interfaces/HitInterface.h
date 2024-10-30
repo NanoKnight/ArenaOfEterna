@@ -26,5 +26,6 @@ public:
 
 	UFUNCTION(BlueprintNativeEvent)
 	 void GetHit(const FVector& ImpactPoint, AActor* Hitter);
+	 
 	
 };

@@ -91,6 +91,7 @@ protected:
 	bool CanDisarm();
 	virtual bool CanArm() override;
 	virtual void HandleDamage(float DamageAmount) override;
+
    /********************************/
 	bool ShieldAlive();
 	void RegenerateShield();
@@ -98,6 +99,10 @@ protected:
 	/********************************/
 	
 	FTimerHandle StaminaRegenerateTimer;
+	FTimerHandle SecondSkillTimer;
+
+	void DefaultVar();
+
 	void StaminaRegenerateTime();
 	void StaminaClearTime();
 
@@ -169,6 +174,7 @@ private:
 	void DisArm();
 	void Arm();
 	void FirstSkill();
+	void SecondSkill();
 	void PlayShieldReactMontage();
 	void InitializePlayerOverlay();
 	void SetHealthBar();
@@ -203,9 +209,12 @@ private:
 
 	UPROPERTY(EditDefaultsOnly,Category = Montages)
 	UAnimMontage* FirstSkillMontage;
+
+	UPROPERTY(EditDefaultsOnly, Category = Montages)
+	UAnimMontage* SecondSkillMontage;
 	
 
-
+	float DefaultEquippedWeaponDamage;
 
 	UPROPERTY()
 	AGameModeBase* GameMode;
@@ -249,6 +258,7 @@ private:
 	UPROPERTY()
 	UCharacterHUD* PlayerOverlay;
 	void ExecuteGetHit(FHitResult& BoxHit);
+	void GetSkillHit(FHitResult& Skillhit);
 	TArray <AActor*> IgnoreActors;
 	bool SkillCanDamage;
 

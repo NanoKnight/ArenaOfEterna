@@ -151,6 +151,8 @@ void AWeapon::ExecuteGetHit(FHitResult& BoxHit)
 	CreateFields(BoxHit.ImpactPoint);
 }
 
+
+
 void AWeapon::BoxTrace(FHitResult& BoxHit)
 {
 	const FVector Start = BoxTraceStart->GetComponentLocation();

@@ -129,6 +129,7 @@ void AWarriorCharacter::GetHit_Implementation(const FVector& ImpactPoint, AActor
 	}
 }
 
+
 void AWarriorCharacter::Jump()
 {
 	if (IsUnoccupied())
@@ -557,10 +558,26 @@ void AWarriorCharacter::FirstSkill()
 	UAnimInstance* AnimInstance = GetMesh()->GetAnimInstance();
 	if (AnimInstance)
 	{
-		AnimInstance->Montage_Play(FirstSkillMontage);
 		UsingSkill();
+		AnimInstance->Montage_Play(FirstSkillMontage);
+		
 	}
 
+}
+
+void AWarriorCharacter::SecondSkill()
+{
+	if (ActionState == EActionState::EAS_UsingSkill) return;
+	UAnimInstance* AnimInstance = GetMesh()->GetAnimInstance();
+	UsingSkill();
+	if (AnimInstance)
+	{
+		AnimInstance->Montage_Play(SecondSkillMontage);
+	}
+	DefaultEquippedWeaponDamage = EquippedWeapon->GetDamage();
+	EquippedWeapon->SetDamage(EquippedWeapon->GetDamage() * 5);
+	GetCharacterMovement()->MaxWalkSpeed = 800.f;
+	GetWorld()->GetTimerManager().SetTimer(StaminaRegenerateTimer, this, &AWarriorCharacter::DefaultVar, 5, false);
 }
 
 
@@ -572,16 +589,13 @@ void AWarriorCharacter::SkillCanDamageF()
 		FVector End = Start + GetActorForwardVector() * 100.f;
 		float SphereRadius = 500.f;
 		float SkillDamage = 50;
-
 		FCollisionQueryParams TraceParams;
 		TraceParams.AddIgnoredActor(this);
-
 		TArray<AActor*> IgnoredActors;
 		IgnoredActors.Add(this);
 		IgnoredActors.Add(EquippedWeapon);
 		ECollisionChannel TraceChannel = ECC_WorldDynamic;
 		ETraceTypeQuery TraceType = UEngineTypes::ConvertToTraceType(TraceChannel);
-
 		bool bHit = UKismetSystemLibrary::SphereTraceMulti(
 			GetWorld(),
 			Start,
@@ -593,8 +607,8 @@ void AWarriorCharacter::SkillCanDamageF()
 			EDrawDebugTrace::ForDuration,
 			OutHits,
 			true
-
 		);
+
 		if (bHit)
 		{
 			for (auto& hit : OutHits)
@@ -602,10 +616,14 @@ void AWarriorCharacter::SkillCanDamageF()
 				AActor* HitActor = hit.GetActor();
 				if (HitActor && HitActor->IsA(AEnemy::StaticClass()))
 				{
+					AEnemy* Enemy = Cast<AEnemy>(hit.GetActor());
+					
+ 
 					UGameplayStatics::ApplyDamage(HitActor, SkillDamage, GetInstigator()->GetController(), this, UDamageType::StaticClass());
 					FString Actorname = HitActor->GetName();
-					GEngine->AddOnScreenDebugMessage(1, 2.f, FColor::Emerald, FString::Printf(TEXT("carpan dusman = %s"), *Actorname));
-					ExecuteGetHit(hit);
+					//GEngine->AddOnScreenDebugMessage(1, 2.f, FColor::Emerald, FString::Printf(TEXT("carpan dusman = %s"), *Actorname));
+					//ExecuteGetHit(hit);
+					GetSkillHit(hit);
 				}
 			}
 		}
@@ -687,9 +705,19 @@ void AWarriorCharacter::HandleDamage(float DamageAmount)
 	}
 }
 
+
+
 bool AWarriorCharacter::ShieldAlive()
 {
 	return Attributes && Attributes->IsShieldAlive();
+}
+
+void AWarriorCharacter::DefaultVar()
+{
+	EquippedWeapon->SetDamage(DefaultEquippedWeaponDamage);
+	GetCharacterMovement()->MaxWalkSpeed = CharacterRunSpeed;
+	GEngine->AddOnScreenDebugMessage(1, 2.f, FColor::Green, FString::Printf(TEXT("Variebles reseted")));
+
 }
 
 void AWarriorCharacter::StaminaRegenerateTime()
@@ -795,6 +823,7 @@ void AWarriorCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputCo
 	PlayerInputComponent->BindAction(FName("Dodge"), IE_Pressed, this, &AWarriorCharacter::Dodge);
 	PlayerInputComponent->BindAction(FName("SaveGame"), IE_Pressed, this, &AWarriorCharacter::Save);
 	PlayerInputComponent->BindAction(FName("FirstSkill"), IE_Pressed, this, &AWarriorCharacter::FirstSkill);
+	PlayerInputComponent->BindAction(FName("SecondSkill"), IE_Pressed, this, &AWarriorCharacter::SecondSkill);
 
 }
 void AWarriorCharacter::SetOverlappingItem(AItemActor* Item)
@@ -855,10 +884,22 @@ void AWarriorCharacter::ExecuteGetHit(FHitResult& BoxHit)
 	{
 
 		HitInterface->Execute_GetHit(BoxHit.GetActor(), BoxHit.ImpactPoint, GetOwner());
+		
 
 	}
 	IgnoreActors.AddUnique(BoxHit.GetActor());
 }
+
+void AWarriorCharacter::GetSkillHit(FHitResult& Skillhit)
+{
+	ISkillHitInterface* SkillInterface = Cast<ISkillHitInterface>(Skillhit.GetActor());
+
+	if (SkillInterface)
+	{
+		SkillInterface->SkillHit(Skillhit.ImpactPoint, GetOwner());
+	}
+}
+
 void AWarriorCharacter::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);

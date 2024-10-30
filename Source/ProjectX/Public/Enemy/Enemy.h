@@ -5,6 +5,7 @@
 #include "CoreMinimal.h"
 #include"../Characters/BaseCharacter.h"
 #include"../CharacterTypes.h"
+#include"../Interfaces/SkillHitInterface.h"
 #include "Enemy.generated.h"
 
 
@@ -14,7 +15,7 @@ class UPawnSensingComponent;
 
 
 UCLASS()
-class PROJECTX_API AEnemy : public ABaseCharacter
+class PROJECTX_API AEnemy : public ABaseCharacter, public ISkillHitInterface
 {
 	GENERATED_BODY()
 
@@ -31,6 +32,8 @@ protected:
 	virtual void AttackEnd() override;
 	virtual bool CanAttack() override;
 	virtual void HandleDamage(float DamageAmount) override;
+	virtual void PlayHitSound(const FVector& ImpactPoint) ;
+
 	
 
 
@@ -49,8 +52,12 @@ public:
 	virtual void GetHit_Implementation(const FVector& ImpactPoint,AActor* Hitter) override;
 	/* </IHitInterface> */
 
+	virtual void SkillHit(const FVector& ImpactPoint, AActor* Hitter) override;
+
 	UPROPERTY(BlueprintReadOnly)
 	EEnemyState EnemyState;
+
+
 
 private:
 
@@ -135,6 +142,8 @@ private:
 	UPROPERTY(EditAnywhere, Category = Combat)
 	TSubclassOf<class AExperiencePoint> Experience;
 
+	UPROPERTY(EditDefaultsOnly, category = Montages)
+	UAnimMontage* SkillDamageMontage;
 	
 	
 };

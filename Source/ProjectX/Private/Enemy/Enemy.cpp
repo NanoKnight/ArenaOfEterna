@@ -11,6 +11,7 @@
 #include"HUD/HealthBarComponent.h"
 #include"Items\Weapons\Weapon.h"
 #include"GameMode\ArenaGameMode.h"
+#include"CameraShakes\MainLegacyCameraShake.h"
 #include "Kismet/GameplayStatics.h"
 #include "AIController.h"
 #include"Items\ExperiencePoint.h"
@@ -157,6 +158,11 @@ void AEnemy::HandleDamage(float DamageAmount)
 
 }
 
+void AEnemy::PlayHitSound(const FVector& ImpactPoint)
+{
+	Super::PlayHitSound(ImpactPoint);
+}
+
 
 
 void AEnemy::Tick(float DeltaTime)
@@ -203,7 +209,10 @@ float AEnemy::TakeDamage(float DamageAmount, FDamageEvent const & DamageEvent, A
 		{
 			ChaseTarget();
 		}
-
+		if (Attributes->GetHealth() == 0 )
+		{
+			Die();
+		}
 		return DamageAmount;
 	}
 	else
@@ -222,17 +231,39 @@ void AEnemy::Destroyed()
 }
 
 void AEnemy::GetHit_Implementation(const FVector& ImpactPoint,AActor* Hitter)
-
 {
-
 	Super::GetHit_Implementation(ImpactPoint,Hitter);
 	if (!IsDead()) ShowHealthBar();
 	ClearPatrolTimer();
 	ClearAttackTimer();
 	SetWeaponCollisionEnabled(ECollisionEnabled::NoCollision);
 	StopAttackMontage();
-
 }
+
+void AEnemy::SkillHit(const FVector& ImpactPoint, AActor* Hitter)
+{
+	if (!IsDead()) ShowHealthBar();
+
+	ClearPatrolTimer();
+	ClearAttackTimer();
+	SetWeaponCollisionEnabled(ECollisionEnabled::NoCollision);
+	StopAttackMontage();
+	PlayHitSound(ImpactPoint);
+	UAnimInstance* AnimInstance = GetMesh()->GetAnimInstance();
+	if (AnimInstance && !IsDead())
+	{
+		AnimInstance->Montage_Play(SkillDamageMontage);
+		EnemyOutlineMesh->GetAnimInstance()->Montage_Play(SkillDamageMontage);
+	}
+
+	    APlayerController* PlayerController = GetWorld()->GetFirstPlayerController();
+		if (PlayerController)
+		{
+			PlayerController->PlayerCameraManager->StartCameraShake(UMainLegacyCameraShake::StaticClass());
+		}
+}
+
+
 
 void AEnemy::SpawnDefaultWeapon()
 {

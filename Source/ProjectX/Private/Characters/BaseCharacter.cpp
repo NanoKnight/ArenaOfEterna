@@ -67,6 +67,7 @@ void ABaseCharacter::GetHit_Implementation(const FVector& ImpactPoint,AActor* Hi
 	SpawnHitParticles(ImpactPoint);
 }
 
+
 	
 	
 

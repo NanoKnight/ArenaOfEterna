@@ -89,7 +89,11 @@ private:
 
 public:
 	FORCEINLINE UBoxComponent* GetWeaponBox()  const { return WeaponBox; }
+	FORCEINLINE float GetDamage() const { return Damage;}
 	
+	
+	
+	FORCEINLINE void SetDamage(float NewDamage) { Damage = NewDamage; }
 
 
 };
