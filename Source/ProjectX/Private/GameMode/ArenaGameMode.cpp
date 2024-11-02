@@ -20,31 +20,33 @@ AArenaGameMode::AArenaGameMode()
 void AArenaGameMode::BeginPlay()
 {
 	Super::BeginPlay();
-
-	EnemyAlive = 0;
 	NextWaveEnemyCount = 1;
-
+	LoadGame();
 	EnemySpawner = Cast<AEnemySpawner>(UGameplayStatics::GetActorOfClass(GetWorld(),AEnemySpawner::StaticClass()));
 
-	if (EnemySpawner)
-	{
-		WaveCount = 1;
-		EnemySpawner->SpawnEnemy(NextWaveEnemyCount);
-		EnemyAlive = NextWaveEnemyCount;
-	}
+		if (EnemySpawner)
+		{
+			EnemySpawner->SpawnEnemy(NextWaveEnemyCount);
+
+		}	
 }
 
 void AArenaGameMode::RespawnEnemyStart_Implementation()
 {
 	WaveStarted = true;
 	GetWorld()->GetTimerManager().SetTimer(WaveStartTimer, this, &AArenaGameMode::RespawnEnemy, 10, false);
+	WaveCount = ++WaveCount;
+	GEngine->AddOnScreenDebugMessage(1, 2.f, FColor::Green, FString::Printf(TEXT("wave count = %d"), WaveCount));
 }
+
 
 void AArenaGameMode::RespawnEnemy()
 {
 	WaveStarted = false;
 	EnemySpawner->SpawnEnemy(NextWaveEnemyCount);
-	WaveCount = ++WaveCount;
+
+
+
 }
 
 void AArenaGameMode::SaveGame()
@@ -61,6 +63,8 @@ void AArenaGameMode::SaveGame()
 		SaveGameObject->Exp = Attributes->GetExperience();
 		SaveGameObject->MaxExp = Attributes->GetMaxExperience();
 		SaveGameObject->Gold = Attributes->GetGold();
+		SaveGameObject->WaveCount = WaveCount;
+		SaveGameObject->EnemyNextWaveCount = NextWaveEnemyCount;
 		TArray<FString> KilledEnemiesList = KilledEnemiesNames;
 		
 		for (FString EnemyName : KilledEnemiesList)
@@ -104,6 +108,8 @@ void AArenaGameMode::LoadGame()
 			Attributes->SetMaxExp(SaveGameObject->MaxExp);
 			Attributes->SetGold(SaveGameObject->Gold);
 			WarriorCharacter->SetActorLocation(SaveGameObject->PlayerLocation);
+			WaveCount = SaveGameObject->WaveCount;
+			NextWaveEnemyCount = SaveGameObject->EnemyNextWaveCount;
 
 		}
 		TArray<FString> LoadedEnemies = SaveGameObject->KilledEnemiesName;
@@ -112,6 +118,7 @@ void AArenaGameMode::LoadGame()
 		for (FString EnemyName : KilledEnemiesNames)
 		{
 			RemoveEnemyFromWorld();
+
 		}
 
 		TArray<FString> LoadaedItems = SaveGameObject->AddedItems;
@@ -144,6 +151,9 @@ void AArenaGameMode::RemoveEnemyFromWorld()
 		if (Enemy && KilledEnemiesNames.Contains(Enemy->EnemyName))
 		{
 			Enemy->Destroy();
+			GEngine->AddOnScreenDebugMessage(1, 2.f, FColor::Green, FString::Printf(TEXT("Enemy Alive = %d"), EnemyAlive));
+
+			
 		}
 	}
 }
@@ -164,6 +174,7 @@ void AArenaGameMode::RemoveItemFormWorld()
 
 void AArenaGameMode::IncrementEnemyAlive()
 {
+
 	EnemyAlive++;
 
 }
@@ -179,7 +190,7 @@ void AArenaGameMode::CheckEnemy()
 {
 	if (EnemyAlive < 1 && EnemySpawner)
 	{
-		NextWaveEnemyCount += 1;
+		NextWaveEnemyCount += 2;
 		if (Implements<URespawnEnemyInterface>())
 		{
 			IRespawnEnemyInterface::Execute_RespawnEnemyStart(this);

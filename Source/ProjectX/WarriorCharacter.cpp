@@ -57,7 +57,6 @@ void AWarriorCharacter::BeginPlay()
 {
 	Super::BeginPlay();
 	Tags.Add("WarriorCharacter");
-	LoadSaveGame();
 	SpawnDefaultShield();
 	SpawnDefaultWeapon();
 	InitializePlayerOverlay();
@@ -577,7 +576,7 @@ void AWarriorCharacter::SecondSkill()
 	DefaultEquippedWeaponDamage = EquippedWeapon->GetDamage();
 	EquippedWeapon->SetDamage(EquippedWeapon->GetDamage() * 5);
 	GetCharacterMovement()->MaxWalkSpeed = 800.f;
-	GetWorld()->GetTimerManager().SetTimer(StaminaRegenerateTimer, this, &AWarriorCharacter::DefaultVar, 5, false);
+	GetWorld()->GetTimerManager().SetTimer(StaminaRegenerateTimer, this, &AWarriorCharacter::DefaultVar, Ragetime, false);
 }
 
 
