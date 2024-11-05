@@ -46,6 +46,7 @@ public:
 	virtual void Tick(float DeltaTime) override;
 	virtual float TakeDamage(float DamageAmount, struct FDamageEvent const& DamageEvent, class AController* EventInstigator, AActor* DamageCauser) override;
 	virtual void Destroyed() override;
+	void SetRagdoll();
 	/*</AActor>*/
 
 	/* <IHitInterface> */
@@ -71,12 +72,13 @@ private:
 	void LoseInterest();
 	void StartPatrolling();
 	void ChaseTarget();
+	void ResetRagdoll();
 	bool IsOutsideCombatRadius();
 	bool IsOutsideAttackRadius();
 	bool IsInsideAttackRadius();
 	bool IsChasing();
 	bool IsAttacking();
-	
+	bool IsStun();
 	bool IsEngaged();
 	void ClearPatrolTimer();
 	void StartAttackTimer();
@@ -126,6 +128,7 @@ private:
 	UPROPERTY(EditAnywhere, Category = "Combat")
 	float WalkSpeed = 125.f;
 	FTimerHandle AttackTimer;
+	FTimerHandle RagdollTimer;
 	
 	UPROPERTY(EditAnywhere, Category = "Combat")
 	float AttackMin = 0.5f;
@@ -138,6 +141,10 @@ private:
 	
 	UPROPERTY(EditAnywhere, Category = Combat)
 	float DeathLifeSpan = 3.f;
+
+	FVector orginalLoc;
+	FRotator orginalRot;
+
 
 	UPROPERTY(EditAnywhere, Category = Combat)
 	TSubclassOf<class AExperiencePoint> Experience;

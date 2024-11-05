@@ -8,6 +8,7 @@
 #include"GameFramework/CharacterMovementComponent.h"
 #include"ProjectX\DebugMacros.h"	
 #include"Components/AttributeComponent.h"
+#include "Components/CapsuleComponent.h"
 #include"HUD/HealthBarComponent.h"
 #include"Items\Weapons\Weapon.h"
 #include"GameMode\ArenaGameMode.h"
@@ -116,6 +117,10 @@ void AEnemy::SpawnExperience()
 
 void AEnemy::Attack()
 {
+	if (EnemyState == EEnemyState::EAS_Stun)
+	{
+		CombatTarget = nullptr;
+	}
 	if (CombatTarget->ActorHasTag(FName("Dead")))
 	{
 		CombatTarget = nullptr;
@@ -139,6 +144,8 @@ bool AEnemy::CanAttack()
 		!IsAttacking() &&
 		!IsEngaged() &&
 		!IsDead();
+	  
+
 	return bCanAttack;
 }
 
@@ -169,17 +176,17 @@ void AEnemy::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
 	if (IsDead()) return;
+	if (EnemyState == EEnemyState::EAS_Stun)
+	{
+		return;
+	}
 	if (EnemyState > EEnemyState::EES_Patrolling )
 	{
-		
-		
-
-		
 		CheckCombatTarget();
 	}
 	else
 	{
-		CheckPatrolTarget();
+		CheckPatrolTarget(); 
 	}
 
 	
@@ -196,13 +203,15 @@ void AEnemy::Tick(float DeltaTime)
 float AEnemy::TakeDamage(float DamageAmount, FDamageEvent const & DamageEvent, AController* EventInstigator, AActor* DamageCauser)
 {
 
+	
 	if (!IsDead())
 	{
 		HandleDamage(DamageAmount);
 		CombatTarget = EventInstigator->GetPawn();
-
-		if (IsInsideAttackRadius())
+		
+		if (IsInsideAttackRadius() && EnemyState != EEnemyState::EAS_Stun)
 		{
+			
 			EnemyState = EEnemyState::EES_Attacking;
 		}
 		else if (IsOutsideAttackRadius())
@@ -230,6 +239,43 @@ void AEnemy::Destroyed()
 	}
 }
 
+void AEnemy::SetRagdoll()
+{
+	EnemyOutlineMesh->SetVisibility(false);
+	GetMesh()->SetSimulatePhysics(true);
+	GetMesh()->SetCollisionEnabled(ECollisionEnabled::PhysicsOnly);
+	GetMesh()->SetCollisionResponseToChannel(ECC_WorldStatic, ECR_Block);
+	EnemyOutlineMesh->SetSimulatePhysics(true);
+	EnemyOutlineMesh->SetCollisionEnabled(ECollisionEnabled::PhysicsOnly);
+	EnemyOutlineMesh->SetCollisionResponseToChannel(ECC_WorldStatic, ECR_Block);
+	GetCapsuleComponent()->SetCollisionEnabled(ECollisionEnabled::NoCollision);
+	GetWorld()->GetTimerManager().SetTimer(RagdollTimer, this, &AEnemy::ResetRagdoll,3.f);
+
+
+
+}
+
+void AEnemy::ResetRagdoll()
+{
+	GetMesh()->SetSimulatePhysics(false);
+	GetMesh()->SetCollisionEnabled(ECollisionEnabled::QueryAndPhysics);
+
+	// Karakterin konumunu ayarlayarak ayaða kalkmasýný saðla
+	FVector NewLocation = GetActorLocation();
+	NewLocation.Z += 90.0f; // Yüksekliði ayarla
+	FRotator NewRotation = FRotator(-90.f, GetActorRotation().Yaw, 0.0f); // Sadece Yaw'ý koruyarak düzelt
+	SetActorRotation(NewRotation);
+	SetActorLocation(NewLocation);
+
+	// Animasyon kontrolüne geri dön (Idle veya baþka bir animasyon)
+	PlayAnimMontage(SkillDamageMontage); // YourAnimMontage: ayaða kalkma animasyonunu temsil eder
+
+	// Kapsül bileþenini tekrar etkinleþtir
+	GetCapsuleComponent()->SetCollisionEnabled(ECollisionEnabled::QueryAndPhysics);
+}
+
+
+
 void AEnemy::GetHit_Implementation(const FVector& ImpactPoint,AActor* Hitter)
 {
 	Super::GetHit_Implementation(ImpactPoint,Hitter);
@@ -243,19 +289,23 @@ void AEnemy::GetHit_Implementation(const FVector& ImpactPoint,AActor* Hitter)
 void AEnemy::SkillHit(const FVector& ImpactPoint, AActor* Hitter)
 {
 	if (!IsDead()) ShowHealthBar();
-
+	LoseInterest();
 	ClearPatrolTimer();
 	ClearAttackTimer();
 	SetWeaponCollisionEnabled(ECollisionEnabled::NoCollision);
-	StopAttackMontage();
 	PlayHitSound(ImpactPoint);
-	UAnimInstance* AnimInstance = GetMesh()->GetAnimInstance();
+	StopAttackMontage();
+	EnemyState = EEnemyState::EAS_Stun;
+	
+	
+	
+	/*UAnimInstance* AnimInstance = GetMesh()->GetAnimInstance();
 	if (AnimInstance && !IsDead())
 	{
 		AnimInstance->Montage_Play(SkillDamageMontage);
 		EnemyOutlineMesh->GetAnimInstance()->Montage_Play(SkillDamageMontage);
 	}
-
+	*/
 	    APlayerController* PlayerController = GetWorld()->GetFirstPlayerController();
 		if (PlayerController)
 		{
@@ -324,7 +374,6 @@ void AEnemy::PatrolTimerFinished()
 void AEnemy::HideHealthBar()
 {
 	HealthBarWidget->SetVisibility(false);
-
 }
 
 void AEnemy::ShowHealthBar()
@@ -348,6 +397,7 @@ void AEnemy::StartPatrolling()
 void AEnemy::ChaseTarget()
 {	
 	
+
 	if (CombatTarget && CombatTarget->ActorHasTag(FName("Dead"))) {
 		CombatTarget = nullptr;
 		MoveToTarget(PatrolTarget);
@@ -360,6 +410,7 @@ void AEnemy::ChaseTarget()
 	MoveToTarget(CombatTarget);
 
 }
+
 
 bool AEnemy::IsOutsideCombatRadius()
 {
@@ -385,6 +436,11 @@ bool AEnemy::IsChasing()
 bool AEnemy::IsAttacking()
 {
 	return EnemyState == EEnemyState::EES_Attacking;
+}
+
+bool AEnemy::IsStun()
+{
+	return EnemyState == EEnemyState::EAS_Stun;
 }
 
 bool AEnemy::IsDead()
@@ -427,6 +483,8 @@ bool AEnemy::InTargetRange(AActor* Target, double Radius)
 
 void AEnemy::MoveToTarget(AActor* Target)
 {
+	
+	
 	if (EnemyController == nullptr || Target == nullptr)return;
 	FAIMoveRequest MoveRequest;
 	MoveRequest.SetGoalActor(Target);
