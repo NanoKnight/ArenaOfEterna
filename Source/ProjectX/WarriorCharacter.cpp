@@ -203,6 +203,9 @@ void AWarriorCharacter::Staminadeneme(float DeltaTime)
 
 void AWarriorCharacter::GetClosestEnemy()
 {
+
+	
+
 	AEnemy* NewClosestEnemy = nullptr;
 	float MinDistance = FLT_MAX;
 	for (AEnemy* Enemy : EnemiesInRange)
@@ -216,21 +219,22 @@ void AWarriorCharacter::GetClosestEnemy()
 		}			
 	}
 
+	
 
 	if (CloseEnemy != NewClosestEnemy)
 	{
 		if (CloseEnemy) {
 
-			USkeletalMeshComponent* EnemyMesh = CloseEnemy->GetMesh();
+			USkeletalMeshComponent* EnemyMesh = CloseEnemy->EnemyOutlineMesh;
 			if (EnemyMesh)
 			{
 				EnemyMesh->SetMaterial(0, nullptr);
 			}
 				
 		}
-		if (NewClosestEnemy)
+		if (NewClosestEnemy && NewClosestEnemy->EnemyState != EEnemyState::EAS_Stun)
 		{
-			USkeletalMeshComponent* EnemyMesh = NewClosestEnemy->GetMesh();
+			USkeletalMeshComponent* EnemyMesh = NewClosestEnemy->EnemyOutlineMesh;
 			if (EnemyMesh)
 			{
 				EnemyMesh->SetMaterial(0, OverlayMaterial);
@@ -576,7 +580,7 @@ void AWarriorCharacter::SecondSkill()
 	DefaultEquippedWeaponDamage = EquippedWeapon->GetDamage();
 	EquippedWeapon->SetDamage(EquippedWeapon->GetDamage() * 5);
 	GetCharacterMovement()->MaxWalkSpeed = 800.f;
-	GetWorld()->GetTimerManager().SetTimer(StaminaRegenerateTimer, this, &AWarriorCharacter::DefaultVar, Ragetime, false);
+	GetWorld()->GetTimerManager().SetTimer(SecondSkillTimer, this, &AWarriorCharacter::DefaultVar, Ragetime, false);
 }
 
 
@@ -616,7 +620,8 @@ void AWarriorCharacter::SkillCanDamageF()
 				if (HitActor && HitActor->IsA(AEnemy::StaticClass()))
 				{
 					AEnemy* Enemy = Cast<AEnemy>(hit.GetActor());
-					
+					Enemy->SetRagdoll();
+					Enemy->EnemyState = EEnemyState::EAS_Stun;
  
 					UGameplayStatics::ApplyDamage(HitActor, SkillDamage, GetInstigator()->GetController(), this, UDamageType::StaticClass());
 					FString Actorname = HitActor->GetName();

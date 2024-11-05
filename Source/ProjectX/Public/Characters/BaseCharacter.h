@@ -29,6 +29,8 @@ public:
   UPROPERTY(VisibleAnywhere, Category = Weapon)
   AWeapon* EquippedWeapon;
 
+  UPROPERTY(EditDefaultsOnly)
+  USkeletalMeshComponent* EnemyOutlineMesh;
 
 
 
@@ -59,8 +61,6 @@ protected:
 	FVector GetRotationWarpTarget(AActor* Target);
 	UFUNCTION(BlueprintCallable)
 	void SetWeaponCollisionEnabled(ECollisionEnabled::Type CollisionEnabled);
-	UPROPERTY(EditDefaultsOnly)
-	USkeletalMeshComponent* EnemyOutlineMesh;
 	UFUNCTION(BlueprintCallable)
 	virtual void AttackEnd();
 	virtual void DodgeEnd();
