@@ -23,6 +23,7 @@ void AEnemySpawner::BeginPlay()
 void AEnemySpawner::RespawnEnemyStart_Implementation()
 {
   
+    GEngine->AddOnScreenDebugMessage(-1, 2.f, FColor::Green, FString(TEXT("denemee1")));
 }
 
 // Called every frame
@@ -53,4 +54,8 @@ void AEnemySpawner::SpawnEnemy(int32 NumbwerOfEnemies)
     }
 }
 
+void AEnemySpawner::GenerateSpawnerID()
+{
+
+}
 
