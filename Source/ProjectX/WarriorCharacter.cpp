@@ -608,7 +608,7 @@ void AWarriorCharacter::SkillCanDamageF()
 		TraceType,
 		false,
 		IgnoredActors,
-		EDrawDebugTrace::ForDuration,
+		EDrawDebugTrace::None,
 		OutHits,
 		true
 	);

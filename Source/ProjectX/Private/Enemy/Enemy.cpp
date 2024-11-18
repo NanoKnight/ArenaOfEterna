@@ -183,13 +183,6 @@ void AEnemy::Tick(float DeltaTime)
 	}
 
 	
-	/*if (GEngine)
-	{
-		FString EnemyIDString = FString::Printf(TEXT("Enemy ID: %d"), EnemyID);
-		GEngine->AddOnScreenDebugMessage(-1, 5.f, FColor::Green, EnemyIDString);
-	}*/
-
-	//GEngine->AddOnScreenDebugMessage(1, 1.f, FColor::Blue, FString::Printf(TEXT("Dusman sayisi : %d "), ));
 
 }
 
@@ -264,14 +257,15 @@ void AEnemy::ResetRagdoll()
 	{
 		AnimInstance2->Montage_Play(SkillDamageMontage);
 	}
-	GetCapsuleComponent()->SetCollisionEnabled(ECollisionEnabled::QueryAndPhysics);
 	GetMesh()->AttachToComponent(CapsuleComp, FAttachmentTransformRules::SnapToTargetIncludingScale);
 	EnemyOutlineMesh->AttachToComponent(CapsuleComp, FAttachmentTransformRules::SnapToTargetIncludingScale);
+	GetCapsuleComponent()->SetCollisionEnabled(ECollisionEnabled::QueryAndPhysics);
 	GetMesh()->SetRelativeLocation(FVector(0.f, 0.f, -90));
 	EnemyOutlineMesh->SetRelativeLocation(FVector(0.f, 0.f, -90));
     FRotator meshrot(0.f, -90.f, 0.f);
 	GetMesh()->SetRelativeRotation(meshrot);
 	EnemyOutlineMesh->SetRelativeRotation(meshrot);
+
 	
 }
 
@@ -280,6 +274,10 @@ void AEnemy::ResetEnemyState()
 {
 	EnemyState = EEnemyState::EES_Patrolling;
 	EnemyOutlineMesh->SetVisibility(true);
+	if (CombatTarget)
+	{
+		ChaseTarget();
+	}
 }
 
 
