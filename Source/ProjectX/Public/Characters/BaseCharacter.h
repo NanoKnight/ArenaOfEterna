@@ -67,6 +67,8 @@ protected:
 	virtual bool CanArm();
 	void DisableCollision();
 
+	
+	bool RageMode = false;
    
 	UPROPERTY(EditAnywhere, Category = Combat)
 	UAttributeComponent* Attributes;

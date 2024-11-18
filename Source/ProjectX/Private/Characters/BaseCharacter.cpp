@@ -351,7 +351,22 @@ int32 ABaseCharacter::PlayWarriorCountMontageSection(UAnimMontage* Montage, cons
 	if (SectionNames.Num() <= 0) return -1;
 	int32 MaxSectionIndex = SectionNames.Num() - 1;
 	int32 Selection = ComboCounts; //FMath::RandRange(0, MaxSectionIndex);
-	PlayMontageSection(Montage, SectionNames[Selection]);
+	UAnimInstance* AnimInstance = GetMesh()->GetAnimInstance();
+	
+	if (RageMode == false)
+	{
+		AnimInstance->Montage_Play(Montage, 1.f);
+	}
+	else if(RageMode == true)
+	{
+		AnimInstance->Montage_Play(Montage, 1.3f);
+	}
+
+	AnimInstance->Montage_JumpToSection(SectionNames[Selection],Montage);
+
+
+	//PlayMontageSection(Montage, SectionNames[Selection]);
+	
 	
 	if (ComboCounts < MaxSectionIndex)
 	{

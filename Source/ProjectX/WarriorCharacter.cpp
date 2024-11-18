@@ -572,6 +572,7 @@ void AWarriorCharacter::SecondSkill()
 {
 	if (ActionState == EActionState::EAS_UsingSkill) return;
 	UAnimInstance* AnimInstance = GetMesh()->GetAnimInstance();
+	RageMode = true;
 	UsingSkill();
 	if (AnimInstance)
 	{
@@ -581,6 +582,7 @@ void AWarriorCharacter::SecondSkill()
 	EquippedWeapon->SetDamage(EquippedWeapon->GetDamage() * 5);
 	GetCharacterMovement()->MaxWalkSpeed = 800.f;
 	GetWorld()->GetTimerManager().SetTimer(SecondSkillTimer, this, &AWarriorCharacter::DefaultVar, Ragetime, false);
+
 }
 
 
@@ -723,8 +725,7 @@ void AWarriorCharacter::DefaultVar()
 {
 	EquippedWeapon->SetDamage(DefaultEquippedWeaponDamage);
 	GetCharacterMovement()->MaxWalkSpeed = CharacterRunSpeed;
-	GEngine->AddOnScreenDebugMessage(1, 2.f, FColor::Green, FString::Printf(TEXT("Variebles reseted")));
-
+	RageMode = false;
 }
 
 void AWarriorCharacter::StaminaRegenerateTime()
