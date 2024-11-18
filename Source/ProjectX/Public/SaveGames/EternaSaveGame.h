@@ -35,6 +35,15 @@ class PROJECTX_API UEternaSaveGame : public USaveGame
 	UPROPERTY(EditDefaultsOnly)
 	int32 Gold;
 
+	UPROPERTY(EditDefaultsOnly)
+	int32 EnemyNextWaveCount;
+
+
+	UPROPERTY(EditDefaultsOnly)
+	int32 WaveCount = 1;
+
+
+
 	/**/UPROPERTY(EditAnywhere, Category = Weapon)
 	TSubclassOf<AWeapon> EquippedWeapon;
 

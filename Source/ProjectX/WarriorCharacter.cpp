@@ -57,7 +57,6 @@ void AWarriorCharacter::BeginPlay()
 {
 	Super::BeginPlay();
 	Tags.Add("WarriorCharacter");
-	LoadSaveGame();
 	SpawnDefaultShield();
 	SpawnDefaultWeapon();
 	InitializePlayerOverlay();
@@ -240,7 +239,7 @@ void AWarriorCharacter::GetClosestEnemy()
 			{
 				EnemyMesh->SetMaterial(0, OverlayMaterial);
 				
-
+				GEngine->AddOnScreenDebugMessage(1, 2.f, FColor::Emerald, FString::Printf(TEXT("deneme")));
 			}
 		}
 	}
@@ -581,62 +580,61 @@ void AWarriorCharacter::SecondSkill()
 	DefaultEquippedWeaponDamage = EquippedWeapon->GetDamage();
 	EquippedWeapon->SetDamage(EquippedWeapon->GetDamage() * 5);
 	GetCharacterMovement()->MaxWalkSpeed = 800.f;
-<<<<<<< HEAD
 	GetWorld()->GetTimerManager().SetTimer(SecondSkillTimer, this, &AWarriorCharacter::DefaultVar, Ragetime, false);
-=======
-	GetWorld()->GetTimerManager().SetTimer(StaminaRegenerateTimer, this, &AWarriorCharacter::DefaultVar, 5, false);
->>>>>>> parent of fe388ef (codes are edited)
 }
 
 
 void AWarriorCharacter::SkillCanDamageF()
 {
 
-		TArray<FHitResult> OutHits;
-		FVector Start = GetActorLocation();
-		FVector End = Start + GetActorForwardVector() * 100.f;
-		float SphereRadius = 500.f;
-		float SkillDamage = 50;
-		FCollisionQueryParams TraceParams;
-		TraceParams.AddIgnoredActor(this);
-		TArray<AActor*> IgnoredActors;
-		IgnoredActors.Add(this);
-		IgnoredActors.Add(EquippedWeapon);
-		ECollisionChannel TraceChannel = ECC_WorldDynamic;
-		ETraceTypeQuery TraceType = UEngineTypes::ConvertToTraceType(TraceChannel);
-		bool bHit = UKismetSystemLibrary::SphereTraceMulti(
-			GetWorld(),
-			Start,
-			End,
-			SphereRadius,
-			TraceType,
-			false,
-			IgnoredActors,
-			EDrawDebugTrace::ForDuration,
-			OutHits,
-			true
-		);
+	TArray<FHitResult> OutHits;
+	FVector Start = GetActorLocation();
+	FVector End = Start + GetActorForwardVector() * 100.f;
+	float SphereRadius = 500.f;
+	float SkillDamage = 25.f;
+	FCollisionQueryParams TraceParams;
+	TraceParams.AddIgnoredActor(this);
+	TArray<AActor*> IgnoredActors;
+	IgnoredActors.Add(this);
+	IgnoredActors.Add(EquippedWeapon);
+	ECollisionChannel TraceChannel = ECC_WorldDynamic;
+	ETraceTypeQuery TraceType = UEngineTypes::ConvertToTraceType(TraceChannel);
 
-		if (bHit)
+	bool bHit = UKismetSystemLibrary::SphereTraceMulti(
+		GetWorld(),
+		Start,
+		End,
+		SphereRadius,
+		TraceType,
+		false,
+		IgnoredActors,
+		EDrawDebugTrace::ForDuration,
+		OutHits,
+		true
+	);
+
+	TSet<AActor*> DamagedEnemies;
+
+	if (bHit)
+	{
+		for (auto& hit : OutHits)
 		{
-			for (auto& hit : OutHits)
+			AActor* HitActor = hit.GetActor();
+			if (HitActor && HitActor->IsA(AEnemy::StaticClass()))
 			{
-				AActor* HitActor = hit.GetActor();
-				if (HitActor && HitActor->IsA(AEnemy::StaticClass()))
+				
+				if (!DamagedEnemies.Contains(HitActor))
 				{
+					DamagedEnemies.Add(HitActor);
 					AEnemy* Enemy = Cast<AEnemy>(hit.GetActor());
 					Enemy->SetRagdoll();
-					Enemy->EnemyState = EEnemyState::EAS_Stun;
- 
 					UGameplayStatics::ApplyDamage(HitActor, SkillDamage, GetInstigator()->GetController(), this, UDamageType::StaticClass());
-					FString Actorname = HitActor->GetName();
-					//GEngine->AddOnScreenDebugMessage(1, 2.f, FColor::Emerald, FString::Printf(TEXT("carpan dusman = %s"), *Actorname));
-					//ExecuteGetHit(hit);
 					GetSkillHit(hit);
 				}
 			}
 		}
 	}
+}
 	
 void AWarriorCharacter::SkillEnd()
 {

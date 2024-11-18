@@ -231,6 +231,8 @@ private:
 	bool bForward = false;
 	float StaminaResetTimerCount = 3.f;
 	float StaminaTimeElapsed = 0.f;
+	UPROPERTY(EditAnywhere)
+	float Ragetime = 15.f;
 	FVector defaultCameraLoc;
 	bool bStaminaTimerOpen = false;
 	bool bCanMoveCamera = false;
@@ -261,6 +263,8 @@ private:
 	void GetSkillHit(FHitResult& Skillhit);
 	TArray <AActor*> IgnoreActors;
 	bool SkillCanDamage;
+
+	
 
 	
 public:

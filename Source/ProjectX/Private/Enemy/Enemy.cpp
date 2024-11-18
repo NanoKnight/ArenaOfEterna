@@ -152,16 +152,9 @@ bool AEnemy::CanAttack()
 void AEnemy::HandleDamage(float DamageAmount)
 {
 
-  if(IsDead()) return;
-
+    if(IsDead()) return;
 	Super::HandleDamage(DamageAmount);
-
-	if (Attributes && HealthBarWidget)
-	{
-		Attributes->ReciveDamage(DamageAmount);
-
-		HealthBarWidget->SetHealthPercent(Attributes->HealthPercent());
-	}
+    HealthBarWidget->SetHealthPercent(Attributes->HealthPercent());
 
 }
 
@@ -203,7 +196,7 @@ void AEnemy::Tick(float DeltaTime)
 float AEnemy::TakeDamage(float DamageAmount, FDamageEvent const & DamageEvent, AController* EventInstigator, AActor* DamageCauser)
 {
 
-	
+	UE_LOG(LogTemp, Warning, TEXT("Applying %f"), DamageAmount);
 	if (!IsDead())
 	{
 		HandleDamage(DamageAmount);
@@ -243,36 +236,52 @@ void AEnemy::SetRagdoll()
 {
 	EnemyOutlineMesh->SetVisibility(false);
 	GetMesh()->SetSimulatePhysics(true);
-	GetMesh()->SetCollisionEnabled(ECollisionEnabled::PhysicsOnly);
-	GetMesh()->SetCollisionResponseToChannel(ECC_WorldStatic, ECR_Block);
+	CombatTarget = nullptr;
 	EnemyOutlineMesh->SetSimulatePhysics(true);
-	EnemyOutlineMesh->SetCollisionEnabled(ECollisionEnabled::PhysicsOnly);
-	EnemyOutlineMesh->SetCollisionResponseToChannel(ECC_WorldStatic, ECR_Block);
+	EnemyOutlineMesh->SetVisibility(false);
 	GetCapsuleComponent()->SetCollisionEnabled(ECollisionEnabled::NoCollision);
-	GetWorld()->GetTimerManager().SetTimer(RagdollTimer, this, &AEnemy::ResetRagdoll,3.f);
-
-
+	EnemyState = EEnemyState::EAS_Stun;
+	GetWorld()->GetTimerManager().SetTimer(HideHealthBarTimer, this, &AEnemy::HideHealthBar, 1.f);
+	GetWorld()->GetTimerManager().SetTimer(RagdollTimer, this, &AEnemy::ResetRagdoll, 4.f);
+	
 
 }
 
 void AEnemy::ResetRagdoll()
 {
+	FVector loc = GetMesh()->GetRelativeLocation();
+	GetCapsuleComponent()->SetRelativeLocation(loc);
+	UAnimInstance* AnimInstance1 = GetMesh()->GetAnimInstance();
+	UAnimInstance* AnimInstance2 = EnemyOutlineMesh->GetAnimInstance();
 	GetMesh()->SetSimulatePhysics(false);
-	GetMesh()->SetCollisionEnabled(ECollisionEnabled::QueryAndPhysics);
-
-	// Karakterin konumunu ayarlayarak ayaða kalkmasýný saðla
-	FVector NewLocation = GetActorLocation();
-	NewLocation.Z += 90.0f; // Yüksekliði ayarla
-	FRotator NewRotation = FRotator(-90.f, GetActorRotation().Yaw, 0.0f); // Sadece Yaw'ý koruyarak düzelt
-	SetActorRotation(NewRotation);
-	SetActorLocation(NewLocation);
-
-	// Animasyon kontrolüne geri dön (Idle veya baþka bir animasyon)
-	PlayAnimMontage(SkillDamageMontage); // YourAnimMontage: ayaða kalkma animasyonunu temsil eder
-
-	// Kapsül bileþenini tekrar etkinleþtir
+	EnemyOutlineMesh->SetSimulatePhysics(false);
+	UCapsuleComponent* CapsuleComp = GetCapsuleComponent();
+	if (AnimInstance1)
+	{
+		AnimInstance1->Montage_Play(SkillDamageMontage);
+	}
+	if (AnimInstance2)
+	{
+		AnimInstance2->Montage_Play(SkillDamageMontage);
+	}
 	GetCapsuleComponent()->SetCollisionEnabled(ECollisionEnabled::QueryAndPhysics);
+	GetMesh()->AttachToComponent(CapsuleComp, FAttachmentTransformRules::SnapToTargetIncludingScale);
+	EnemyOutlineMesh->AttachToComponent(CapsuleComp, FAttachmentTransformRules::SnapToTargetIncludingScale);
+	GetMesh()->SetRelativeLocation(FVector(0.f, 0.f, -90));
+	EnemyOutlineMesh->SetRelativeLocation(FVector(0.f, 0.f, -90));
+    FRotator meshrot(0.f, -90.f, 0.f);
+	GetMesh()->SetRelativeRotation(meshrot);
+	EnemyOutlineMesh->SetRelativeRotation(meshrot);
+	
 }
+
+
+void AEnemy::ResetEnemyState()
+{
+	EnemyState = EEnemyState::EES_Patrolling;
+	EnemyOutlineMesh->SetVisibility(true);
+}
+
 
 
 
@@ -288,8 +297,8 @@ void AEnemy::GetHit_Implementation(const FVector& ImpactPoint,AActor* Hitter)
 
 void AEnemy::SkillHit(const FVector& ImpactPoint, AActor* Hitter)
 {
+	
 	if (!IsDead()) ShowHealthBar();
-	LoseInterest();
 	ClearPatrolTimer();
 	ClearAttackTimer();
 	SetWeaponCollisionEnabled(ECollisionEnabled::NoCollision);
@@ -297,21 +306,14 @@ void AEnemy::SkillHit(const FVector& ImpactPoint, AActor* Hitter)
 	StopAttackMontage();
 	EnemyState = EEnemyState::EAS_Stun;
 	
-	
-	
-	/*UAnimInstance* AnimInstance = GetMesh()->GetAnimInstance();
-	if (AnimInstance && !IsDead())
+    APlayerController* PlayerController = GetWorld()->GetFirstPlayerController();
+	if (PlayerController)
 	{
-		AnimInstance->Montage_Play(SkillDamageMontage);
-		EnemyOutlineMesh->GetAnimInstance()->Montage_Play(SkillDamageMontage);
+	PlayerController->PlayerCameraManager->StartCameraShake(UMainLegacyCameraShake::StaticClass());
 	}
-	*/
-	    APlayerController* PlayerController = GetWorld()->GetFirstPlayerController();
-		if (PlayerController)
-		{
-			PlayerController->PlayerCameraManager->StartCameraShake(UMainLegacyCameraShake::StaticClass());
-		}
+		
 }
+
 
 
 
@@ -396,7 +398,10 @@ void AEnemy::StartPatrolling()
 
 void AEnemy::ChaseTarget()
 {	
-	
+	if (EnemyState == EEnemyState::EAS_Stun)
+	{
+		return;
+	}
 
 	if (CombatTarget && CombatTarget->ActorHasTag(FName("Dead"))) {
 		CombatTarget = nullptr;
