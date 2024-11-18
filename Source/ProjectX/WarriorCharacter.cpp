@@ -57,6 +57,7 @@ void AWarriorCharacter::BeginPlay()
 {
 	Super::BeginPlay();
 	Tags.Add("WarriorCharacter");
+	LoadSaveGame();
 	SpawnDefaultShield();
 	SpawnDefaultWeapon();
 	InitializePlayerOverlay();
@@ -580,7 +581,11 @@ void AWarriorCharacter::SecondSkill()
 	DefaultEquippedWeaponDamage = EquippedWeapon->GetDamage();
 	EquippedWeapon->SetDamage(EquippedWeapon->GetDamage() * 5);
 	GetCharacterMovement()->MaxWalkSpeed = 800.f;
+<<<<<<< HEAD
 	GetWorld()->GetTimerManager().SetTimer(SecondSkillTimer, this, &AWarriorCharacter::DefaultVar, Ragetime, false);
+=======
+	GetWorld()->GetTimerManager().SetTimer(StaminaRegenerateTimer, this, &AWarriorCharacter::DefaultVar, 5, false);
+>>>>>>> parent of fe388ef (codes are edited)
 }
 
 

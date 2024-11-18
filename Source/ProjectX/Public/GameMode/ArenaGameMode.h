@@ -44,7 +44,7 @@ public:
      int32 NextWaveEnemyCount;
 	 
 	 UPROPERTY(VisibleAnywhere)
-	 int32 WaveCount = 1;
+	 int32 WaveCount;
 	 UPROPERTY()
 	 FTimerHandle WaveStartTimer;
 
