@@ -55,6 +55,9 @@ public:
 
 	virtual void SkillHit(const FVector& ImpactPoint, AActor* Hitter) override;
 
+	UFUNCTION(BlueprintCallable)
+	void ResetEnemyState();
+
 	UPROPERTY(BlueprintReadOnly)
 	EEnemyState EnemyState;
 
@@ -129,6 +132,7 @@ private:
 	float WalkSpeed = 125.f;
 	FTimerHandle AttackTimer;
 	FTimerHandle RagdollTimer;
+	FTimerHandle HideHealthBarTimer;
 	
 	UPROPERTY(EditAnywhere, Category = "Combat")
 	float AttackMin = 0.5f;
@@ -141,10 +145,6 @@ private:
 	
 	UPROPERTY(EditAnywhere, Category = Combat)
 	float DeathLifeSpan = 3.f;
-
-	FVector orginalLoc;
-	FRotator orginalRot;
-
 
 	UPROPERTY(EditAnywhere, Category = Combat)
 	TSubclassOf<class AExperiencePoint> Experience;
