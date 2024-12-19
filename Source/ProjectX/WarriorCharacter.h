@@ -7,7 +7,9 @@
 #include "Public\Characters\BaseCharacter.h"
 #include"Blueprint/UserWidget.h"
 #include"Public\Interfaces\PickUpInterface.h"
+#include "Public\QuestStruct.h"
 #include "WarriorCharacter.generated.h"
+
 
 class USpringArmComponent;
 class AShield;
@@ -17,6 +19,7 @@ class ATreasure;
 class USphereComponent;
 class AEnemy;
 class UCharacterHUD;
+class UQuestUI;
 class AArenaGameMode;
 
 
@@ -50,6 +53,25 @@ public:
 	bool IsEnemyBehindCharacter();
 	void AddKilledEnemyID(FString EnemyName);
 
+	UFUNCTION(BlueprintCallable, Category = "Quests")
+	void StartQuest(FName QuestRowName);
+	UFUNCTION(BlueprintCallable, Category = "Quests")
+	void AddQuest(const FQuestStruct& NewQuest);
+
+	UFUNCTION(BlueprintCallable, Category = "Quests")
+	void CompleteQuest(int32 QuestID);
+
+	UFUNCTION(BlueprintCallable, Category = "Quests")
+	void UpdateQuestUI();
+
+	void UpdateQuest(FName QuestRowName);
+	FQuestStruct GetCurrentQuest() const { return CurrentQuest; }
+
+
+
+
+
+
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Category = "SaveGame")
 	TArray<FString>KilledEnemiesNames;
@@ -57,6 +79,11 @@ public:
 	UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Category = "SaveGame")
 	TArray<FString> AddedItems;
 
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Quests")
+	TArray<FQuestStruct> ActiveQuests;
+	
+	UPROPERTY(EditAnywhere)
+	TSubclassOf<class UQuestUI> QuestWidget;
 	UPROPERTY(EditAnywhere)
 	TSubclassOf<class AWeapon> WeaponClass;
 
@@ -64,6 +91,17 @@ public:
 	TSubclassOf<UUserWidget> DeathWidgetClass;
 	UUserWidget* DeathWidgetInstance;
 
+	UPROPERTY(EditAnywhere,BlueprintReadWrite , Category= "Quests")
+	UDataTable* QuestDataTable;
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Quest")
+	FQuestStruct CurrentQuest;
+
+	UPROPERTY()
+	int32 CurrentQuestIndex;
+
+	FName CurrentQuestRowName;
+  
     
 
 
@@ -131,6 +169,8 @@ protected:
 	UFUNCTION(BlueprintCallable)
 	void SkillCanDamageF();
 	
+	UFUNCTION()
+	void CompleteCurrentQuest();
 
 	UFUNCTION()
 	void SphereCollisionBeginOverlap(UPrimitiveComponent* OverlappedComponent, AActor*OtherActor, UPrimitiveComponent*OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult);
@@ -180,6 +220,7 @@ private:
 	void SetHealthBar();
 	void SetStaminaBar();
 	void SetLevelBar();
+	void PrintQuest();
 	void Dodge();
 	bool IsUnoccupied();
 	bool HasEnoughStamina();
@@ -259,6 +300,8 @@ private:
 	EMovementState MovementState = EMovementState::EMS_Idle;
 	UPROPERTY()
 	UCharacterHUD* PlayerOverlay;
+
+	UQuestUI* QuestOverlay;
 	void ExecuteGetHit(FHitResult& BoxHit);
 	void GetSkillHit(FHitResult& Skillhit);
 	TArray <AActor*> IgnoreActors;

@@ -16,11 +16,13 @@
 #include"Interfaces\HitInterface.h"
 #include"HUD/PlayerHUD.h"
 #include "HUD\CharacterHUD.h"
+#include"HUD\QuestUI.h"
 #include "SaveGames/EternaSaveGame.h"
 #include "Items\ExperiencePoint.h"
 #include"Items\Treasure.h"
 #include"Items\HealthPoint.h"
 #include "EngineUtils.h"
+#include "Public\QuestStruct.h"
 #include"GameMode\ArenaGameMode.h"
 #include"Runtime/Engine/Public/TimerManager.h"
 
@@ -53,6 +55,7 @@ AWarriorCharacter::AWarriorCharacter()
 
 }
 
+
 void AWarriorCharacter::BeginPlay()
 {
 	Super::BeginPlay();
@@ -62,8 +65,58 @@ void AWarriorCharacter::BeginPlay()
 	InitializePlayerOverlay();
 	defaultCameraLoc = ViewCamera->GetRelativeLocation();
 
-	
+	FString Path = TEXT("/Script/Engine.DataTable'/Game/Blueprints/Data/DT_QuestDataTable.DT_QuestDataTable'");
+	QuestDataTable = LoadObject<UDataTable>(nullptr, *Path);
+
+
+
+
+	// Görev UI'ýna bilgileri yazdýr
+
+	if (QuestWidget)
+	{
+		QuestOverlay = CreateWidget<UQuestUI>(GetWorld(), QuestWidget);
+		QuestOverlay->AddToViewport();
+
+	}
+	else
+	{
+		GEngine->AddOnScreenDebugMessage(4, 2.f, FColor::Red,FString::Printf(TEXT("quest overlay e ulasilamadi")));
+	}
+
+
+
+	if (QuestDataTable)
+	{
+
+		TArray<FName> RowNames = QuestDataTable->GetRowNames();
+
+		for (const FName& RowName : RowNames)
+		{
+			FQuestStruct* Quest = QuestDataTable->FindRow<FQuestStruct>(RowName, "");
+			if (Quest)
+			{
+				ActiveQuests.Add(*Quest);
+			}
+		}
+
+		if (ActiveQuests.IsValidIndex(0) && QuestOverlay)
+		{
+			CurrentQuestIndex = 0;
+			QuestOverlay->SetQuestText(
+				ActiveQuests[0].QuestName,
+				ActiveQuests[0].QuestDescription
+			);
+		}
+	}	
+	//UpdateQuest(FName("Quest1"));
 }
+
+
+
+
+
+
 
 void AWarriorCharacter::Save()
 {
@@ -276,7 +329,7 @@ float AWarriorCharacter::TakeDamage(float DamageAmount, FDamageEvent const& Dama
 	}
 	return DamageAmount;
 }
-
+ 
 void AWarriorCharacter::SetHealthBar()
 {
 	if (PlayerOverlay && Attributes)
@@ -301,6 +354,14 @@ void AWarriorCharacter::SetLevelBar()
 	}
 }
 
+void AWarriorCharacter::PrintQuest()
+{
+	for (const FQuestStruct& Quest: ActiveQuests)
+	{
+
+	}
+}
+
 bool AWarriorCharacter::IsEnemyBehindCharacter()
 {
 
@@ -322,6 +383,46 @@ void AWarriorCharacter::AddKilledEnemyID(FString EnemName)
 	}
 
 }
+
+void AWarriorCharacter::StartQuest(FName QuestRowName)
+{
+}
+
+void AWarriorCharacter::AddQuest(const FQuestStruct& NewQuest)
+{
+	ActiveQuests.Add(NewQuest);  
+	//GEngine->AddOnScreenDebugMessage(1, 2.f,FColor::Blue, FString::Printf(TEXT("Görev eklendi : %s"), *NewQuest.QuestName));
+}
+
+void AWarriorCharacter::CompleteQuest(int32 QuestID)
+{
+	
+}
+
+void AWarriorCharacter::UpdateQuestUI()
+{
+
+}
+
+void AWarriorCharacter::UpdateQuest(FName QuestRowName)
+{
+	if (QuestDataTable)
+	{
+		static const FString ContextString(TEXT("Quest Lookup"));
+		FQuestStruct* Quest = QuestDataTable->FindRow<FQuestStruct>(QuestRowName, ContextString);
+
+		if (Quest)
+		{
+			CurrentQuest = *Quest;
+			CurrentQuestRowName = QuestRowName;
+		}
+	}
+
+}
+
+
+
+
 
 void AWarriorCharacter::InitializePlayerOverlay()
 {
@@ -637,6 +738,28 @@ void AWarriorCharacter::SkillCanDamageF()
 		}
 	}
 }
+
+void AWarriorCharacter::CompleteCurrentQuest()
+{
+	if (ActiveQuests.IsValidIndex(CurrentQuestIndex))
+	{
+
+		ActiveQuests[CurrentQuestIndex].bIsQuestCompleted = true;
+		CurrentQuestIndex++;
+		
+		if (ActiveQuests.IsValidIndex(CurrentQuestIndex))
+		{
+			QuestOverlay->SetQuestText(ActiveQuests[CurrentQuestIndex].QuestName,
+			ActiveQuests[CurrentQuestIndex].QuestDescription
+			
+			);
+			
+
+		}
+
+
+	}
+}
 	
 void AWarriorCharacter::SkillEnd()
 {
@@ -832,6 +955,7 @@ void AWarriorCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputCo
 	PlayerInputComponent->BindAction(FName("SaveGame"), IE_Pressed, this, &AWarriorCharacter::Save);
 	PlayerInputComponent->BindAction(FName("FirstSkill"), IE_Pressed, this, &AWarriorCharacter::FirstSkill);
 	PlayerInputComponent->BindAction(FName("SecondSkill"), IE_Pressed, this, &AWarriorCharacter::SecondSkill);
+	PlayerInputComponent->BindAction(FName("CompleteQuest"), IE_Pressed, this, &AWarriorCharacter::CompleteCurrentQuest);
 
 }
 void AWarriorCharacter::SetOverlappingItem(AItemActor* Item)
