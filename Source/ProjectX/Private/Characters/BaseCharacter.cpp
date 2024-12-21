@@ -362,12 +362,7 @@ int32 ABaseCharacter::PlayWarriorCountMontageSection(UAnimMontage* Montage, cons
 		AnimInstance->Montage_Play(Montage, 1.3f);
 	}
 
-	AnimInstance->Montage_JumpToSection(SectionNames[Selection],Montage);
-
-
-	//PlayMontageSection(Montage, SectionNames[Selection]);
-	
-	
+	AnimInstance->Montage_JumpToSection(SectionNames[Selection],Montage);	
 	if (ComboCounts < MaxSectionIndex)
 	{
 		ComboCounts = ComboCounts + 1;
@@ -379,7 +374,6 @@ int32 ABaseCharacter::PlayWarriorCountMontageSection(UAnimMontage* Montage, cons
 	}
 	return Selection;
 }
-
 
 void ABaseCharacter::SetWeaponCollisionEnabled(ECollisionEnabled::Type CollisionEnabled)
 {

@@ -22,6 +22,7 @@ private:
 		UPROPERTY(EditDefaultsOnly)
 		TSubclassOf<UCharacterHUD> CharacterHUDClass;
 		UCharacterHUD* CharacterHUD;
+		
 
 public:
 		FORCEINLINE UCharacterHUD* GetPlayerOverlay() const { return CharacterHUD; }
