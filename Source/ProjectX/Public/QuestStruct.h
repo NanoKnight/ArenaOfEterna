@@ -9,6 +9,19 @@
 /**
  * 
  */
+
+UENUM(BlueprintType)
+enum class EQuestType : uint8
+{
+	GoToLocation UMETA(DisplayName = "Go to Location"),
+	KillEnemies UMETA(DisplayName = "Kill Enemies")
+
+
+};
+
+
+
+
 USTRUCT(BlueprintType)
 struct PROJECTX_API FQuestStruct : public FTableRowBase
 {	
@@ -25,6 +38,21 @@ public:
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Quests")
 	bool bIsQuestCompleted = false;
+
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	EQuestType QuestType;
+
+	// Go to Location specific
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	FVector TargetLocation;
+
+	// Kill Enemies specific
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	int32 TargetKillCount;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	int32 CurrentKillCount;
 
 
 	FQuestStruct();

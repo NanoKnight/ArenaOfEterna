@@ -212,6 +212,10 @@ void AWarriorCharacter::Dodge()
 		
 }
 
+void AWarriorCharacter::CheckQuestProgress()
+{
+}
+
 
 
 bool AWarriorCharacter::HasEnoughStamina()
@@ -957,11 +961,15 @@ void AWarriorCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputCo
 	PlayerInputComponent->BindAction(FName("SecondSkill"), IE_Pressed, this, &AWarriorCharacter::SecondSkill);
 	PlayerInputComponent->BindAction(FName("CompleteQuest"), IE_Pressed, this, &AWarriorCharacter::CompleteCurrentQuest);
 
+
 }
+
+
 void AWarriorCharacter::SetOverlappingItem(AItemActor* Item)
 {
 	OverlappingItem = Item;
 }
+
 void AWarriorCharacter::AddXp(AExperiencePoint* Xp)
 {
 	if (Attributes && PlayerOverlay)

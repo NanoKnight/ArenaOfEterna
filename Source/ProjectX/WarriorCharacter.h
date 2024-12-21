@@ -222,6 +222,7 @@ private:
 	void SetLevelBar();
 	void PrintQuest();
 	void Dodge();
+	void CheckQuestProgress();
 	bool IsUnoccupied();
 	bool HasEnoughStamina();
 
