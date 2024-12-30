@@ -36,7 +36,6 @@ void AArenaGameMode::RespawnEnemyStart_Implementation()
 	WaveStarted = true;
 	GetWorld()->GetTimerManager().SetTimer(WaveStartTimer, this, &AArenaGameMode::RespawnEnemy, 10, false);
 	WaveCount = ++WaveCount;
-	GEngine->AddOnScreenDebugMessage(1, 2.f, FColor::Green, FString::Printf(TEXT("wave count = %d"), WaveCount));
 }
 
 
@@ -151,7 +150,6 @@ void AArenaGameMode::RemoveEnemyFromWorld()
 		if (Enemy && KilledEnemiesNames.Contains(Enemy->EnemyName))
 		{
 			Enemy->Destroy();
-			GEngine->AddOnScreenDebugMessage(1, 2.f, FColor::Green, FString::Printf(TEXT("Enemy Alive = %d"), EnemyAlive));
 
 			
 		}
@@ -195,7 +193,6 @@ void AArenaGameMode::CheckEnemy()
 		{
 			IRespawnEnemyInterface::Execute_RespawnEnemyStart(this);
 		}
-		GEngine->AddOnScreenDebugMessage(-1, 2.f, FColor::Green, FString::Printf(TEXT("respawned")));
 
 	}
 

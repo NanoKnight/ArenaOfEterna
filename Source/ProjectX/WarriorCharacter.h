@@ -68,11 +68,6 @@ public:
 	FQuestStruct GetCurrentQuest() const { return CurrentQuest; }
 
 
-
-
-
-
-
 	UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Category = "SaveGame")
 	TArray<FString>KilledEnemiesNames;
 	
@@ -84,6 +79,8 @@ public:
 	
 	UPROPERTY(EditAnywhere)
 	TSubclassOf<class UQuestUI> QuestWidget;
+	UPROPERTY(EditAnywhere)
+	TSubclassOf<class UQuestCompleteWidget>QuestCompleteWidget;
 	UPROPERTY(EditAnywhere)
 	TSubclassOf<class AWeapon> WeaponClass;
 
@@ -101,6 +98,9 @@ public:
 	int32 CurrentQuestIndex;
 
 	FName CurrentQuestRowName;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Quest System")
+	FName NextQuestRowName;
   
     
 
@@ -138,6 +138,7 @@ protected:
 	
 	FTimerHandle StaminaRegenerateTimer;
 	FTimerHandle SecondSkillTimer;
+	FTimerHandle QuestCompleteUITimer;
 
 	void DefaultVar();
 
@@ -223,6 +224,8 @@ private:
 	void PrintQuest();
 	void Dodge();
 	void CheckQuestProgress();
+	void StartNextQuest();
+	void QuesstCompleteFadeOutAnim();
 	bool IsUnoccupied();
 	bool HasEnoughStamina();
 
@@ -303,6 +306,8 @@ private:
 	UCharacterHUD* PlayerOverlay;
 
 	UQuestUI* QuestOverlay;
+	UQuestCompleteWidget* QuestCompleteOverlay;
+
 	void ExecuteGetHit(FHitResult& BoxHit);
 	void GetSkillHit(FHitResult& Skillhit);
 	TArray <AActor*> IgnoreActors;
