@@ -20,10 +20,12 @@ AArenaGameMode::AArenaGameMode()
 void AArenaGameMode::BeginPlay()
 {
 	Super::BeginPlay();
-	NextWaveEnemyCount = 1;
+
+
+
 	LoadGame();
 	EnemySpawner = Cast<AEnemySpawner>(UGameplayStatics::GetActorOfClass(GetWorld(),AEnemySpawner::StaticClass()));
-
+	NextWaveEnemyCount = EnemySpawner->EnemySpawnCount;
 		if (EnemySpawner)
 		{
 			EnemySpawner->SpawnEnemy(NextWaveEnemyCount);
@@ -41,8 +43,12 @@ void AArenaGameMode::RespawnEnemyStart_Implementation()
 
 void AArenaGameMode::RespawnEnemy()
 {
-	WaveStarted = false;
-	EnemySpawner->SpawnEnemy(NextWaveEnemyCount);
+	if (EnemySpawner->WaveMode == true)
+	{
+		WaveStarted = false;
+		EnemySpawner->SpawnEnemy(NextWaveEnemyCount);
+	}
+
 
 
 
@@ -97,7 +103,7 @@ void AArenaGameMode::LoadGame()
 	{
 		AWarriorCharacter* WarriorCharacter = Cast<AWarriorCharacter>(UGameplayStatics::GetPlayerCharacter(GetWorld(), 0));
 		Attributes = WarriorCharacter->GetAttributesComponent();
-		
+
 		if (Attributes && WarriorCharacter)
 		{
 			Attributes->SetHealth(SaveGameObject->Health);
@@ -126,16 +132,10 @@ void AArenaGameMode::LoadGame()
 		{
 			RemoveItemFormWorld();
 
+
+			WarriorCharacter->WeaponClass = SaveGameObject->EquippedWeapon;
+
 		}
-
-
-
-		
-		WarriorCharacter->WeaponClass = SaveGameObject->EquippedWeapon;
-		
-
-
-
 	}
 }
 

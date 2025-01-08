@@ -4,7 +4,10 @@
 
 #include "CoreMinimal.h"
 #include "Blueprint/UserWidget.h"
+#include "QuestUI.h"
+#include "QuestCompleteWidget.h"
 #include "CharacterHUD.generated.h"
+
 
 /**
  * 
@@ -24,6 +27,15 @@ public:
 	void SetXpText(int32 Xp);
 	void SetMaxXpText(int32 MaxXPTxt);
 	void SetLevelText(int32 Level);
+
+	UPROPERTY(meta = (BindWidgetAnim), Transient)
+	UWidgetAnimation* QuestCompleteFadeIn;
+
+	UPROPERTY(meta = (BindWidgetAnim), Transient)
+	UWidgetAnimation* QuestCompleteFadeOut;
+
+	FORCEINLINE UQuestUI* GetQuestOverlay() { return QuestUI; }
+	FORCEINLINE UQuestCompleteWidget* GetQuestCompleteWidget() { return QuestCompleteWidget; }
 
 
 
@@ -49,5 +61,14 @@ private:
 
 	UPROPERTY(meta = (BindWidget))
 	class UTextBlock* LevelText;
+
+	UPROPERTY(meta = (BindWidget))
+	class UQuestUI* QuestUI;
+
+	UPROPERTY(meta = (BindWidget))
+	class UQuestCompleteWidget* QuestCompleteWidget;
+
+
+
 
 };

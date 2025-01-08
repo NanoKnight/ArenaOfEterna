@@ -42,7 +42,7 @@ public:
 	void ClearShieldRegenerateTimer();
 	void StartShieldRegenerateTimer();
 	FORCEINLINE UAttributeComponent* GetAttributesComponent() const { return Attributes; }
-	void Staminadeneme(float DeltaTime);
+	void StaminaRegenerate(float DeltaTime);
 	/* </IHitInterface> */
 	UPROPERTY(BlueprintReadOnly)
 	int ComboCount;
@@ -54,15 +54,7 @@ public:
 	void AddKilledEnemyID(FString EnemyName);
 
 	UFUNCTION(BlueprintCallable, Category = "Quests")
-	void StartQuest(FName QuestRowName);
-	UFUNCTION(BlueprintCallable, Category = "Quests")
 	void AddQuest(const FQuestStruct& NewQuest);
-
-	UFUNCTION(BlueprintCallable, Category = "Quests")
-	void CompleteQuest(int32 QuestID);
-
-	UFUNCTION(BlueprintCallable, Category = "Quests")
-	void UpdateQuestUI();
 
 	void UpdateQuest(FName QuestRowName);
 	FQuestStruct GetCurrentQuest() const { return CurrentQuest; }
@@ -76,11 +68,6 @@ public:
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Quests")
 	TArray<FQuestStruct> ActiveQuests;
-	
-	UPROPERTY(EditAnywhere)
-	TSubclassOf<class UQuestUI> QuestWidget;
-	UPROPERTY(EditAnywhere)
-	TSubclassOf<class UQuestCompleteWidget>QuestCompleteWidget;
 	UPROPERTY(EditAnywhere)
 	TSubclassOf<class AWeapon> WeaponClass;
 
@@ -101,9 +88,6 @@ public:
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Quest System")
 	FName NextQuestRowName;
-  
-    
-
 
 protected:
 	virtual void BeginPlay() override;
@@ -179,33 +163,33 @@ protected:
 	UFUNCTION()
 	void SphereCollisionEndOverlap(UPrimitiveComponent* OverlappedComp, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex);
 
+	virtual void Die() override;
+
 	UPROPERTY(BlueprintReadOnly)
 	TArray<AEnemy*> EnemiesInRange;
 	
 	UPROPERTY(BlueprintReadOnly)
 	AEnemy* CloseEnemy;
 
-
 	UPROPERTY(EditAnywhere, Category = "Settings")
 	float DistanceThreshold ;
 
 	bool BShieldOn = false;
-	virtual void Die() override;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Camera")
 	float CameraMoveSpeed = 2.f;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Camera")
-	float MinX = -1.f; // Minimum X sýnýrý
+	float MinX = -1.f; 
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Camera")
-	float MaxX = 400.f;  // Maximum X sýnýrý
+	float MaxX = 400.f; 
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Camera")
-	float MinY = -300.f; // Minimum Y sýnýrý
+	float MinY = -300.f; 
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Camera")
-	float MaxY = 300.f;  // Maximum Y sýnýrý
+	float MaxY = 300.f;  
 
 
 private:
@@ -258,7 +242,6 @@ private:
 	UPROPERTY(EditDefaultsOnly, Category = Montages)
 	UAnimMontage* SecondSkillMontage;
 	
-
 	float DefaultEquippedWeaponDamage;
 
 	UPROPERTY()
@@ -304,9 +287,6 @@ private:
 	EMovementState MovementState = EMovementState::EMS_Idle;
 	UPROPERTY()
 	UCharacterHUD* PlayerOverlay;
-
-	UQuestUI* QuestOverlay;
-	UQuestCompleteWidget* QuestCompleteOverlay;
 
 	void ExecuteGetHit(FHitResult& BoxHit);
 	void GetSkillHit(FHitResult& Skillhit);

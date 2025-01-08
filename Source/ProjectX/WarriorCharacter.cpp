@@ -16,8 +16,6 @@
 #include"Interfaces\HitInterface.h"
 #include"HUD/PlayerHUD.h"
 #include "HUD\CharacterHUD.h"
-#include"HUD\QuestUI.h"
-#include"HUD\QuestCompleteWidget.h"
 #include "SaveGames/EternaSaveGame.h"
 #include "Items\ExperiencePoint.h"
 #include"Items\Treasure.h"
@@ -69,15 +67,6 @@ void AWarriorCharacter::BeginPlay()
 	FString Path = TEXT("/Script/Engine.DataTable'/Game/Blueprints/Data/DT_QuestDataTable.DT_QuestDataTable'");
 	QuestDataTable = LoadObject<UDataTable>(nullptr, *Path);
 
-	if (QuestWidget)
-	{
-		QuestOverlay = CreateWidget<UQuestUI>(GetWorld(), QuestWidget);
-		QuestOverlay->AddToViewport();
-
-	}
-
-
-
 	if (QuestDataTable)
 	{
 
@@ -93,23 +82,17 @@ void AWarriorCharacter::BeginPlay()
 				
 			}
 		}
+		//if (ActiveQuests.IsValidIndex(0) && QuestOverlay)
 
-		if (ActiveQuests.IsValidIndex(0) && QuestOverlay)
+		if (ActiveQuests.IsValidIndex(0) && PlayerOverlay->GetQuestOverlay())
 		{
 			CurrentQuestIndex = 0;
-			QuestOverlay->SetQuestText(
+			PlayerOverlay->GetQuestOverlay()->SetQuestText(
 				ActiveQuests[0].QuestName,
-				ActiveQuests[0].QuestDescription
-			);
+				ActiveQuests[0].QuestDescription);
 		}
 	}	
 }
-
-
-
-
-
-
 
 void AWarriorCharacter::Save()
 {
@@ -241,10 +224,10 @@ void AWarriorCharacter::StartNextQuest()
 		if (NextQuest)
 		{
 			CurrentQuest = *NextQuest;
-			if (QuestOverlay)
+			if (PlayerOverlay)
 			{
 				GEngine->AddOnScreenDebugMessage(4, 3.f, FColor::Cyan, FString::Printf(TEXT("Quest Starting")));
-				QuestOverlay->SetQuestText(CurrentQuest.QuestName, CurrentQuest.QuestDescription);
+				PlayerOverlay->GetQuestOverlay()->SetQuestText(CurrentQuest.QuestName, CurrentQuest.QuestDescription);
 			}
 		}
 
@@ -253,9 +236,9 @@ void AWarriorCharacter::StartNextQuest()
 
 void AWarriorCharacter::QuesstCompleteFadeOutAnim()
 {
-	if (QuestCompleteOverlay)
+	if (PlayerOverlay)
 	{
-		QuestCompleteOverlay->PlayFadeOutAnimation();
+		PlayerOverlay->PlayAnimation(PlayerOverlay->QuestCompleteFadeOut);
 	}
 }
 
@@ -291,7 +274,7 @@ void AWarriorCharacter::StartShieldRegenerateTimer()
 	
 }
 
-void AWarriorCharacter::Staminadeneme(float DeltaTime)
+void AWarriorCharacter::StaminaRegenerate(float DeltaTime)
 {
 		if (Attributes && PlayerOverlay)
 	{
@@ -431,25 +414,12 @@ void AWarriorCharacter::AddKilledEnemyID(FString EnemName)
 
 }
 
-void AWarriorCharacter::StartQuest(FName QuestRowName)
-{
-}
-
 void AWarriorCharacter::AddQuest(const FQuestStruct& NewQuest)
 {
 	ActiveQuests.Add(NewQuest);  
 	//GEngine->AddOnScreenDebugMessage(1, 2.f,FColor::Blue, FString::Printf(TEXT("Görev eklendi : %s"), *NewQuest.QuestName));
 }
 
-void AWarriorCharacter::CompleteQuest(int32 QuestID)
-{
-	
-}
-
-void AWarriorCharacter::UpdateQuestUI()
-{
-
-}
 
 void AWarriorCharacter::UpdateQuest(FName QuestRowName)
 {
@@ -466,9 +436,6 @@ void AWarriorCharacter::UpdateQuest(FName QuestRowName)
 	}
 
 }
-
-
-
 
 
 void AWarriorCharacter::InitializePlayerOverlay()
@@ -802,27 +769,15 @@ void AWarriorCharacter::CompleteCurrentQuest()
 			QuestNumber++;
 		}
 		NextQuestRowName = FName(FString::Printf(TEXT("%s_%d"), *BaseName, QuestNumber));
-		GEngine->AddOnScreenDebugMessage(4, 2.f, FColor::Magenta, FString::Printf(TEXT("quest ismi = %s"), *NextQuestRowName.ToString()));
-
 		StartNextQuest();
-		if (QuestCompleteWidget)
+		if (PlayerOverlay->GetQuestCompleteWidget())
 		{
-			if (!QuestCompleteOverlay)
-			{
-				QuestCompleteOverlay = CreateWidget<UQuestCompleteWidget>(GetWorld(), QuestCompleteWidget);
-				QuestCompleteOverlay->SetQuestText(CurrentQuest.QuestName);
-				QuestCompleteOverlay->AddToViewport();
-				QuestCompleteOverlay->PlayFadeInAnimation();
+	
+				PlayerOverlay->GetQuestCompleteWidget()->SetQuestText(CurrentQuest.QuestName);
+				PlayerOverlay->GetQuestCompleteWidget()->PlayFadeInAnimation();
+				PlayerOverlay->PlayAnimation(PlayerOverlay->QuestCompleteFadeIn);
 				GetWorld()->GetTimerManager().SetTimer(QuestCompleteUITimer, this, &AWarriorCharacter::QuesstCompleteFadeOutAnim, 3, false);
-
-			}
-			else
-			{
-				QuestCompleteOverlay->SetQuestText(CurrentQuest.QuestName);
-				QuestCompleteOverlay->PlayFadeInAnimation();
-				GetWorld()->GetTimerManager().SetTimer(QuestCompleteUITimer, this, &AWarriorCharacter::QuesstCompleteFadeOutAnim, 3, false);
-
-			}
+		
 		}
 	}
 
