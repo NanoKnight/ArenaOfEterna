@@ -8,11 +8,6 @@
 
 void UQuestUI::SetQuestText(const FString& QuestName, const FString& Description)
 {
-
-    FName QuestNameAsFName(*QuestName);
-
-    UTextBlock* QuestNameText = Cast<UTextBlock>(GetWidgetFromName(TEXT("QuestNameText")));
-    UTextBlock* QuestDescriptionText = Cast<UTextBlock>(GetWidgetFromName(TEXT("QuestDescriptionText")));
         QuestText->SetText(FText::FromString(QuestName)); 
     
 }

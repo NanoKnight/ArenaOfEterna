@@ -20,10 +20,12 @@ AArenaGameMode::AArenaGameMode()
 void AArenaGameMode::BeginPlay()
 {
 	Super::BeginPlay();
-	NextWaveEnemyCount = 1;
+
+
+
 	LoadGame();
 	EnemySpawner = Cast<AEnemySpawner>(UGameplayStatics::GetActorOfClass(GetWorld(),AEnemySpawner::StaticClass()));
-
+	NextWaveEnemyCount = EnemySpawner->EnemySpawnCount;
 		if (EnemySpawner)
 		{
 			EnemySpawner->SpawnEnemy(NextWaveEnemyCount);
@@ -36,14 +38,17 @@ void AArenaGameMode::RespawnEnemyStart_Implementation()
 	WaveStarted = true;
 	GetWorld()->GetTimerManager().SetTimer(WaveStartTimer, this, &AArenaGameMode::RespawnEnemy, 10, false);
 	WaveCount = ++WaveCount;
-	GEngine->AddOnScreenDebugMessage(1, 2.f, FColor::Green, FString::Printf(TEXT("wave count = %d"), WaveCount));
 }
 
 
 void AArenaGameMode::RespawnEnemy()
 {
-	WaveStarted = false;
-	EnemySpawner->SpawnEnemy(NextWaveEnemyCount);
+	if (EnemySpawner->WaveMode == true)
+	{
+		WaveStarted = false;
+		EnemySpawner->SpawnEnemy(NextWaveEnemyCount);
+	}
+
 
 
 
@@ -98,7 +103,7 @@ void AArenaGameMode::LoadGame()
 	{
 		AWarriorCharacter* WarriorCharacter = Cast<AWarriorCharacter>(UGameplayStatics::GetPlayerCharacter(GetWorld(), 0));
 		Attributes = WarriorCharacter->GetAttributesComponent();
-		
+
 		if (Attributes && WarriorCharacter)
 		{
 			Attributes->SetHealth(SaveGameObject->Health);
@@ -127,16 +132,10 @@ void AArenaGameMode::LoadGame()
 		{
 			RemoveItemFormWorld();
 
+
+			WarriorCharacter->WeaponClass = SaveGameObject->EquippedWeapon;
+
 		}
-
-
-
-		
-		WarriorCharacter->WeaponClass = SaveGameObject->EquippedWeapon;
-		
-
-
-
 	}
 }
 
@@ -151,7 +150,6 @@ void AArenaGameMode::RemoveEnemyFromWorld()
 		if (Enemy && KilledEnemiesNames.Contains(Enemy->EnemyName))
 		{
 			Enemy->Destroy();
-			GEngine->AddOnScreenDebugMessage(1, 2.f, FColor::Green, FString::Printf(TEXT("Enemy Alive = %d"), EnemyAlive));
 
 			
 		}
@@ -195,7 +193,6 @@ void AArenaGameMode::CheckEnemy()
 		{
 			IRespawnEnemyInterface::Execute_RespawnEnemyStart(this);
 		}
-		GEngine->AddOnScreenDebugMessage(-1, 2.f, FColor::Green, FString::Printf(TEXT("respawned")));
 
 	}
 

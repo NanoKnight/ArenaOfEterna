@@ -10,6 +10,7 @@
 #include"Components/AttributeComponent.h"
 #include "Components/CapsuleComponent.h"
 #include"HUD/HealthBarComponent.h"
+#include"../WarriorCharacter.h"
 #include"Items\Weapons\Weapon.h"
 #include"GameMode\ArenaGameMode.h"
 #include"CameraShakes\MainLegacyCameraShake.h"
@@ -69,7 +70,6 @@ void AEnemy::Die()
 	
 	if (IsDead()) return;
 	Super::Die();
-	GEngine->AddOnScreenDebugMessage(1, 2.f, FColor::Blue, EnemyName);
 	AddKilledEnemy();
     SetEnemyDead();
 	ClearAttackTimer();
@@ -83,6 +83,21 @@ void AEnemy::Die()
 	AArenaGameMode* ArenaGameMode = Cast<AArenaGameMode>(GameMode);
 	ArenaGameMode->DecrementEnemyAlive();
 	
+	APlayerController* PlayerController = GetWorld()->GetFirstPlayerController();
+	if (PlayerController)
+	{
+		ACharacter* PlayerCharacter = Cast<ACharacter>(PlayerController->GetPawn());
+		if (PlayerCharacter)
+		{
+			AWarriorCharacter* WarriorCharacter = Cast<AWarriorCharacter>(PlayerCharacter);
+			if (WarriorCharacter)
+			{
+		
+				WarriorCharacter->CurrentQuest.CurrentKillCount++;
+			}
+		}
+	}
+
 
 
 
@@ -189,7 +204,6 @@ void AEnemy::Tick(float DeltaTime)
 float AEnemy::TakeDamage(float DamageAmount, FDamageEvent const & DamageEvent, AController* EventInstigator, AActor* DamageCauser)
 {
 
-	UE_LOG(LogTemp, Warning, TEXT("Applying %f"), DamageAmount);
 	if (!IsDead())
 	{
 		HandleDamage(DamageAmount);

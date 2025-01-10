@@ -16,7 +16,6 @@
 #include"Interfaces\HitInterface.h"
 #include"HUD/PlayerHUD.h"
 #include "HUD\CharacterHUD.h"
-#include"HUD\QuestUI.h"
 #include "SaveGames/EternaSaveGame.h"
 #include "Items\ExperiencePoint.h"
 #include"Items\Treasure.h"
@@ -68,24 +67,6 @@ void AWarriorCharacter::BeginPlay()
 	FString Path = TEXT("/Script/Engine.DataTable'/Game/Blueprints/Data/DT_QuestDataTable.DT_QuestDataTable'");
 	QuestDataTable = LoadObject<UDataTable>(nullptr, *Path);
 
-
-
-
-	// Görev UI'ýna bilgileri yazdýr
-
-	if (QuestWidget)
-	{
-		QuestOverlay = CreateWidget<UQuestUI>(GetWorld(), QuestWidget);
-		QuestOverlay->AddToViewport();
-
-	}
-	else
-	{
-		GEngine->AddOnScreenDebugMessage(4, 2.f, FColor::Red,FString::Printf(TEXT("quest overlay e ulasilamadi")));
-	}
-
-
-
 	if (QuestDataTable)
 	{
 
@@ -97,26 +78,21 @@ void AWarriorCharacter::BeginPlay()
 			if (Quest)
 			{
 				ActiveQuests.Add(*Quest);
+				CurrentQuest = ActiveQuests[0];
+				
 			}
 		}
+		//if (ActiveQuests.IsValidIndex(0) && QuestOverlay)
 
-		if (ActiveQuests.IsValidIndex(0) && QuestOverlay)
+		if (ActiveQuests.IsValidIndex(0) && PlayerOverlay->GetQuestOverlay())
 		{
 			CurrentQuestIndex = 0;
-			QuestOverlay->SetQuestText(
+			PlayerOverlay->GetQuestOverlay()->SetQuestText(
 				ActiveQuests[0].QuestName,
-				ActiveQuests[0].QuestDescription
-			);
+				ActiveQuests[0].QuestDescription);
 		}
 	}	
-	//UpdateQuest(FName("Quest1"));
 }
-
-
-
-
-
-
 
 void AWarriorCharacter::Save()
 {
@@ -214,6 +190,56 @@ void AWarriorCharacter::Dodge()
 
 void AWarriorCharacter::CheckQuestProgress()
 {
+	if (CurrentQuest.QuestType == EQuestType::GoToLocation)
+	{
+		GEngine->AddOnScreenDebugMessage(3, 3.f, FColor::Blue, FString::Printf(TEXT("cheking Location")));
+		FVector PlayerLocation = GetActorLocation();
+		float Distance = FVector::Dist(PlayerLocation, CurrentQuest.TargetLocation);
+		if (Distance < 350.f)
+		{
+			GEngine->AddOnScreenDebugMessage(3, 3.f, FColor::Blue, FString::Printf(TEXT("calisti")));
+			CompleteCurrentQuest();
+		}
+
+	}
+	 if(CurrentQuest.QuestType == EQuestType::KillEnemies)
+	{
+		GEngine->AddOnScreenDebugMessage(3, 3.f, FColor::Blue, FString::Printf(TEXT("cheking killed enemies")));
+		if (CurrentQuest.CurrentKillCount >= CurrentQuest.TargetKillCount)
+		{
+			CompleteCurrentQuest();
+		}
+
+	}
+}
+
+void AWarriorCharacter::StartNextQuest()
+{
+	if (QuestDataTable)
+	{
+		
+
+		static const FString ContextString(TEXT("Quest"));
+		FQuestStruct* NextQuest = QuestDataTable->FindRow<FQuestStruct>(NextQuestRowName, ContextString);
+		if (NextQuest)
+		{
+			CurrentQuest = *NextQuest;
+			if (PlayerOverlay)
+			{
+				GEngine->AddOnScreenDebugMessage(4, 3.f, FColor::Cyan, FString::Printf(TEXT("Quest Starting")));
+				PlayerOverlay->GetQuestOverlay()->SetQuestText(CurrentQuest.QuestName, CurrentQuest.QuestDescription);
+			}
+		}
+
+	}
+}
+
+void AWarriorCharacter::QuesstCompleteFadeOutAnim()
+{
+	if (PlayerOverlay)
+	{
+		PlayerOverlay->PlayAnimation(PlayerOverlay->QuestCompleteFadeOut);
+	}
 }
 
 
@@ -248,7 +274,7 @@ void AWarriorCharacter::StartShieldRegenerateTimer()
 	
 }
 
-void AWarriorCharacter::Staminadeneme(float DeltaTime)
+void AWarriorCharacter::StaminaRegenerate(float DeltaTime)
 {
 		if (Attributes && PlayerOverlay)
 	{
@@ -388,25 +414,12 @@ void AWarriorCharacter::AddKilledEnemyID(FString EnemName)
 
 }
 
-void AWarriorCharacter::StartQuest(FName QuestRowName)
-{
-}
-
 void AWarriorCharacter::AddQuest(const FQuestStruct& NewQuest)
 {
 	ActiveQuests.Add(NewQuest);  
 	//GEngine->AddOnScreenDebugMessage(1, 2.f,FColor::Blue, FString::Printf(TEXT("Görev eklendi : %s"), *NewQuest.QuestName));
 }
 
-void AWarriorCharacter::CompleteQuest(int32 QuestID)
-{
-	
-}
-
-void AWarriorCharacter::UpdateQuestUI()
-{
-
-}
 
 void AWarriorCharacter::UpdateQuest(FName QuestRowName)
 {
@@ -423,9 +436,6 @@ void AWarriorCharacter::UpdateQuest(FName QuestRowName)
 	}
 
 }
-
-
-
 
 
 void AWarriorCharacter::InitializePlayerOverlay()
@@ -745,24 +755,34 @@ void AWarriorCharacter::SkillCanDamageF()
 
 void AWarriorCharacter::CompleteCurrentQuest()
 {
-	if (ActiveQuests.IsValidIndex(CurrentQuestIndex))
+
+	if (!CurrentQuest.QuestName.IsEmpty()) 
 	{
-
-		ActiveQuests[CurrentQuestIndex].bIsQuestCompleted = true;
-		CurrentQuestIndex++;
 		
-		if (ActiveQuests.IsValidIndex(CurrentQuestIndex))
+
+		FString CurrentRowName = NextQuestRowName.ToString();
+		FString BaseName = "Quest";
+		int32 QuestNumber = 2;
+		if (CurrentRowName.Split(TEXT("_"),&BaseName, &CurrentRowName))
 		{
-			QuestOverlay->SetQuestText(ActiveQuests[CurrentQuestIndex].QuestName,
-			ActiveQuests[CurrentQuestIndex].QuestDescription
-			
-			);
-			
-
+			QuestNumber = FCString::Atoi(*CurrentRowName);
+			QuestNumber++;
 		}
-
-
+		NextQuestRowName = FName(FString::Printf(TEXT("%s_%d"), *BaseName, QuestNumber));
+		StartNextQuest();
+		if (PlayerOverlay->GetQuestCompleteWidget())
+		{
+	
+				PlayerOverlay->GetQuestCompleteWidget()->SetQuestText(CurrentQuest.QuestName);
+				PlayerOverlay->GetQuestCompleteWidget()->PlayFadeInAnimation();
+				PlayerOverlay->PlayAnimation(PlayerOverlay->QuestCompleteFadeIn);
+				GetWorld()->GetTimerManager().SetTimer(QuestCompleteUITimer, this, &AWarriorCharacter::QuesstCompleteFadeOutAnim, 3, false);
+		
+		}
 	}
+
+
+
 }
 	
 void AWarriorCharacter::SkillEnd()
@@ -1047,6 +1067,7 @@ void AWarriorCharacter::Tick(float DeltaTime)
 	ComboCountTimer(DeltaTime);
 	SetStaminaBar();
 	ResetCameraPosition();
+	CheckQuestProgress();
 
 	
 
