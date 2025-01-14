@@ -21,7 +21,10 @@ public:
 
 protected:
 	// Called when the game starts or when spawned
-	virtual void BeginPlay() override;
+
+
+
+
 
 public:	
 	// Called every frame
@@ -30,21 +33,24 @@ public:
 	virtual void RespawnEnemyStart_Implementation()override;
 	UFUNCTION(BlueprintCallable, Category = "Spawning")
 	void SpawnEnemy(int32 NumbwerOfEnemies);
-
+	virtual void BeginPlay() override;
+	
 	UPROPERTY(EditAnywhere)
 	TSubclassOf<AEnemy>EnemyClass;
+
 	int32 SpawnedEnemy;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	bool WaveMode;
 
 	UPROPERTY(EditAnywhere)
 	int32 EnemySpawnCount;
 
-	UPROPERTY(EditAnywhere,BlueprintReadWrite)
-	bool WaveMode;
+	UPROPERTY(EditAnywhere)
+	int32 SpawnerID;
 
-
-
-
-
+	
+private:
 
 
 };

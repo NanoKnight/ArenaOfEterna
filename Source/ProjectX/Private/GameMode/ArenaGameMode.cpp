@@ -9,6 +9,7 @@
 #include "Kismet/GameplayStatics.h"
 #include "./Items/EnemySpawner.h"
 #include"../WarriorCharacter.h"
+#include"Items\SpawnManager.h"
 #include"Items/Weapons/Weapon.h"
 #include"Runtime/Engine/Public/TimerManager.h"
 
@@ -20,16 +21,31 @@ AArenaGameMode::AArenaGameMode()
 void AArenaGameMode::BeginPlay()
 {
 	Super::BeginPlay();
-
-
-
 	LoadGame();
 	EnemySpawner = Cast<AEnemySpawner>(UGameplayStatics::GetActorOfClass(GetWorld(),AEnemySpawner::StaticClass()));
 	NextWaveEnemyCount = EnemySpawner->EnemySpawnCount;
-		if (EnemySpawner)
+
+	if (!SpawnManager)
+	{
+		
+		TArray<AActor*> FoundSpawnManagers;
+		UGameplayStatics::GetAllActorsOfClass(GetWorld(), ASpawnManager::StaticClass(), FoundSpawnManagers);
+		
+		if (FoundSpawnManagers.Num() > 0)
+		{
+			// Eðer bir SpawnManager bulduysak, referansý alýyoruz
+			SpawnManager = Cast<ASpawnManager>(FoundSpawnManagers[0]);
+		}
+		
+		
+	}
+	if (SpawnManager)
+	{
+		SpawnManager->TriggerSpawnerByID(EnemySpawner->SpawnerID);
+	}
+		else if (EnemySpawner)
 		{
 			EnemySpawner->SpawnEnemy(NextWaveEnemyCount);
-
 		}	
 }
 
@@ -48,10 +64,6 @@ void AArenaGameMode::RespawnEnemy()
 		WaveStarted = false;
 		EnemySpawner->SpawnEnemy(NextWaveEnemyCount);
 	}
-
-
-
-
 }
 
 void AArenaGameMode::SaveGame()
@@ -83,16 +95,8 @@ void AArenaGameMode::SaveGame()
 		{
 			SaveGameObject->AddItems(AddedItemsa);
 		}
-
-			//WarriorCharacter->WeaponClass = WarriorCharacter->EquippedWeapon->GetClass();
-			SaveGameObject->EquippedWeapon  = WarriorCharacter->EquippedWeapon->GetClass();
-
-
+		SaveGameObject->EquippedWeapon  = WarriorCharacter->EquippedWeapon->GetClass();
 		UGameplayStatics::SaveGameToSlot(SaveGameObject, TEXT("Save"), 0);
-		
-	
-	
-	
 	}
 }
 
@@ -115,7 +119,6 @@ void AArenaGameMode::LoadGame()
 			WarriorCharacter->SetActorLocation(SaveGameObject->PlayerLocation);
 			WaveCount = SaveGameObject->WaveCount;
 			NextWaveEnemyCount = SaveGameObject->EnemyNextWaveCount;
-
 		}
 		TArray<FString> LoadedEnemies = SaveGameObject->KilledEnemiesName;
 		KilledEnemiesNames = LoadedEnemies;
@@ -131,8 +134,6 @@ void AArenaGameMode::LoadGame()
 		for (FString AddedItemsArray : AddedItems)
 		{
 			RemoveItemFormWorld();
-
-
 			WarriorCharacter->WeaponClass = SaveGameObject->EquippedWeapon;
 
 		}
@@ -183,7 +184,6 @@ void AArenaGameMode::DecrementEnemyAlive()
 	CheckEnemy();
 }
 
-
 void AArenaGameMode::CheckEnemy()
 {
 	if (EnemyAlive < 1 && EnemySpawner)
@@ -193,8 +193,5 @@ void AArenaGameMode::CheckEnemy()
 		{
 			IRespawnEnemyInterface::Execute_RespawnEnemyStart(this);
 		}
-
-	}
-
-	
+	}	
 }

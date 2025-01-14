@@ -13,6 +13,7 @@
 
 class AEnemy;
 class UAttributeComponent;
+class ASpawnManager;
 /**
  * 
  */
@@ -60,8 +61,9 @@ protected:
 
 private:
 
+	ASpawnManager* SpawnManager;
+
 	void RespawnEnemy();
-	
 
 
 };

@@ -20,6 +20,8 @@
 #include "Items\ExperiencePoint.h"
 #include"Items\Treasure.h"
 #include"Items\HealthPoint.h"
+#include"Items\EnemySpawner.h"
+#include"Items\SpawnManager.h"
 #include "EngineUtils.h"
 #include "Public\QuestStruct.h"
 #include"GameMode\ArenaGameMode.h"
@@ -90,6 +92,24 @@ void AWarriorCharacter::BeginPlay()
 			PlayerOverlay->GetQuestOverlay()->SetQuestText(
 				ActiveQuests[0].QuestName,
 				ActiveQuests[0].QuestDescription);
+		}
+
+
+		if (SpawnManager == nullptr)
+		{
+			// Eðer SpawnManager boþ ise, yeni bir tane oluþturup atayalým.
+			TSubclassOf<ASpawnManager> SpawnManagerClass = ASpawnManager::StaticClass(); // ASpawnManager class'ýný alýyoruz
+			SpawnManager = GetWorld()->SpawnActor<ASpawnManager>(SpawnManagerClass);
+		}
+
+		// Eðer SpawnManager var ise, iþlemi baþlat
+		if (SpawnManager)
+		{
+			GEngine->AddOnScreenDebugMessage(-1, 5.f, FColor::Green, TEXT("SpawnManager is successfully assigned."));
+		}
+		else
+		{
+			GEngine->AddOnScreenDebugMessage(-1, 5.f, FColor::Red, TEXT("Failed to assign SpawnManager."));
 		}
 	}	
 }
@@ -207,10 +227,27 @@ void AWarriorCharacter::CheckQuestProgress()
 		GEngine->AddOnScreenDebugMessage(3, 3.f, FColor::Blue, FString::Printf(TEXT("cheking killed enemies")));
 		if (CurrentQuest.CurrentKillCount >= CurrentQuest.TargetKillCount)
 		{
+			if (SpawnManager)
+			{
+				AEnemySpawner* NextSpawner = SpawnManager->GetNextSpawn();
+				if (NextSpawner)
+				{
+					NextSpawner->SpawnEnemy(NextSpawner->EnemySpawnCount);
+				}
+
+			}
+			else
+			{
+				GEngine->AddOnScreenDebugMessage(6, 5.f, FColor::Cyan, FString::Printf(TEXT("spawnmanager boss")));
+			}
+			
 			CompleteCurrentQuest();
+			
 		}
 
+
 	}
+
 }
 
 void AWarriorCharacter::StartNextQuest()
@@ -276,20 +313,15 @@ void AWarriorCharacter::StartShieldRegenerateTimer()
 
 void AWarriorCharacter::StaminaRegenerate(float DeltaTime)
 {
-		if (Attributes && PlayerOverlay)
+	if (Attributes && PlayerOverlay)
 	{
 		Attributes->RegenStamina(DeltaTime);
-		//PlayerOverlay->SetStaminaBarPercent(Attributes->GetStamina());
-
 	}
 }
 
 void AWarriorCharacter::GetClosestEnemy()
 {
-
-	
-
-	AEnemy* NewClosestEnemy = nullptr;
+    AEnemy* NewClosestEnemy = nullptr;
 	float MinDistance = FLT_MAX;
 	for (AEnemy* Enemy : EnemiesInRange)
 	{
@@ -298,12 +330,8 @@ void AWarriorCharacter::GetClosestEnemy()
 		{
 			MinDistance = Distance;
 			NewClosestEnemy = Enemy;
-
 		}			
 	}
-
-	
-
 	if (CloseEnemy != NewClosestEnemy)
 	{
 		if (CloseEnemy) {
