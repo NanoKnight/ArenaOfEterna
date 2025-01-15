@@ -21,6 +21,7 @@ class AEnemy;
 class UCharacterHUD;
 class UQuestUI;
 class AArenaGameMode;
+class ASpawnManager;
 
 
 
@@ -287,12 +288,11 @@ private:
 	EMovementState MovementState = EMovementState::EMS_Idle;
 	UPROPERTY()
 	UCharacterHUD* PlayerOverlay;
-
 	void ExecuteGetHit(FHitResult& BoxHit);
 	void GetSkillHit(FHitResult& Skillhit);
 	TArray <AActor*> IgnoreActors;
 	bool SkillCanDamage;
-
+	ASpawnManager* SpawnManager;
 	
 
 	

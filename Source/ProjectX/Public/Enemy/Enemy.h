@@ -146,6 +146,10 @@ private:
 	UPROPERTY(EditAnywhere, Category = Combat)
 	float DeathLifeSpan = 3.f;
 
+
+	UPROPERTY(EditAnywhere, Category = "Combat");
+	int32 ExperiencePoint;
+
 	UPROPERTY(EditAnywhere, Category = Combat)
 	TSubclassOf<class AExperiencePoint> Experience;
 

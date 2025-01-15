@@ -125,7 +125,7 @@ void AEnemy::SpawnExperience()
 		AExperiencePoint* SpawnedExp = World->SpawnActor<AExperiencePoint>(Experience, SpawnLocation, GetActorRotation());
 		if (SpawnedExp)
 		{
-			SpawnedExp->SetExp(Attributes->GetExperience());
+			SpawnedExp->SetExp(ExperiencePoint);
 		}		
 	}	
 }

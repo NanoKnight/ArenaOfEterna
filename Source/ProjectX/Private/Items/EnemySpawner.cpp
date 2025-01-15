@@ -4,20 +4,19 @@
 #include"Interfaces/RespawnEnemyInterface.h"
 #include "Engine/World.h"
 
-
 // Sets default values
 AEnemySpawner::AEnemySpawner()
 {
     // Set this actor to call Tick() every frame.
     PrimaryActorTick.bCanEverTick = true;
-
+    
+  
 }
 
 // Called when the game starts or when spawned
 void AEnemySpawner::BeginPlay()
 {
     Super::BeginPlay();
- 
 }
 
 void AEnemySpawner::RespawnEnemyStart_Implementation()
@@ -35,8 +34,8 @@ void AEnemySpawner::SpawnEnemy(int32 NumbwerOfEnemies)
 {
     FVector SpawnLocation = GetActorLocation();
     float offset = 200.f;
-    float Radius = 500.f;
-    float AngelStep = 360.f / NumbwerOfEnemies;
+    float Radius = 200.f;
+    float AngelStep = 160.f / NumbwerOfEnemies;
    
     for (int32 i = 0; i < NumbwerOfEnemies; i++)
     {
@@ -51,6 +50,12 @@ void AEnemySpawner::SpawnEnemy(int32 NumbwerOfEnemies)
         SpawnLocation.X += 100.f;
         SpawnLocation.Y += 50.f;
     }
+    if (WaveMode == false)
+    {
+       // Destroy();
+    }  
+  
+
 }
 
 
