@@ -13,7 +13,6 @@ class UHealthBarComponent;
 class AWarriorCharacter;
 class UPawnSensingComponent;
 
-
 UCLASS()
 class PROJECTX_API AEnemy : public ABaseCharacter, public ISkillHitInterface
 {
@@ -34,7 +33,6 @@ protected:
 	virtual void HandleDamage(float DamageAmount) override;
 	virtual void PlayHitSound(const FVector& ImpactPoint) ;
 
-	
 
 
 	
@@ -60,6 +58,8 @@ public:
 
 	UPROPERTY(BlueprintReadOnly)
 	EEnemyState EnemyState;
+
+
 
 
 
@@ -155,6 +155,8 @@ private:
 
 	UPROPERTY(EditDefaultsOnly, category = Montages)
 	UAnimMontage* SkillDamageMontage;
+
+	AWarriorCharacter* WarriorCharacter;
 	
 	
 };

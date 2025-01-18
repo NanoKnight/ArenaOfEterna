@@ -9,8 +9,6 @@ AEnemySpawner::AEnemySpawner()
 {
     // Set this actor to call Tick() every frame.
     PrimaryActorTick.bCanEverTick = true;
-    
-  
 }
 
 // Called when the game starts or when spawned
@@ -21,7 +19,7 @@ void AEnemySpawner::BeginPlay()
 
 void AEnemySpawner::RespawnEnemyStart_Implementation()
 {
-  
+ 
 }
 
 // Called every frame
@@ -32,30 +30,50 @@ void AEnemySpawner::Tick(float DeltaTime)
 
 void AEnemySpawner::SpawnEnemy(int32 NumbwerOfEnemies)
 {
-    FVector SpawnLocation = GetActorLocation();
-    float offset = 200.f;
-    float Radius = 200.f;
-    float AngelStep = 160.f / NumbwerOfEnemies;
-   
-    for (int32 i = 0; i < NumbwerOfEnemies; i++)
+
+    if (SpawnEnemiesLoc.IsZero())
     {
-        float Angle = i * AngelStep;
-        float x = SpawnLocation.X + Radius * FMath::Cos(FMath::DegreesToRadians(Angle));
-        float y = SpawnLocation.Y + Radius * FMath::Sin(FMath::DegreesToRadians(Angle));
+        FVector SpawnLocation = GetActorLocation();
 
-        FVector NewspawnLocation(x, y, SpawnLocation.Z);
+        AEnemy* SpawnedEnemy = GetWorld()->SpawnActor<AEnemy>(EnemyClass, SpawnLocation, FRotator::ZeroRotator);
+        if (SpawnedEnemy)
+        {
 
-        GetWorld()->SpawnActor<AEnemy>(EnemyClass, NewspawnLocation, FRotator::ZeroRotator);
-
-        SpawnLocation.X += 100.f;
-        SpawnLocation.Y += 50.f;
+            SetLifeSpan(1.0f);
+        }
     }
-    if (WaveMode == false)
+    if (!SpawnEnemiesLoc.IsZero())
     {
-       // Destroy();
-    }  
-  
 
+        FVector SpawnLocation = SpawnEnemiesLoc;
+
+        float offset = 300.f;
+        float Radius = 400.f;
+        float AngelStep = 260.f / NumbwerOfEnemies;
+
+        for (int32 i = 0; i < NumbwerOfEnemies; i++)
+        {
+            float Angle = i * AngelStep;
+            float x = SpawnLocation.X + Radius * FMath::Cos(FMath::DegreesToRadians(Angle));
+            float y = SpawnLocation.Y + Radius * FMath::Sin(FMath::DegreesToRadians(Angle));
+
+            FVector NewspawnLocation(x, y, SpawnLocation.Z);
+            FVector NearestSpawnerLoc = GetActorLocation();
+            SpawnLocation.X += 100.f;
+            SpawnLocation.Y += 50.f;
+
+            AEnemy* SpawnedEnemy = GetWorld()->SpawnActor<AEnemy>(EnemyClass, NewspawnLocation, FRotator::ZeroRotator);
+            if (SpawnedEnemy)
+            {
+
+                SetLifeSpan(1.0f);
+            }
+        }
+    }
+  
+   
 }
+
+
 
 

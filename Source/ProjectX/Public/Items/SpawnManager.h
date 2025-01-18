@@ -30,8 +30,9 @@ public:
 	AEnemySpawner* GetNextSpawn();
 
 
+
 private:
+	
 	TArray<AEnemySpawner*> Spawners;
 	int32 CurrentSpawnerIndex;
-
 };

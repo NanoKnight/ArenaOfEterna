@@ -16,6 +16,7 @@
 #include"CameraShakes\MainLegacyCameraShake.h"
 #include "Kismet/GameplayStatics.h"
 #include "AIController.h"
+#include "Items\SpawnManager.h"
 #include"Items\ExperiencePoint.h"
 
 
@@ -52,8 +53,16 @@ void AEnemy::BeginPlay()
 	AArenaGameMode* ArenaGameMode = Cast<AArenaGameMode>(GameMode);
 	ArenaGameMode->IncrementEnemyAlive();
 	
-	
-	
+	APlayerController* PlayerController = GetWorld()->GetFirstPlayerController();
+	if (PlayerController)
+	{
+		ACharacter* PlayerCharacter = Cast<ACharacter>(PlayerController->GetPawn());
+		if (PlayerCharacter)
+		{
+			WarriorCharacter = Cast<AWarriorCharacter>(PlayerCharacter);
+			
+		}
+	}
 }
 
 void AEnemy::InitializeEnemy()
@@ -81,25 +90,13 @@ void AEnemy::Die()
 	SpawnExperience();
 	AGameModeBase* GameMode = GetWorld()->GetAuthGameMode();
 	AArenaGameMode* ArenaGameMode = Cast<AArenaGameMode>(GameMode);
-	ArenaGameMode->DecrementEnemyAlive();
+	//ArenaGameMode->DecrementEnemyAlive();
 	
-	APlayerController* PlayerController = GetWorld()->GetFirstPlayerController();
-	if (PlayerController)
+	if (WarriorCharacter)
 	{
-		ACharacter* PlayerCharacter = Cast<ACharacter>(PlayerController->GetPawn());
-		if (PlayerCharacter)
-		{
-			AWarriorCharacter* WarriorCharacter = Cast<AWarriorCharacter>(PlayerCharacter);
-			if (WarriorCharacter)
-			{
-		
-				WarriorCharacter->CurrentQuest.CurrentKillCount++;
-			}
-		}
+
+		WarriorCharacter->CurrentQuest.CurrentKillCount++;
 	}
-
-
-
 
 }
 

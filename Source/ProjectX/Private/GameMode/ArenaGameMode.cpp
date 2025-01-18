@@ -22,7 +22,7 @@ void AArenaGameMode::BeginPlay()
 {
 	Super::BeginPlay();
 	LoadGame();
-	EnemySpawner = Cast<AEnemySpawner>(UGameplayStatics::GetActorOfClass(GetWorld(),AEnemySpawner::StaticClass()));
+   /*	EnemySpawner = Cast<AEnemySpawner>(UGameplayStatics::GetActorOfClass(GetWorld(), AEnemySpawner::StaticClass()));
 	NextWaveEnemyCount = EnemySpawner->EnemySpawnCount;
 
 	if (!SpawnManager)
@@ -33,11 +33,8 @@ void AArenaGameMode::BeginPlay()
 		
 		if (FoundSpawnManagers.Num() > 0)
 		{
-			// Eðer bir SpawnManager bulduysak, referansý alýyoruz
 			SpawnManager = Cast<ASpawnManager>(FoundSpawnManagers[0]);
 		}
-		
-		
 	}
 	if (SpawnManager)
 	{
@@ -46,11 +43,13 @@ void AArenaGameMode::BeginPlay()
 		else if (EnemySpawner)
 		{
 			EnemySpawner->SpawnEnemy(NextWaveEnemyCount);
-		}	
+	}
+	*/
 }
 
 void AArenaGameMode::RespawnEnemyStart_Implementation()
 {
+	if (EnemySpawner->WaveMode == false) return;
 	WaveStarted = true;
 	GetWorld()->GetTimerManager().SetTimer(WaveStartTimer, this, &AArenaGameMode::RespawnEnemy, 10, false);
 	WaveCount = ++WaveCount;
@@ -181,17 +180,26 @@ void AArenaGameMode::IncrementEnemyAlive()
 void AArenaGameMode::DecrementEnemyAlive()
 {
 	EnemyAlive--;
-	CheckEnemy();
+	if (EnemySpawner->WaveMode == true)
+	{
+		CheckEnemy();
+
+	}
 }
 
 void AArenaGameMode::CheckEnemy()
 {
-	if (EnemyAlive < 1 && EnemySpawner)
+
+	if (EnemySpawner->WaveMode == true)
 	{
-		NextWaveEnemyCount += 2;
-		if (Implements<URespawnEnemyInterface>())
+		if (EnemyAlive < 1 && EnemySpawner)
 		{
-			IRespawnEnemyInterface::Execute_RespawnEnemyStart(this);
+			NextWaveEnemyCount += 2;
+			if (Implements<URespawnEnemyInterface>())
+			{
+				IRespawnEnemyInterface::Execute_RespawnEnemyStart(this);
+			}
 		}
-	}	
+	}
+	
 }

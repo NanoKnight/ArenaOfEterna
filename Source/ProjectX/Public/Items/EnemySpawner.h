@@ -29,25 +29,31 @@ protected:
 public:	
 	// Called every frame
 	virtual void Tick(float DeltaTime) override;
-
+	virtual void BeginPlay() override;
 	virtual void RespawnEnemyStart_Implementation()override;
 	UFUNCTION(BlueprintCallable, Category = "Spawning")
-	void SpawnEnemy(int32 NumbwerOfEnemies);
-	virtual void BeginPlay() override;
+	void SpawnEnemy(int32 NumberOfEnemies);
+	
 	
 	UPROPERTY(EditAnywhere)
 	TSubclassOf<AEnemy>EnemyClass;
 
-	int32 SpawnedEnemy;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	bool WaveMode;
+
+	UPROPERTY(EditAnywhere)
+	bool Disposable;
 
 	UPROPERTY(EditAnywhere)
 	int32 EnemySpawnCount;
 
 	UPROPERTY(EditAnywhere)
 	int32 SpawnerID;
+
+	UPROPERTY(EditAnywhere)
+	FVector SpawnEnemiesLoc;
+
 
 	
 private:

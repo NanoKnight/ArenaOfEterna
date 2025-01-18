@@ -31,6 +31,7 @@ public:
 	void IncrementEnemyAlive();
 	void DecrementEnemyAlive();
 	void CheckEnemy();
+
 	UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Category = "SaveGame")
 	TArray<FString>KilledEnemiesNames;
 
