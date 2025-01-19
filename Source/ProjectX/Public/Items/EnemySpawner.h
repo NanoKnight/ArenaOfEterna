@@ -8,7 +8,7 @@
 #include"../Interfaces/RespawnEnemyInterface.h"
 #include "EnemySpawner.generated.h"
 class AEnemy;
-
+class UCapsuleComponent;
 UCLASS()
 
 class PROJECTX_API AEnemySpawner : public AActor, public IRespawnEnemyInterface
@@ -22,9 +22,16 @@ public:
 protected:
 	// Called when the game starts or when spawned
 
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Components")
+	class USceneComponent* RootSceneComponent;
 
+	UPROPERTY(VisibleAnywhere, Category = "Components")
+	class UCapsuleComponent* CapsuleComponent;
 
+	UPROPERTY(VisibleAnywhere, Category = "Components")
+	class UTextRenderComponent* SpawnerIDText;
 
+	virtual void OnConstruction(const FTransform& Transform) override;
 
 public:	
 	// Called every frame
@@ -43,7 +50,7 @@ public:
 	bool WaveMode;
 
 	UPROPERTY(EditAnywhere)
-	bool Disposable;
+	bool Loop;
 
 	UPROPERTY(EditAnywhere)
 	int32 EnemySpawnCount;

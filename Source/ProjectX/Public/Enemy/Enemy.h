@@ -108,6 +108,8 @@ private:
 	UPROPERTY(EditAnywhere)
 	double AttackRadius = 200.f;
 
+	UPROPERTY(EditAnywhere)
+	bool InfiniteEnemy;
 
 	UPROPERTY(EditAnywhere)
 	double PatrolRadius = 200.f;

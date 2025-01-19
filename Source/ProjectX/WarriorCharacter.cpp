@@ -97,19 +97,9 @@ void AWarriorCharacter::BeginPlay()
 
 		if (SpawnManager == nullptr)
 		{
-			// Eðer SpawnManager boþ ise, yeni bir tane oluþturup atayalým.
+			
 			TSubclassOf<ASpawnManager> SpawnManagerClass = ASpawnManager::StaticClass(); // ASpawnManager class'ýný alýyoruz
 			SpawnManager = GetWorld()->SpawnActor<ASpawnManager>(SpawnManagerClass);
-		}
-
-		// Eðer SpawnManager var ise, iþlemi baþlat
-		if (SpawnManager)
-		{
-			GEngine->AddOnScreenDebugMessage(-1, 5.f, FColor::Green, TEXT("SpawnManager is successfully assigned."));
-		}
-		else
-		{
-			GEngine->AddOnScreenDebugMessage(-1, 5.f, FColor::Red, TEXT("Failed to assign SpawnManager."));
 		}
 	}	
 }
@@ -212,19 +202,16 @@ void AWarriorCharacter::CheckQuestProgress()
 {
 	if (CurrentQuest.QuestType == EQuestType::GoToLocation)
 	{
-		GEngine->AddOnScreenDebugMessage(3, 3.f, FColor::Blue, FString::Printf(TEXT("cheking Location")));
 		FVector PlayerLocation = GetActorLocation();
 		float Distance = FVector::Dist(PlayerLocation, CurrentQuest.TargetLocation);
 		if (Distance < 350.f)
 		{
-			GEngine->AddOnScreenDebugMessage(3, 3.f, FColor::Blue, FString::Printf(TEXT("calisti")));
 			CompleteCurrentQuest();
 		}
 
 	}
 	 if(CurrentQuest.QuestType == EQuestType::KillEnemies)
 	{
-		GEngine->AddOnScreenDebugMessage(3, 3.f, FColor::Blue, FString::Printf(TEXT("cheking killed enemies")));
 		if (CurrentQuest.CurrentKillCount >= CurrentQuest.TargetKillCount)
 		{
 			if (SpawnManager)
@@ -236,10 +223,7 @@ void AWarriorCharacter::CheckQuestProgress()
 				}
 
 			}
-			else
-			{
-				GEngine->AddOnScreenDebugMessage(6, 5.f, FColor::Cyan, FString::Printf(TEXT("spawnmanager boss")));
-			}
+			
 			
 			CompleteCurrentQuest();
 			
@@ -263,7 +247,6 @@ void AWarriorCharacter::StartNextQuest()
 			CurrentQuest = *NextQuest;
 			if (PlayerOverlay)
 			{
-				GEngine->AddOnScreenDebugMessage(4, 3.f, FColor::Cyan, FString::Printf(TEXT("Quest Starting")));
 				PlayerOverlay->GetQuestOverlay()->SetQuestText(CurrentQuest.QuestName, CurrentQuest.QuestDescription);
 			}
 		}
@@ -350,7 +333,7 @@ void AWarriorCharacter::GetClosestEnemy()
 			{
 				EnemyMesh->SetMaterial(0, OverlayMaterial);
 				
-				GEngine->AddOnScreenDebugMessage(1, 2.f, FColor::Emerald, FString::Printf(TEXT("deneme")));
+
 			}
 		}
 	}
@@ -445,7 +428,6 @@ void AWarriorCharacter::AddKilledEnemyID(FString EnemName)
 void AWarriorCharacter::AddQuest(const FQuestStruct& NewQuest)
 {
 	ActiveQuests.Add(NewQuest);  
-	//GEngine->AddOnScreenDebugMessage(1, 2.f,FColor::Blue, FString::Printf(TEXT("Görev eklendi : %s"), *NewQuest.QuestName));
 }
 
 

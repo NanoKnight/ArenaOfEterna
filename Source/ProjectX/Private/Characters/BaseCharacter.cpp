@@ -21,7 +21,6 @@ ABaseCharacter::ABaseCharacter()
 	EnemyOutlineMesh = CreateDefaultSubobject<USkeletalMeshComponent>(TEXT("OutlineMesh"));
 	EnemyOutlineMesh->SetupAttachment(GetMesh());
 	Attributes = CreateDefaultSubobject<UAttributeComponent>(TEXT("EnemyAttributes"));
-
 	GetCapsuleComponent()->SetCollisionResponseToChannel(ECollisionChannel::ECC_Camera, ECollisionResponse::ECR_Ignore);
 	
 }

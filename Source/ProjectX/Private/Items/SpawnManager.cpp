@@ -23,20 +23,36 @@ void ASpawnManager::BeginPlay()
 	for (AActor* SpawnersActor : FoundSpawners)
 	{
 		AEnemySpawner* Spawner = Cast<AEnemySpawner>(SpawnersActor);
-		Spawners.Add(Spawner);
-		
+		if (Spawner)
+		{
+			if (Spawner->Loop) {
+				LoopedSpawners.Add(Spawner);
+
+		  }
+			else
+			{
+				Spawners.Add(Spawner);
+			}
+		}		
 	}
 
+	CurrentSpawnerIndex = 1;
 	Spawners.Sort([](const AEnemySpawner& A, const AEnemySpawner& B) {
 		return A.SpawnerID < B.SpawnerID;
 		});
 
 	if (Spawners.Num() > 0 )
 	{
+		
 		TriggerSpawnerByID(Spawners[0]->SpawnerID);
 	}
-	CurrentSpawnerIndex = 1;
-
+	
+	for (AEnemySpawner* Spawner:LoopedSpawners)
+	{
+		if (Spawner) {
+			Spawner->SpawnEnemy(Spawner->EnemySpawnCount);
+		}
+	}
 
 }
 
