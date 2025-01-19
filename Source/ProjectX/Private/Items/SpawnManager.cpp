@@ -18,7 +18,6 @@ void ASpawnManager::BeginPlay()
 {
 	Super::BeginPlay();
 	TArray<AActor*>FoundSpawners;
-
 	UGameplayStatics::GetAllActorsOfClass(GetWorld(), AEnemySpawner::StaticClass(), FoundSpawners);
 	for (AActor* SpawnersActor : FoundSpawners)
 	{

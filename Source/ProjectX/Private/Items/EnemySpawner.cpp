@@ -59,6 +59,11 @@ void AEnemySpawner::Tick(float DeltaTime)
 
 void AEnemySpawner::SpawnEnemy(int32 NumbwerOfEnemies)
 {
+    if (Loop)
+    {
+        EnemyAliveForLoop++;
+
+    }
 
     if (SpawnEnemiesLoc.IsZero())
     {
@@ -119,6 +124,11 @@ void AEnemySpawner::SpawnEnemy(int32 NumbwerOfEnemies)
     }
   
    
+}
+
+void AEnemySpawner::OnEnemyKilled()
+{
+    EnemyAliveForLoop--;
 }
 
 
