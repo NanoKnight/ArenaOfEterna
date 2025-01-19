@@ -26,11 +26,17 @@ void AEnemySpawner::OnConstruction(const FTransform& Transform)
 {
     Super::OnConstruction(Transform);
 
-    if (SpawnerIDText)
+    if (SpawnerIDText && !Loop)
     {
         
         SpawnerIDText->SetText(FText::FromString(FString::Printf(TEXT("Spawner ID = %d"), SpawnerID)));
     }
+    if (Loop)
+    {
+        SpawnerIDText->SetText(FText::FromString(FString::Printf(TEXT("Spawner Infinite"))));
+
+    }
+
 }
 // Called when the game starts or when spawned
 void AEnemySpawner::BeginPlay()
