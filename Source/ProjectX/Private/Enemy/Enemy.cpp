@@ -91,8 +91,7 @@ void AEnemy::Die()
 	AGameModeBase* GameMode = GetWorld()->GetAuthGameMode();
 	AArenaGameMode* ArenaGameMode = Cast<AArenaGameMode>(GameMode);
 	//ArenaGameMode->DecrementEnemyAlive();
-	
-	if (WarriorCharacter)
+	if (WarriorCharacter && !InfiniteEnemy)
 	{
 
 		WarriorCharacter->CurrentQuest.CurrentKillCount++;

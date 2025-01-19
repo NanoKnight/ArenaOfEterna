@@ -32,7 +32,7 @@ public:
 
 
 private:
-	
+	TArray<AEnemySpawner*> LoopedSpawners;
 	TArray<AEnemySpawner*> Spawners;
 	int32 CurrentSpawnerIndex;
 };
