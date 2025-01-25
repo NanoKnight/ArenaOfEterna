@@ -88,11 +88,7 @@ void AEnemy::Die()
 	SetLifeSpan(DeathLifeSpan);
 	GetCharacterMovement()->bOrientRotationToMovement = false;
 	SetWeaponCollisionEnabled(ECollisionEnabled::NoCollision);
-	if (Experience)
-	{
-		SpawnExperience();
-	}
-	
+	SpawnExperience();
 	IncreaseQuestKillCount();
 
 	TArray<AActor*>FoundSpawners;

@@ -22,6 +22,7 @@
 #include"Items\HealthPoint.h"
 #include"Items\EnemySpawner.h"
 #include"Items\SpawnManager.h"
+#include "Items\QuestActor.h"
 #include "EngineUtils.h"
 #include "Public\QuestStruct.h"
 #include"GameMode\ArenaGameMode.h"
@@ -71,9 +72,7 @@ void AWarriorCharacter::BeginPlay()
 
 	if (QuestDataTable)
 	{
-
 		TArray<FName> RowNames = QuestDataTable->GetRowNames();
-
 		for (const FName& RowName : RowNames)
 		{
 			FQuestStruct* Quest = QuestDataTable->FindRow<FQuestStruct>(RowName, "");
@@ -81,10 +80,8 @@ void AWarriorCharacter::BeginPlay()
 			{
 				ActiveQuests.Add(*Quest);
 				CurrentQuest = ActiveQuests[0];
-				
 			}
 		}
-		//if (ActiveQuests.IsValidIndex(0) && QuestOverlay)
 
 		if (ActiveQuests.IsValidIndex(0) && PlayerOverlay->GetQuestOverlay())
 		{
@@ -93,15 +90,22 @@ void AWarriorCharacter::BeginPlay()
 				ActiveQuests[0].QuestName,
 				ActiveQuests[0].QuestDescription);
 		}
-
-
 		if (SpawnManager == nullptr)
 		{
-			
-			TSubclassOf<ASpawnManager> SpawnManagerClass = ASpawnManager::StaticClass(); // ASpawnManager class'ýný alýyoruz
+			TSubclassOf<ASpawnManager> SpawnManagerClass = ASpawnManager::StaticClass();
 			SpawnManager = GetWorld()->SpawnActor<ASpawnManager>(SpawnManagerClass);
 		}
 	}	
+
+	if (QuestActorClass)
+	{
+		UWorld* World = GetWorld();
+		if (World)
+		{
+			QuestActor = GetWorld()->SpawnActor<AQuestActor>(QuestActorClass, CurrentQuest.TargetLocation, FRotator::ZeroRotator);
+
+		}
+	}
 }
 
 void AWarriorCharacter::Save()
@@ -207,13 +211,29 @@ void AWarriorCharacter::CheckQuestProgress()
 		if (Distance < 350.f)
 		{
 			CompleteCurrentQuest();
+			QuestActor->HiddenQuestTracker(false);
 		}
 
 	}
 	 if(CurrentQuest.QuestType == EQuestType::KillEnemies)
 	{
+
+
+		 FVector PlayerLocation = GetActorLocation();
+		 float Distance = FVector::Dist(PlayerLocation, CurrentQuest.TargetLocation);
+
+		 if (QuestActor && Distance < 350.f)
+		 {
+			QuestActor->HiddenQuestTracker(false);
+		 }
+
+
+
+
 		if (CurrentQuest.CurrentKillCount >= CurrentQuest.TargetKillCount)
 		{
+
+
 			if (SpawnManager)
 			{
 				AEnemySpawner* NextSpawner = SpawnManager->GetNextSpawn();
@@ -406,13 +426,13 @@ void AWarriorCharacter::PrintQuest()
 bool AWarriorCharacter::IsEnemyBehindCharacter()
 {
 
-        FVector WarriorCharacterLocation = GetActorLocation();
-		FVector EnemyLocation = CloseEnemy->GetActorLocation();
-		FVector WarriorForwardVector = GetActorForwardVector();
-		FVector DirectionToEnemy = EnemyLocation - WarriorCharacterLocation;
-		DirectionToEnemy.Normalize();
-		float DotProduct = FVector::DotProduct(WarriorForwardVector, DirectionToEnemy);
-		return DotProduct < 0;
+   FVector WarriorCharacterLocation = GetActorLocation();
+   FVector EnemyLocation = CloseEnemy->GetActorLocation();
+   FVector WarriorForwardVector = GetActorForwardVector();
+   FVector DirectionToEnemy = EnemyLocation - WarriorCharacterLocation;
+   DirectionToEnemy.Normalize();
+   float DotProduct = FVector::DotProduct(WarriorForwardVector, DirectionToEnemy);
+   return DotProduct < 0;
 	
 }
 
@@ -769,7 +789,6 @@ void AWarriorCharacter::CompleteCurrentQuest()
 	if (!CurrentQuest.QuestName.IsEmpty()) 
 	{
 		
-
 		FString CurrentRowName = NextQuestRowName.ToString();
 		FString BaseName = "Quest";
 		int32 QuestNumber = 2;
@@ -782,16 +801,25 @@ void AWarriorCharacter::CompleteCurrentQuest()
 		StartNextQuest();
 		if (PlayerOverlay->GetQuestCompleteWidget())
 		{
-	
-				PlayerOverlay->GetQuestCompleteWidget()->SetQuestText(CurrentQuest.QuestName);
-				PlayerOverlay->GetQuestCompleteWidget()->PlayFadeInAnimation();
-				PlayerOverlay->PlayAnimation(PlayerOverlay->QuestCompleteFadeIn);
-				GetWorld()->GetTimerManager().SetTimer(QuestCompleteUITimer, this, &AWarriorCharacter::QuesstCompleteFadeOutAnim, 3, false);
-		
+		PlayerOverlay->GetQuestCompleteWidget()->SetQuestText(CurrentQuest.QuestName);
+		PlayerOverlay->GetQuestCompleteWidget()->PlayFadeInAnimation();
+		PlayerOverlay->PlayAnimation(PlayerOverlay->QuestCompleteFadeIn);
+		GetWorld()->GetTimerManager().SetTimer(QuestCompleteUITimer, this, &AWarriorCharacter::QuesstCompleteFadeOutAnim, 3, false);		
+
 		}
 	}
+	if (QuestActorClass && !QuestActor)
+	{
+		QuestActor = GetWorld()->SpawnActor<AQuestActor>(QuestActorClass, CurrentQuest.TargetLocation, FRotator::ZeroRotator);
+	
+	
+	}
+	else
+	{
+		QuestActor->SetActorLocation(CurrentQuest.TargetLocation);
+		QuestActor->HiddenQuestTracker(true);
 
-
+	}
 
 }
 	
@@ -1079,7 +1107,7 @@ void AWarriorCharacter::Tick(float DeltaTime)
 	ResetCameraPosition();
 	CheckQuestProgress();
 
-	
+
 
 }
 void AWarriorCharacter::ResetCameraPosition()

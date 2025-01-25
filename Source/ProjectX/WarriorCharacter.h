@@ -22,6 +22,7 @@ class UCharacterHUD;
 class UQuestUI;
 class AArenaGameMode;
 class ASpawnManager;
+class AQuestActor;
 
 
 
@@ -69,8 +70,12 @@ public:
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Quests")
 	TArray<FQuestStruct> ActiveQuests;
-	UPROPERTY(EditAnywhere)
+
+	UPROPERTY(EditAnywhere, Category = "Combat")
 	TSubclassOf<class AWeapon> WeaponClass;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Quests")
+	TSubclassOf<class AQuestActor> QuestActorClass;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "UI")
 	TSubclassOf<UUserWidget> DeathWidgetClass;
@@ -89,6 +94,9 @@ public:
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Quest System")
 	FName NextQuestRowName;
+
+	UPROPERTY(BlueprintReadOnly, Category = "Quest")
+	AQuestActor* QuestActor;
 
 protected:
 	virtual void BeginPlay() override;
