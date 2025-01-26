@@ -742,14 +742,14 @@ void AWarriorCharacter::SecondSkill()
 }
 
 
-void AWarriorCharacter::SkillCanDamageF()
+void AWarriorCharacter::SkillCanDamageF(float SphereRadiusFloat, float SkillDamageFloat, float TraceEnd)
 {
 
 	TArray<FHitResult> OutHits;
 	FVector Start = GetActorLocation();
-	FVector End = Start + GetActorForwardVector() * 100.f;
-	float SphereRadius = 500.f;
-	float SkillDamage = 25.f;
+	FVector End = Start + GetActorForwardVector() * TraceEnd;
+	float SphereRadius = SphereRadiusFloat;
+	float SkillDamage = SkillDamageFloat;
 	FCollisionQueryParams TraceParams;
 	TraceParams.AddIgnoredActor(this);
 	TArray<AActor*> IgnoredActors;
@@ -766,7 +766,7 @@ void AWarriorCharacter::SkillCanDamageF()
 		TraceType,
 		false,
 		IgnoredActors,
-		EDrawDebugTrace::None,
+		EDrawDebugTrace::ForDuration,
 		OutHits,
 		true
 	);
@@ -785,9 +785,13 @@ void AWarriorCharacter::SkillCanDamageF()
 				{
 					DamagedEnemies.Add(HitActor);
 					AEnemy* Enemy = Cast<AEnemy>(hit.GetActor());
-					Enemy->SetRagdoll();
-					UGameplayStatics::ApplyDamage(HitActor, SkillDamage, GetInstigator()->GetController(), this, UDamageType::StaticClass());
-					GetSkillHit(hit);
+					if (!Enemy->IsDead())
+					{
+						Enemy->SetRagdoll();
+						UGameplayStatics::ApplyDamage(HitActor, SkillDamage, GetInstigator()->GetController(), this, UDamageType::StaticClass());
+						GetSkillHit(hit);
+					}
+					
 				}
 			}
 		}
@@ -1114,6 +1118,7 @@ void AWarriorCharacter::ExecuteGetHit(FHitResult& BoxHit)
 
 void AWarriorCharacter::GetSkillHit(FHitResult& Skillhit)
 {
+
 	ISkillHitInterface* SkillInterface = Cast<ISkillHitInterface>(Skillhit.GetActor());
 
 	if (SkillInterface)

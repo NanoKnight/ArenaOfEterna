@@ -165,7 +165,7 @@ protected:
 
 
 	UFUNCTION(BlueprintCallable)
-	void SkillCanDamageF();
+	void SkillCanDamageF(float SphereRadiusFloat, float  SkillDamageFloat, float  TraceEnd );
 	
 	UFUNCTION()
 	void CompleteCurrentQuest();

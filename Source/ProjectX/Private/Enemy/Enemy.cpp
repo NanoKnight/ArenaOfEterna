@@ -284,6 +284,7 @@ void AEnemy::SetRagdoll()
 
 void AEnemy::ResetRagdoll()
 {
+	if (IsDead())return;
 	FVector loc = GetMesh()->GetRelativeLocation();
 	GetCapsuleComponent()->SetRelativeLocation(loc);
 	UAnimInstance* AnimInstance1 = GetMesh()->GetAnimInstance();
@@ -314,6 +315,7 @@ void AEnemy::ResetRagdoll()
 
 void AEnemy::ResetEnemyState()
 {
+	
 	EnemyState = EEnemyState::EES_Patrolling;
 	EnemyOutlineMesh->SetVisibility(true);
 	if (CombatTarget)
@@ -337,8 +339,12 @@ void AEnemy::GetHit_Implementation(const FVector& ImpactPoint,AActor* Hitter)
 
 void AEnemy::SkillHit(const FVector& ImpactPoint, AActor* Hitter)
 {
-	
+	if (Attributes->HealthPercent() == 0)
+	{
+		SetEnemyDead();
+	}
 	if (!IsDead()) ShowHealthBar();
+
 	ClearPatrolTimer();
 	ClearAttackTimer();
 	SetWeaponCollisionEnabled(ECollisionEnabled::NoCollision);
@@ -438,10 +444,9 @@ void AEnemy::StartPatrolling()
 
 void AEnemy::ChaseTarget()
 {	
-	if (EnemyState == EEnemyState::EAS_Stun)
-	{
-		return;
-	}
+	if (IsDead())return;
+	if (EnemyState == EEnemyState::EAS_Stun) return;
+	
 
 	if (CombatTarget && CombatTarget->ActorHasTag(FName("Dead"))) {
 		CombatTarget = nullptr;
