@@ -7,8 +7,7 @@
 #include "QuestActor.generated.h"
 
 class UWidgetComponent;
-class UUserWidget;
-UCLASS(Blueprintable)
+UCLASS()
 class PROJECTX_API AQuestActor : public AActor
 {
 	GENERATED_BODY()
@@ -33,13 +32,9 @@ public:
 
 	UFUNCTION()
 	void HiddenQuestTracker(bool TrackerState);
-
-	bool playerIsRange() const;
-
 	
 
 private	:
-	float DisplayDistance = 7000.f;
 
 
 };
