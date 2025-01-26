@@ -49,6 +49,13 @@ enum class EEnemyState : uint8
 	EES_Dead UMETA(DisplayName = "Dead")		
 };
 
+UENUM(BluePrintType)
+enum class EAttackButtonState : uint8
+{
+    EAB_Releassed UMETA(DisplayName = "Releassed"),
+	EAB_Holding UMETA(DisplayName = "Holdding")
+
+};
 
 UENUM(BlueprintType)
 enum class EMovementState : uint8

@@ -3,7 +3,7 @@
 
 #include "CoreMinimal.h"
 #include"../Characters/BaseCharacter.h"
-#include"../CharacterTypes.h"
+#include"../EnumStates.h"
 #include"../Interfaces/SkillHitInterface.h"
 #include "Enemy.generated.h"
 

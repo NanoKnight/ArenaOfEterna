@@ -677,16 +677,27 @@ void AWarriorCharacter::EquipWeapon(AWeapon* Weapon)
 void AWarriorCharacter::Attack()
 {
 	Super::Attack();
-
+	AttackButtonStates = EAttackButtonState::EAB_Holding;
 	const bool bCanAttack = (ActionState == EActionState::EAS_Unoccupied && CharacterStates != ECharacterStates::ECS_UnEquipped);
 	if (bCanAttack)
 	{
 		WarriorAttackMontage();
 		bAttackTimerOpen = true;
 		ActionState = EActionState::EAS_Attacking;
-		
+		GetWorld()->GetTimerManager().SetTimer(AttackHoldingTimer, this, &AWarriorCharacter::PlayHoldingAttackAnim, 1.5, false);
+
+	
+
 	}
 }
+
+void AWarriorCharacter::AttackReleassed()
+{
+	AttackButtonStates = EAttackButtonState::EAB_Releassed;
+	//GEngine->AddOnScreenDebugMessage(-1, 1.f, FColor::Cyan, FString::Printf(TEXT("AttackReleassed")));
+
+}
+
 
 void AWarriorCharacter::AttackEnd()
 {
@@ -913,6 +924,18 @@ void AWarriorCharacter::DefaultVar()
 	RageMode = false;
 }
 
+void AWarriorCharacter::PlayHoldingAttackAnim()
+{
+	if (AttackButtonStates == EAttackButtonState::EAB_Holding)
+	{
+		UAnimInstance* AnimInstance = GetMesh()->GetAnimInstance();
+		if (AnimInstance)
+		{
+			AnimInstance->Montage_Play(HoldingAttackMontage);
+		}
+	}
+}
+
 void AWarriorCharacter::StaminaRegenerateTime()
 {
 	GetWorld()->GetTimerManager().SetTimer(StaminaRegenerateTimer, this, &AWarriorCharacter::StaminaRegen, 1, false);
@@ -1011,6 +1034,7 @@ void AWarriorCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputCo
 	PlayerInputComponent->BindAction(FName("Jump"), IE_Pressed, this, &ACharacter::Jump);
 	PlayerInputComponent->BindAction(FName("Use"), IE_Pressed, this, &AWarriorCharacter::EKeyPressed);
 	PlayerInputComponent->BindAction(FName("Attack"), IE_Pressed, this, &AWarriorCharacter::Attack);
+	PlayerInputComponent->BindAction(FName("Attack"), IE_Released, this, &AWarriorCharacter::AttackReleassed);
 	PlayerInputComponent->BindAction(FName("Shield"), IE_Pressed, this, &AWarriorCharacter::Shield);
 	PlayerInputComponent->BindAction(FName("Shield"), IE_Released, this, &AWarriorCharacter::ShieldRealesed);
 	PlayerInputComponent->BindAction(FName("Dodge"), IE_Pressed, this, &AWarriorCharacter::Dodge);

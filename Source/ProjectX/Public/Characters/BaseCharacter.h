@@ -5,7 +5,7 @@
 #include "CoreMinimal.h"
 #include "GameFramework/Character.h"
 #include"./InterFaces/HitInterface.h"
-#include"../CharacterTypes.h"
+#include"../EnumStates.h"
 #include "NiagaraSystem.h"
 #include "BaseCharacter.generated.h"
 
