@@ -232,6 +232,7 @@ void AEnemy::Tick(float DeltaTime)
 float AEnemy::TakeDamage(float DamageAmount, FDamageEvent const & DamageEvent, AController* EventInstigator, AActor* DamageCauser)
 {
 
+	
 	if (!IsDead())
 	{
 		HandleDamage(DamageAmount);
@@ -309,13 +310,11 @@ void AEnemy::ResetRagdoll()
 	GetMesh()->SetRelativeRotation(meshrot);
 	EnemyOutlineMesh->SetRelativeRotation(meshrot);
 
-	
 }
 
 
 void AEnemy::ResetEnemyState()
 {
-	
 	EnemyState = EEnemyState::EES_Patrolling;
 	EnemyOutlineMesh->SetVisibility(true);
 	if (CombatTarget)
@@ -339,19 +338,18 @@ void AEnemy::GetHit_Implementation(const FVector& ImpactPoint,AActor* Hitter)
 
 void AEnemy::SkillHit(const FVector& ImpactPoint, AActor* Hitter)
 {
-	if (Attributes->HealthPercent() == 0)
-	{
-		SetEnemyDead();
-	}
 	if (!IsDead()) ShowHealthBar();
-
 	ClearPatrolTimer();
 	ClearAttackTimer();
 	SetWeaponCollisionEnabled(ECollisionEnabled::NoCollision);
 	PlayHitSound(ImpactPoint);
 	StopAttackMontage();
 	EnemyState = EEnemyState::EAS_Stun;
-	
+	if (Attributes->HealthPercent() <= 0)
+	{
+		SetEnemyDead();
+	}
+
     APlayerController* PlayerController = GetWorld()->GetFirstPlayerController();
 	if (PlayerController)
 	{
@@ -359,8 +357,6 @@ void AEnemy::SkillHit(const FVector& ImpactPoint, AActor* Hitter)
 	}
 		
 }
-
-
 
 
 void AEnemy::SpawnDefaultWeapon()
@@ -377,7 +373,6 @@ void AEnemy::SpawnDefaultWeapon()
 
 void AEnemy::CheckPatrolTarget()
 {
-
 	if (InTargetRange(PatrolTarget, PatrolRadius))
 	{
 		PatrolTarget = ChoosePatrolTarget();
@@ -444,10 +439,7 @@ void AEnemy::StartPatrolling()
 
 void AEnemy::ChaseTarget()
 {	
-	if (IsDead())return;
 	if (EnemyState == EEnemyState::EAS_Stun) return;
-	
-
 	if (CombatTarget && CombatTarget->ActorHasTag(FName("Dead"))) {
 		CombatTarget = nullptr;
 		MoveToTarget(PatrolTarget);
@@ -569,6 +561,8 @@ AActor* AEnemy::ChoosePatrolTarget()
 
 void AEnemy::PawnSeen(APawn* SeenPawn)
 {
+
+
 	const bool bShouldChaseTarget =
 		EnemyState != EEnemyState::EES_Dead &&
 		EnemyState != EEnemyState::EES_Chasing &&
