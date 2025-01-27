@@ -22,6 +22,7 @@
 #include"Items\HealthPoint.h"
 #include"Items\EnemySpawner.h"
 #include"Items\SpawnManager.h"
+#include "Items\QuestActor.h"
 #include "EngineUtils.h"
 #include "Public\QuestStruct.h"
 #include"GameMode\ArenaGameMode.h"
@@ -71,9 +72,7 @@ void AWarriorCharacter::BeginPlay()
 
 	if (QuestDataTable)
 	{
-
 		TArray<FName> RowNames = QuestDataTable->GetRowNames();
-
 		for (const FName& RowName : RowNames)
 		{
 			FQuestStruct* Quest = QuestDataTable->FindRow<FQuestStruct>(RowName, "");
@@ -81,10 +80,8 @@ void AWarriorCharacter::BeginPlay()
 			{
 				ActiveQuests.Add(*Quest);
 				CurrentQuest = ActiveQuests[0];
-				
 			}
 		}
-		//if (ActiveQuests.IsValidIndex(0) && QuestOverlay)
 
 		if (ActiveQuests.IsValidIndex(0) && PlayerOverlay->GetQuestOverlay())
 		{
@@ -93,15 +90,22 @@ void AWarriorCharacter::BeginPlay()
 				ActiveQuests[0].QuestName,
 				ActiveQuests[0].QuestDescription);
 		}
-
-
 		if (SpawnManager == nullptr)
 		{
-			
-			TSubclassOf<ASpawnManager> SpawnManagerClass = ASpawnManager::StaticClass(); // ASpawnManager class'ýný alýyoruz
+			TSubclassOf<ASpawnManager> SpawnManagerClass = ASpawnManager::StaticClass();
 			SpawnManager = GetWorld()->SpawnActor<ASpawnManager>(SpawnManagerClass);
 		}
 	}	
+
+	if (QuestActorClass)
+	{
+		UWorld* World = GetWorld();
+		if (World)
+		{
+			QuestActor = GetWorld()->SpawnActor<AQuestActor>(QuestActorClass, CurrentQuest.TargetLocation, FRotator::ZeroRotator);
+
+		}
+	}
 }
 
 void AWarriorCharacter::Save()
@@ -207,13 +211,29 @@ void AWarriorCharacter::CheckQuestProgress()
 		if (Distance < 350.f)
 		{
 			CompleteCurrentQuest();
+			QuestActor->HiddenQuestTracker(false);
 		}
 
 	}
 	 if(CurrentQuest.QuestType == EQuestType::KillEnemies)
 	{
+
+
+		 FVector PlayerLocation = GetActorLocation();
+		 float Distance = FVector::Dist(PlayerLocation, CurrentQuest.TargetLocation);
+
+		 if (QuestActor && Distance < 350.f)
+		 {
+			QuestActor->HiddenQuestTracker(false);
+		 }
+
+
+
+
 		if (CurrentQuest.CurrentKillCount >= CurrentQuest.TargetKillCount)
 		{
+
+
 			if (SpawnManager)
 			{
 				AEnemySpawner* NextSpawner = SpawnManager->GetNextSpawn();
@@ -406,13 +426,13 @@ void AWarriorCharacter::PrintQuest()
 bool AWarriorCharacter::IsEnemyBehindCharacter()
 {
 
-        FVector WarriorCharacterLocation = GetActorLocation();
-		FVector EnemyLocation = CloseEnemy->GetActorLocation();
-		FVector WarriorForwardVector = GetActorForwardVector();
-		FVector DirectionToEnemy = EnemyLocation - WarriorCharacterLocation;
-		DirectionToEnemy.Normalize();
-		float DotProduct = FVector::DotProduct(WarriorForwardVector, DirectionToEnemy);
-		return DotProduct < 0;
+   FVector WarriorCharacterLocation = GetActorLocation();
+   FVector EnemyLocation = CloseEnemy->GetActorLocation();
+   FVector WarriorForwardVector = GetActorForwardVector();
+   FVector DirectionToEnemy = EnemyLocation - WarriorCharacterLocation;
+   DirectionToEnemy.Normalize();
+   float DotProduct = FVector::DotProduct(WarriorForwardVector, DirectionToEnemy);
+   return DotProduct < 0;
 	
 }
 
@@ -657,16 +677,27 @@ void AWarriorCharacter::EquipWeapon(AWeapon* Weapon)
 void AWarriorCharacter::Attack()
 {
 	Super::Attack();
-
+	AttackButtonStates = EAttackButtonState::EAB_Holding;
 	const bool bCanAttack = (ActionState == EActionState::EAS_Unoccupied && CharacterStates != ECharacterStates::ECS_UnEquipped);
 	if (bCanAttack)
 	{
 		WarriorAttackMontage();
 		bAttackTimerOpen = true;
 		ActionState = EActionState::EAS_Attacking;
-		
+		GetWorld()->GetTimerManager().SetTimer(AttackHoldingTimer, this, &AWarriorCharacter::PlayHoldingAttackAnim, 1.5, false);
+
+	
+
 	}
 }
+
+void AWarriorCharacter::AttackReleassed()
+{
+	AttackButtonStates = EAttackButtonState::EAB_Releassed;
+	//GEngine->AddOnScreenDebugMessage(-1, 1.f, FColor::Cyan, FString::Printf(TEXT("AttackReleassed")));
+
+}
+
 
 void AWarriorCharacter::AttackEnd()
 {
@@ -711,14 +742,14 @@ void AWarriorCharacter::SecondSkill()
 }
 
 
-void AWarriorCharacter::SkillCanDamageF()
+void AWarriorCharacter::SkillCanDamageF(float SphereRadiusFloat, float SkillDamageFloat, float TraceEnd)
 {
 
 	TArray<FHitResult> OutHits;
 	FVector Start = GetActorLocation();
-	FVector End = Start + GetActorForwardVector() * 100.f;
-	float SphereRadius = 500.f;
-	float SkillDamage = 25.f;
+	FVector End = Start + GetActorForwardVector() * TraceEnd;
+	float SphereRadius = SphereRadiusFloat;
+	float SkillDamage = SkillDamageFloat;
 	FCollisionQueryParams TraceParams;
 	TraceParams.AddIgnoredActor(this);
 	TArray<AActor*> IgnoredActors;
@@ -735,7 +766,7 @@ void AWarriorCharacter::SkillCanDamageF()
 		TraceType,
 		false,
 		IgnoredActors,
-		EDrawDebugTrace::None,
+		EDrawDebugTrace::ForDuration,
 		OutHits,
 		true
 	);
@@ -754,9 +785,13 @@ void AWarriorCharacter::SkillCanDamageF()
 				{
 					DamagedEnemies.Add(HitActor);
 					AEnemy* Enemy = Cast<AEnemy>(hit.GetActor());
-					Enemy->SetRagdoll();
-					UGameplayStatics::ApplyDamage(HitActor, SkillDamage, GetInstigator()->GetController(), this, UDamageType::StaticClass());
-					GetSkillHit(hit);
+					if (!Enemy->IsDead())
+					{
+						Enemy->SetRagdoll();
+						UGameplayStatics::ApplyDamage(HitActor, SkillDamage, GetInstigator()->GetController(), this, UDamageType::StaticClass());
+						GetSkillHit(hit);
+					}
+					
 				}
 			}
 		}
@@ -769,7 +804,6 @@ void AWarriorCharacter::CompleteCurrentQuest()
 	if (!CurrentQuest.QuestName.IsEmpty()) 
 	{
 		
-
 		FString CurrentRowName = NextQuestRowName.ToString();
 		FString BaseName = "Quest";
 		int32 QuestNumber = 2;
@@ -782,16 +816,25 @@ void AWarriorCharacter::CompleteCurrentQuest()
 		StartNextQuest();
 		if (PlayerOverlay->GetQuestCompleteWidget())
 		{
-	
-				PlayerOverlay->GetQuestCompleteWidget()->SetQuestText(CurrentQuest.QuestName);
-				PlayerOverlay->GetQuestCompleteWidget()->PlayFadeInAnimation();
-				PlayerOverlay->PlayAnimation(PlayerOverlay->QuestCompleteFadeIn);
-				GetWorld()->GetTimerManager().SetTimer(QuestCompleteUITimer, this, &AWarriorCharacter::QuesstCompleteFadeOutAnim, 3, false);
-		
+		PlayerOverlay->GetQuestCompleteWidget()->SetQuestText(CurrentQuest.QuestName);
+		PlayerOverlay->GetQuestCompleteWidget()->PlayFadeInAnimation();
+		PlayerOverlay->PlayAnimation(PlayerOverlay->QuestCompleteFadeIn);
+		GetWorld()->GetTimerManager().SetTimer(QuestCompleteUITimer, this, &AWarriorCharacter::QuesstCompleteFadeOutAnim, 3, false);		
+
 		}
 	}
+	if (QuestActorClass && !QuestActor)
+	{
+		QuestActor = GetWorld()->SpawnActor<AQuestActor>(QuestActorClass, CurrentQuest.TargetLocation, FRotator::ZeroRotator);
+	
+	
+	}
+	else
+	{
+		QuestActor->SetActorLocation(CurrentQuest.TargetLocation);
+		QuestActor->HiddenQuestTracker(true);
 
-
+	}
 
 }
 	
@@ -883,6 +926,18 @@ void AWarriorCharacter::DefaultVar()
 	EquippedWeapon->SetDamage(DefaultEquippedWeaponDamage);
 	GetCharacterMovement()->MaxWalkSpeed = CharacterRunSpeed;
 	RageMode = false;
+}
+
+void AWarriorCharacter::PlayHoldingAttackAnim()
+{
+	if (AttackButtonStates == EAttackButtonState::EAB_Holding)
+	{
+		UAnimInstance* AnimInstance = GetMesh()->GetAnimInstance();
+		if (AnimInstance)
+		{
+			AnimInstance->Montage_Play(HoldingAttackMontage);
+		}
+	}
 }
 
 void AWarriorCharacter::StaminaRegenerateTime()
@@ -983,6 +1038,7 @@ void AWarriorCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputCo
 	PlayerInputComponent->BindAction(FName("Jump"), IE_Pressed, this, &ACharacter::Jump);
 	PlayerInputComponent->BindAction(FName("Use"), IE_Pressed, this, &AWarriorCharacter::EKeyPressed);
 	PlayerInputComponent->BindAction(FName("Attack"), IE_Pressed, this, &AWarriorCharacter::Attack);
+	PlayerInputComponent->BindAction(FName("Attack"), IE_Released, this, &AWarriorCharacter::AttackReleassed);
 	PlayerInputComponent->BindAction(FName("Shield"), IE_Pressed, this, &AWarriorCharacter::Shield);
 	PlayerInputComponent->BindAction(FName("Shield"), IE_Released, this, &AWarriorCharacter::ShieldRealesed);
 	PlayerInputComponent->BindAction(FName("Dodge"), IE_Pressed, this, &AWarriorCharacter::Dodge);
@@ -1062,6 +1118,7 @@ void AWarriorCharacter::ExecuteGetHit(FHitResult& BoxHit)
 
 void AWarriorCharacter::GetSkillHit(FHitResult& Skillhit)
 {
+
 	ISkillHitInterface* SkillInterface = Cast<ISkillHitInterface>(Skillhit.GetActor());
 
 	if (SkillInterface)
@@ -1079,7 +1136,7 @@ void AWarriorCharacter::Tick(float DeltaTime)
 	ResetCameraPosition();
 	CheckQuestProgress();
 
-	
+
 
 }
 void AWarriorCharacter::ResetCameraPosition()

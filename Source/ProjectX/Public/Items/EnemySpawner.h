@@ -61,6 +61,10 @@ public:
 	UPROPERTY(EditAnywhere)
 	FVector SpawnEnemiesLoc;
 
+	UPROPERTY()
+	int32 EnemyAliveForLoop;
+
+	void OnEnemyKilled();
 
 	
 private:

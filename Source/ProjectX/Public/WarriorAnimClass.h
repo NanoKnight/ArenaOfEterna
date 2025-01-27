@@ -4,7 +4,7 @@
 
 #include "CoreMinimal.h"
 #include "Animation/AnimInstance.h"
-#include "CharacterTypes.h"
+#include "EnumStates.h"
 #include "WarriorAnimClass.generated.h"
 
 

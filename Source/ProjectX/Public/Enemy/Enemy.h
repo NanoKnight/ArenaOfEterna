@@ -1,10 +1,9 @@
-// Fill out your copyright notice in the Description page of Project Settings.
 
 #pragma once
 
 #include "CoreMinimal.h"
 #include"../Characters/BaseCharacter.h"
-#include"../CharacterTypes.h"
+#include"../EnumStates.h"
 #include"../Interfaces/SkillHitInterface.h"
 #include "Enemy.generated.h"
 
@@ -12,6 +11,7 @@
 class UHealthBarComponent;
 class AWarriorCharacter;
 class UPawnSensingComponent;
+class AEnemySpawner;
 
 UCLASS()
 class PROJECTX_API AEnemy : public ABaseCharacter, public ISkillHitInterface
@@ -24,9 +24,12 @@ protected:
 	virtual void BeginPlay() override;
 	void InitializeEnemy();
 	virtual void Die() override;
+	void IncreaseQuestKillCount();
 	void SetEnemyDead();
 	void AddKilledEnemy();
 	void SpawnExperience();
+	UFUNCTION()
+	void RespawnInfiniteEnemy(AEnemySpawner* SpawnerActor);
 	virtual void Attack() override;
 	virtual void AttackEnd() override;
 	virtual bool CanAttack() override;
@@ -55,6 +58,8 @@ public:
 
 	UFUNCTION(BlueprintCallable)
 	void ResetEnemyState();
+
+
 
 	UPROPERTY(BlueprintReadOnly)
 	EEnemyState EnemyState;
@@ -135,6 +140,7 @@ private:
 	FTimerHandle AttackTimer;
 	FTimerHandle RagdollTimer;
 	FTimerHandle HideHealthBarTimer;
+	FTimerHandle RespawnInfiniteEnemyTimer;
 	
 	UPROPERTY(EditAnywhere, Category = "Combat")
 	float AttackMin = 0.5f;

@@ -15,6 +15,7 @@
 #include"GameMode\ArenaGameMode.h"
 #include"CameraShakes\MainLegacyCameraShake.h"
 #include "Kismet/GameplayStatics.h"
+#include"Items\EnemySpawner.h"
 #include "AIController.h"
 #include "Items\SpawnManager.h"
 #include"Items\ExperiencePoint.h"
@@ -88,15 +89,42 @@ void AEnemy::Die()
 	GetCharacterMovement()->bOrientRotationToMovement = false;
 	SetWeaponCollisionEnabled(ECollisionEnabled::NoCollision);
 	SpawnExperience();
+	IncreaseQuestKillCount();
+
+	TArray<AActor*>FoundSpawners;
+	UGameplayStatics::GetAllActorsOfClass(GetWorld(), AEnemySpawner::StaticClass(), FoundSpawners);
+	for (AActor* Actor : FoundSpawners)
+	{
+		AEnemySpawner* SpawnerActor = Cast<AEnemySpawner>(Actor);
+		SpawnerActor->OnEnemyKilled();
+		GEngine->AddOnScreenDebugMessage(-1, 3.f, FColor::Cyan, FString::Printf(TEXT("EnemyKilled")));
+		FTimerDelegate TimerDelegate;
+		TimerDelegate.BindUFunction(this, FName("RespawnInfiniteEnemy"), SpawnerActor);
+		GetWorld()->GetTimerManager().SetTimer(RespawnInfiniteEnemyTimer, TimerDelegate, 3.f, false);
+
+	}
 	AGameModeBase* GameMode = GetWorld()->GetAuthGameMode();
 	AArenaGameMode* ArenaGameMode = Cast<AArenaGameMode>(GameMode);
 	//ArenaGameMode->DecrementEnemyAlive();
-	if (WarriorCharacter && !InfiniteEnemy)
+	
+
+}
+
+void AEnemy::RespawnInfiniteEnemy(AEnemySpawner* SpawnerActor)
+{
+	if (SpawnerActor->Loop && SpawnerActor->EnemyAliveForLoop == 0)
+	{
+		SpawnerActor->SpawnEnemy(SpawnerActor->EnemySpawnCount);
+	}
+}
+
+void AEnemy::IncreaseQuestKillCount()
+{
+	if (WarriorCharacter && !InfiniteEnemy && WarriorCharacter->CurrentQuest.QuestType == EQuestType::KillEnemies)
 	{
 
 		WarriorCharacter->CurrentQuest.CurrentKillCount++;
 	}
-
 }
 
 void AEnemy::SetEnemyDead()
@@ -114,6 +142,10 @@ void AEnemy::AddKilledEnemy()
 void AEnemy::SpawnExperience()
 {
 	UWorld* World = GetWorld();
+	if (!GetWorld() || !Experience)
+	{
+		return;
+	}
 
 	if (World && Experience && Attributes)
 	{
@@ -252,6 +284,7 @@ void AEnemy::SetRagdoll()
 
 void AEnemy::ResetRagdoll()
 {
+	if (IsDead())return;
 	FVector loc = GetMesh()->GetRelativeLocation();
 	GetCapsuleComponent()->SetRelativeLocation(loc);
 	UAnimInstance* AnimInstance1 = GetMesh()->GetAnimInstance();
@@ -282,6 +315,7 @@ void AEnemy::ResetRagdoll()
 
 void AEnemy::ResetEnemyState()
 {
+	
 	EnemyState = EEnemyState::EES_Patrolling;
 	EnemyOutlineMesh->SetVisibility(true);
 	if (CombatTarget)
@@ -305,8 +339,12 @@ void AEnemy::GetHit_Implementation(const FVector& ImpactPoint,AActor* Hitter)
 
 void AEnemy::SkillHit(const FVector& ImpactPoint, AActor* Hitter)
 {
-	
+	if (Attributes->HealthPercent() == 0)
+	{
+		SetEnemyDead();
+	}
 	if (!IsDead()) ShowHealthBar();
+
 	ClearPatrolTimer();
 	ClearAttackTimer();
 	SetWeaponCollisionEnabled(ECollisionEnabled::NoCollision);
@@ -406,10 +444,9 @@ void AEnemy::StartPatrolling()
 
 void AEnemy::ChaseTarget()
 {	
-	if (EnemyState == EEnemyState::EAS_Stun)
-	{
-		return;
-	}
+	if (IsDead())return;
+	if (EnemyState == EEnemyState::EAS_Stun) return;
+	
 
 	if (CombatTarget && CombatTarget->ActorHasTag(FName("Dead"))) {
 		CombatTarget = nullptr;

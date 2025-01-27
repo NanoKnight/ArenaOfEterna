@@ -3,7 +3,7 @@
 #pragma once
 
 #include "CoreMinimal.h"
-#include "Public\CharacterTypes.h"
+#include "Public\EnumStates.h"
 #include "Public\Characters\BaseCharacter.h"
 #include"Blueprint/UserWidget.h"
 #include"Public\Interfaces\PickUpInterface.h"
@@ -22,6 +22,7 @@ class UCharacterHUD;
 class UQuestUI;
 class AArenaGameMode;
 class ASpawnManager;
+class AQuestActor;
 
 
 
@@ -69,8 +70,12 @@ public:
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Quests")
 	TArray<FQuestStruct> ActiveQuests;
-	UPROPERTY(EditAnywhere)
+
+	UPROPERTY(EditAnywhere, Category = "Combat")
 	TSubclassOf<class AWeapon> WeaponClass;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Quests")
+	TSubclassOf<class AQuestActor> QuestActorClass;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "UI")
 	TSubclassOf<UUserWidget> DeathWidgetClass;
@@ -90,6 +95,9 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Quest System")
 	FName NextQuestRowName;
 
+	UPROPERTY(BlueprintReadOnly, Category = "Quest")
+	AQuestActor* QuestActor;
+
 protected:
 	virtual void BeginPlay() override;
 	void MoveForward(float value);
@@ -106,6 +114,7 @@ protected:
 	*/
 	void EquipWeapon(AWeapon*Weapon);
 	virtual void Attack() override;
+	void AttackReleassed();
 	virtual void AttackEnd() override;
 	void UsingSkill();
 	void Shield();
@@ -123,9 +132,12 @@ protected:
 	
 	FTimerHandle StaminaRegenerateTimer;
 	FTimerHandle SecondSkillTimer;
+	FTimerHandle AttackHoldingTimer;
 	FTimerHandle QuestCompleteUITimer;
+	
 
 	void DefaultVar();
+	void PlayHoldingAttackAnim();
 
 	void StaminaRegenerateTime();
 	void StaminaClearTime();
@@ -153,7 +165,7 @@ protected:
 
 
 	UFUNCTION(BlueprintCallable)
-	void SkillCanDamageF();
+	void SkillCanDamageF(float SphereRadiusFloat, float  SkillDamageFloat, float  TraceEnd );
 	
 	UFUNCTION()
 	void CompleteCurrentQuest();
@@ -240,6 +252,9 @@ private:
 	UPROPERTY(EditDefaultsOnly,Category = Montages)
 	UAnimMontage* FirstSkillMontage;
 
+	UPROPERTY(EditDefaultsOnly, Category = montages)
+	UAnimMontage* HoldingAttackMontage;
+
 	UPROPERTY(EditDefaultsOnly, Category = Montages)
 	UAnimMontage* SecondSkillMontage;
 	
@@ -282,6 +297,10 @@ private:
 	void SpawnDefaultShield();
 	UPROPERTY(BlueprintReadWrite, meta = (AllowPrivateAccess = "true"))
 	ECharacterStates CharacterStates = ECharacterStates::ECS_UnEquipped;
+
+	UPROPERTY(BlueprintReadWrite, meta = (AllowPrivateAccess = "true"))
+	EAttackButtonState AttackButtonStates = EAttackButtonState::EAB_Releassed;
+
 	UPROPERTY(BlueprintReadWrite, meta = (AllowPrivateAccess = "true"))
 	EActionState ActionState = EActionState::EAS_Unoccupied;
 	UPROPERTY(BlueprintReadWrite, meta = (AllowPrivateAccess = "true"))

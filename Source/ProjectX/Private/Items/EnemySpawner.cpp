@@ -26,11 +26,17 @@ void AEnemySpawner::OnConstruction(const FTransform& Transform)
 {
     Super::OnConstruction(Transform);
 
-    if (SpawnerIDText)
+    if (SpawnerIDText && !Loop)
     {
         
         SpawnerIDText->SetText(FText::FromString(FString::Printf(TEXT("Spawner ID = %d"), SpawnerID)));
     }
+    if (Loop)
+    {
+        SpawnerIDText->SetText(FText::FromString(FString::Printf(TEXT("Spawner Infinite"))));
+
+    }
+
 }
 // Called when the game starts or when spawned
 void AEnemySpawner::BeginPlay()
@@ -53,6 +59,11 @@ void AEnemySpawner::Tick(float DeltaTime)
 
 void AEnemySpawner::SpawnEnemy(int32 NumbwerOfEnemies)
 {
+    if (Loop)
+    {
+        EnemyAliveForLoop++;
+
+    }
 
     if (SpawnEnemiesLoc.IsZero())
     {
@@ -113,6 +124,11 @@ void AEnemySpawner::SpawnEnemy(int32 NumbwerOfEnemies)
     }
   
    
+}
+
+void AEnemySpawner::OnEnemyKilled()
+{
+    EnemyAliveForLoop--;
 }
 
 
