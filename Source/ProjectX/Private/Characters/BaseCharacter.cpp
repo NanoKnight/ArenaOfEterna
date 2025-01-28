@@ -145,10 +145,17 @@ int32 ABaseCharacter::PlayAttackMontage()
  return	PlayRandomMontageSection(AttackMontage,AttackMontageSections);
 }
 
+int32 ABaseCharacter::PlayHoldingAttackMontage()
+{
+	return PlayWarriorCountMontageSection(HoldingAttackMontage, HoldingAttackMontageSections);
+}
+
 int32 ABaseCharacter::WarriorAttackMontage()
 {
 	return PlayWarriorCountMontageSection(AttackMontage,AttackMontageSections);
 }
+
+
 
 int32 ABaseCharacter::PlayDeathMontage()
 {

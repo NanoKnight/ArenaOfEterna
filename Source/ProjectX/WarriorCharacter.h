@@ -228,6 +228,7 @@ private:
 
 
 
+
 	UPROPERTY(VisibleAnywhere)
 	USpringArmComponent* CameraBoom;
 
@@ -252,8 +253,6 @@ private:
 	UPROPERTY(EditDefaultsOnly,Category = Montages)
 	UAnimMontage* FirstSkillMontage;
 
-	UPROPERTY(EditDefaultsOnly, Category = montages)
-	UAnimMontage* HoldingAttackMontage;
 
 	UPROPERTY(EditDefaultsOnly, Category = Montages)
 	UAnimMontage* SecondSkillMontage;
@@ -281,9 +280,6 @@ private:
 	bool bStaminaTimerOpen = false;
 	bool bCanMoveCamera = false;
 	double CombatTargetRadius = 500.f;
-
-
-
 
 	UPROPERTY(EditDefaultsOnly)
 	USphereComponent* Sphere;
@@ -313,7 +309,7 @@ private:
 	bool SkillCanDamage;
 	ASpawnManager* SpawnManager;
 	
-
+	
 	
 public:
 	virtual void Tick(float DeltaTime) override;

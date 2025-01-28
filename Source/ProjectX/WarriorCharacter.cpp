@@ -289,6 +289,8 @@ bool AWarriorCharacter::HasEnoughStamina()
 	return Attributes->GetStamina() > Attributes->GetStaminaCost();
 }
 
+
+
 bool AWarriorCharacter::CheckShieldClose()
 {
 	return !BShieldOn || IsEnemyBehindCharacter();
@@ -681,6 +683,7 @@ void AWarriorCharacter::Attack()
 	const bool bCanAttack = (ActionState == EActionState::EAS_Unoccupied && CharacterStates != ECharacterStates::ECS_UnEquipped);
 	if (bCanAttack)
 	{
+
 		WarriorAttackMontage();
 		bAttackTimerOpen = true;
 		ActionState = EActionState::EAS_Attacking;
@@ -930,13 +933,16 @@ void AWarriorCharacter::DefaultVar()
 
 void AWarriorCharacter::PlayHoldingAttackAnim()
 {
-	if (AttackButtonStates == EAttackButtonState::EAB_Holding)
+	if (AttackButtonStates == EAttackButtonState::EAB_Holding && ComboCounts > 0)
 	{
-		UAnimInstance* AnimInstance = GetMesh()->GetAnimInstance();
+
+		PlayHoldingAttackMontage();
+
+		/*UAnimInstance* AnimInstance = GetMesh()->GetAnimInstance();
 		if (AnimInstance)
 		{
 			AnimInstance->Montage_Play(HoldingAttackMontage);
-		}
+		}*/
 	}
 }
 

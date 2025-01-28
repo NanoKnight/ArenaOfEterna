@@ -50,6 +50,7 @@ protected:
 	virtual void PlayMontageSection(UAnimMontage* Montage, const FName& SectionName);
   	void PlayHitReactMontage(const FName& SectionName);
     virtual int32 PlayAttackMontage();
+	virtual int32 PlayHoldingAttackMontage();
 	virtual int32 WarriorAttackMontage();
     virtual int32 PlayDeathMontage();	
 	virtual void PlayDodgeMontage();
@@ -87,8 +88,8 @@ protected:
 	TEnumAsByte<EDeadPose>DeadPose;
 private:
 
-	 int32 PlayRandomMontageSection(UAnimMontage* Montage, const TArray<FName>& SectionNames);
-	 int32 PlayWarriorCountMontageSection(UAnimMontage* Montage, const TArray<FName>& SectionNames);
+	virtual int32 PlayWarriorCountMontageSection(UAnimMontage* Montage, const TArray<FName>& SectionNames);
+    int32 PlayRandomMontageSection(UAnimMontage* Montage, const TArray<FName>& SectionNames);
 	UPROPERTY(EditAnywhere, Category = Sounds)
 	USoundBase* HitSound;
 	UPROPERTY(EditAnywhere, Category = Sounds)
@@ -109,6 +110,9 @@ private:
 	UPROPERTY(EditDefaultsOnly, Category = Montages)
 	UAnimMontage* AttackMontage;
 
+	UPROPERTY(EditDefaultsOnly, Category = montages)
+	UAnimMontage* HoldingAttackMontage;
+	
 	UPROPERTY(EditDefaultsOnly, Category = Montages)
 	UAnimMontage* HitReactMontage;
 
@@ -120,6 +124,9 @@ private:
 
 	UPROPERTY(EditAnywhere, Category = Combat)
 	TArray<FName> AttackMontageSections;
+
+	UPROPERTY(EditAnywhere, Category = Combat)
+	TArray<FName>HoldingAttackMontageSections;
 
 	UPROPERTY(EditAnywhere, Category = Combat)
 	TArray<FName> DeathMontageSections;
