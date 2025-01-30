@@ -678,26 +678,23 @@ void AWarriorCharacter::EquipWeapon(AWeapon* Weapon)
 
 void AWarriorCharacter::Attack()
 {
-	Super::Attack();
-	AttackButtonStates = EAttackButtonState::EAB_Holding;
-	const bool bCanAttack = (ActionState == EActionState::EAS_Unoccupied && CharacterStates != ECharacterStates::ECS_UnEquipped);
-	if (bCanAttack)
-	{
+		Super::Attack();
+		GetWorld()->GetTimerManager().SetTimer(AttackHoldingTimer, this, &AWarriorCharacter::PlayHoldingAttackAnim, 1.f, false);
 
-		WarriorAttackMontage();
-		bAttackTimerOpen = true;
-		ActionState = EActionState::EAS_Attacking;
-		GetWorld()->GetTimerManager().SetTimer(AttackHoldingTimer, this, &AWarriorCharacter::PlayHoldingAttackAnim, 1.5, false);
+		const bool bCanAttack = (ActionState == EActionState::EAS_Unoccupied && CharacterStates != ECharacterStates::ECS_UnEquipped);
+		if (bCanAttack)
+		{
 
-	
+			WarriorAttackMontage();
+			bAttackTimerOpen = true;
 
+			ActionState = EActionState::EAS_Attacking;
 	}
 }
 
 void AWarriorCharacter::AttackReleassed()
 {
 	AttackButtonStates = EAttackButtonState::EAB_Releassed;
-	//GEngine->AddOnScreenDebugMessage(-1, 1.f, FColor::Cyan, FString::Printf(TEXT("AttackReleassed")));
 
 }
 
@@ -933,17 +930,10 @@ void AWarriorCharacter::DefaultVar()
 
 void AWarriorCharacter::PlayHoldingAttackAnim()
 {
-	if (AttackButtonStates == EAttackButtonState::EAB_Holding && ComboCounts > 0)
-	{
 
+		AttackButtonStates = EAttackButtonState::EAB_Holding;
 		PlayHoldingAttackMontage();
-
-		/*UAnimInstance* AnimInstance = GetMesh()->GetAnimInstance();
-		if (AnimInstance)
-		{
-			AnimInstance->Montage_Play(HoldingAttackMontage);
-		}*/
-	}
+	
 }
 
 void AWarriorCharacter::StaminaRegenerateTime()
