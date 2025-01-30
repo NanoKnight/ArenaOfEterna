@@ -147,12 +147,14 @@ int32 ABaseCharacter::PlayAttackMontage()
 
 int32 ABaseCharacter::PlayHoldingAttackMontage()
 {
-	return PlayWarriorCountMontageSection(HoldingAttackMontage, HoldingAttackMontageSections);
+	return PlayWarriorCountMontageSection(HoldingAttackMontage,HoldingAttackMontageSections);
+	
 }
 
 int32 ABaseCharacter::WarriorAttackMontage()
 {
 	return PlayWarriorCountMontageSection(AttackMontage,AttackMontageSections);
+	
 }
 
 
@@ -352,7 +354,7 @@ int32 ABaseCharacter::PlayRandomMontageSection(UAnimMontage* Montage, const TArr
 	return Selection;
 }
 
-int32 ABaseCharacter::PlayWarriorCountMontageSection(UAnimMontage* Montage, const TArray<FName>& SectionNames)
+int32 ABaseCharacter::PlayWarriorCountMontageSection(UAnimMontage* Montage,const TArray<FName>& SectionNames)
 {
 	if (SectionNames.Num() <= 0) return -1;
 	int32 MaxSectionIndex = SectionNames.Num() - 1;
@@ -372,6 +374,7 @@ int32 ABaseCharacter::PlayWarriorCountMontageSection(UAnimMontage* Montage, cons
 	if (ComboCounts < MaxSectionIndex)
 	{
 		ComboCounts = ComboCounts + 1;
+
 	}
 	else if (ComboCounts >= MaxSectionIndex)
 	{

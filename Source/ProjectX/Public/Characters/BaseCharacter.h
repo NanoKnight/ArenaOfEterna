@@ -84,11 +84,14 @@ protected:
 	UPROPERTY(VisibleAnywhere)
 	int32 ComboCounts = 0;
 
+	UPROPERTY(VisibleAnywhere)
+	int32 HoldingComboCounts = 0;
+
 	UPROPERTY(BlueprintReadOnly)
 	TEnumAsByte<EDeadPose>DeadPose;
 private:
 
-	virtual int32 PlayWarriorCountMontageSection(UAnimMontage* Montage, const TArray<FName>& SectionNames);
+	virtual int32 PlayWarriorCountMontageSection(UAnimMontage* Montage,const TArray<FName>& SectionNames);
     int32 PlayRandomMontageSection(UAnimMontage* Montage, const TArray<FName>& SectionNames);
 	UPROPERTY(EditAnywhere, Category = Sounds)
 	USoundBase* HitSound;

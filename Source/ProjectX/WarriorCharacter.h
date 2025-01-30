@@ -46,8 +46,7 @@ public:
 	FORCEINLINE UAttributeComponent* GetAttributesComponent() const { return Attributes; }
 	void StaminaRegenerate(float DeltaTime);
 	/* </IHitInterface> */
-	UPROPERTY(BlueprintReadOnly)
-	int ComboCount;
+	
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Materials")
 	UMaterialInterface* OverlayMaterial;
 
@@ -132,11 +131,13 @@ protected:
 	
 	FTimerHandle StaminaRegenerateTimer;
 	FTimerHandle SecondSkillTimer;
+	FTimerHandle AttackTypeCheckTimer;
 	FTimerHandle AttackHoldingTimer;
 	FTimerHandle QuestCompleteUITimer;
 	
 
 	void DefaultVar();
+	void ChangeAttackType();
 	void PlayHoldingAttackAnim();
 
 	void StaminaRegenerateTime();
@@ -270,6 +271,7 @@ private:
 	float ComboResetTimer = 2.f;
 	float TimeElapsed = 0.f;
 	bool bAttackTimerOpen = false;
+	bool bDidHoldingAttack;
 	///////////////////////////
 	bool bForward = false;
 	float StaminaResetTimerCount = 3.f;

@@ -66,6 +66,8 @@ void AWarriorCharacter::BeginPlay()
 	SpawnDefaultWeapon();
 	InitializePlayerOverlay();
 	defaultCameraLoc = ViewCamera->GetRelativeLocation();
+	
+
 
 	FString Path = TEXT("/Script/Engine.DataTable'/Game/Blueprints/Data/DT_QuestDataTable.DT_QuestDataTable'");
 	QuestDataTable = LoadObject<UDataTable>(nullptr, *Path);
@@ -523,6 +525,7 @@ void AWarriorCharacter::MoveForward(float value)
 }
 
 
+
 void AWarriorCharacter::MoveRight(float value)
 {
 	if (ActionState != EActionState::EAS_Unoccupied) return;
@@ -679,22 +682,29 @@ void AWarriorCharacter::EquipWeapon(AWeapon* Weapon)
 void AWarriorCharacter::Attack()
 {
 		Super::Attack();
+		bDidHoldingAttack = false;
+		AttackButtonStates = EAttackButtonState::EAB_Holding;
 		GetWorld()->GetTimerManager().SetTimer(AttackHoldingTimer, this, &AWarriorCharacter::PlayHoldingAttackAnim, 1.f, false);
 
-		const bool bCanAttack = (ActionState == EActionState::EAS_Unoccupied && CharacterStates != ECharacterStates::ECS_UnEquipped);
-		if (bCanAttack)
-		{
-
-			WarriorAttackMontage();
-			bAttackTimerOpen = true;
-
-			ActionState = EActionState::EAS_Attacking;
-	}
+		
 }
 
 void AWarriorCharacter::AttackReleassed()
 {
+	if (bDidHoldingAttack)
+	{
+		return;
+	}
+
 	AttackButtonStates = EAttackButtonState::EAB_Releassed;
+	const bool bCanAttack = (ActionState == EActionState::EAS_Unoccupied && CharacterStates != ECharacterStates::ECS_UnEquipped);
+	if (bCanAttack)
+	{
+		WarriorAttackMontage();
+		bAttackTimerOpen = true;
+		ActionState = EActionState::EAS_Attacking;
+	}
+	
 
 }
 
@@ -744,7 +754,6 @@ void AWarriorCharacter::SecondSkill()
 
 void AWarriorCharacter::SkillCanDamageF(float SphereRadiusFloat, float SkillDamageFloat, float TraceEnd)
 {
-
 	TArray<FHitResult> OutHits;
 	FVector Start = GetActorLocation();
 	FVector End = Start + GetActorForwardVector() * TraceEnd;
@@ -928,17 +937,26 @@ void AWarriorCharacter::DefaultVar()
 	RageMode = false;
 }
 
+void AWarriorCharacter::ChangeAttackType()
+{
+	AttackButtonStates = EAttackButtonState::EAB_Holding;
+}
+
 void AWarriorCharacter::PlayHoldingAttackAnim()
 {
-
-		AttackButtonStates = EAttackButtonState::EAB_Holding;
+	if (AttackButtonStates == EAttackButtonState::EAB_Holding)
+	{
 		PlayHoldingAttackMontage();
-	
+		bDidHoldingAttack = true;
+		HoldingComboCounts += 1;
+		bAttackTimerOpen = true;
+		
+	}	
 }
 
 void AWarriorCharacter::StaminaRegenerateTime()
 {
-	GetWorld()->GetTimerManager().SetTimer(StaminaRegenerateTimer, this, &AWarriorCharacter::StaminaRegen, 1, false);
+	GetWorld()->GetTimerManager().SetTimer(StaminaRegenerateTimer, this, &AWarriorCharacter::StaminaRegen, 0.6, false);
 	
 }
 
@@ -975,6 +993,7 @@ void AWarriorCharacter::HitReactEnd()
 void AWarriorCharacter::ComboCountReset()
 {
 	ComboCounts = 0;
+	HoldingComboCounts = 0;
 	bAttackTimerOpen = false;
 
 }
@@ -1131,6 +1150,7 @@ void AWarriorCharacter::Tick(float DeltaTime)
 	SetStaminaBar();
 	ResetCameraPosition();
 	CheckQuestProgress();
+	GEngine->AddOnScreenDebugMessage(1, 5.f, FColor::Cyan, FString::Printf(TEXT("COUNT : %d"), ComboCounts));
 
 
 
@@ -1153,16 +1173,16 @@ void AWarriorCharacter::ComboCountTimer(float DeltaTime)
 		{
 			TimeElapsed += DeltaTime;
 		}
-
-
 		if (TimeElapsed >= ComboResetTimer)
 		{
+
 			ComboCountReset();
 			TimeElapsed = 0;
 
 		}
 	}
 
+	
 }
 void AWarriorCharacter::StaminaRegen()
 {
