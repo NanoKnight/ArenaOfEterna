@@ -11,6 +11,19 @@
 #include "WarriorCharacter.generated.h"
 
 
+/*
+
+
+
+HOLDING ATTACKLA COMBO COUNTS UYUÞMADIÐI ÝÇÝN ÇÖKÜYOR
+YA IKI AYRI FONKSÝYON YAPICAKSIN YA DA IKISINI TEK BIR FONKSIYONDAN KONTROL EDICEKSIN
+
+
+
+
+*/
+
+
 class USpringArmComponent;
 class AShield;
 class UCameraComponent;

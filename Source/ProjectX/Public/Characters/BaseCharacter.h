@@ -91,8 +91,8 @@ protected:
 	TEnumAsByte<EDeadPose>DeadPose;
 private:
 
-	virtual int32 PlayWarriorCountMontageSection(UAnimMontage* Montage,const TArray<FName>& SectionNames);
-    int32 PlayRandomMontageSection(UAnimMontage* Montage, const TArray<FName>& SectionNames);
+	virtual int32 PlayWarriorCountMontageSection(UAnimMontage* Montage,bool IsHolding,const TArray<FName>& SectionNames);
+	int32 PlayRandomMontageSection(UAnimMontage* Montage, const TArray<FName>& SectionNames);
 	UPROPERTY(EditAnywhere, Category = Sounds)
 	USoundBase* HitSound;
 	UPROPERTY(EditAnywhere, Category = Sounds)

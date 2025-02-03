@@ -948,7 +948,6 @@ void AWarriorCharacter::PlayHoldingAttackAnim()
 	{
 		PlayHoldingAttackMontage();
 		bDidHoldingAttack = true;
-		HoldingComboCounts += 1;
 		bAttackTimerOpen = true;
 		
 	}	
@@ -1150,7 +1149,7 @@ void AWarriorCharacter::Tick(float DeltaTime)
 	SetStaminaBar();
 	ResetCameraPosition();
 	CheckQuestProgress();
-	GEngine->AddOnScreenDebugMessage(1, 5.f, FColor::Cyan, FString::Printf(TEXT("COUNT : %d"), ComboCounts));
+	GEngine->AddOnScreenDebugMessage(1, 5.f, FColor::Cyan, FString::Printf(TEXT("COUNT : %d"), HoldingComboCounts));
 
 
 
