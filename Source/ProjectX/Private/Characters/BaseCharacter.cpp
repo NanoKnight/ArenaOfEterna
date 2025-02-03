@@ -386,18 +386,21 @@ int32 ABaseCharacter::PlayWarriorCountMontageSection(UAnimMontage* Montage,bool 
 		AnimInstance->Montage_JumpToSection(SectionNames[Selection], Montage);
 
 	}
+	CheckComboCount(MaxSectionIndex, IsHolding);
+	return Selection;
+}
 
-	// if combocount greater and equal max holding attackmontage sections reset holding attack combo counts
+void ABaseCharacter::CheckComboCount(const int32& MaxSectionIndex, bool IsHolding)
+{
 	if (ComboCounts >= HoldingAttackMontageSections.Num() - 1)
 	{
 		HoldingComboCounts = 0;
 
 	}
 
-
-	if (ComboCounts < MaxSectionIndex )
+	if (ComboCounts < MaxSectionIndex)
 	{
-		
+
 		if (IsHolding == false)
 		{
 			ComboCounts = ComboCounts + 1;
@@ -405,7 +408,7 @@ int32 ABaseCharacter::PlayWarriorCountMontageSection(UAnimMontage* Montage,bool 
 
 		}
 
-		
+
 	}
 
 	else if (ComboCounts >= MaxSectionIndex)
@@ -413,7 +416,6 @@ int32 ABaseCharacter::PlayWarriorCountMontageSection(UAnimMontage* Montage,bool 
 		ComboCounts = 0;
 
 	}
-	return Selection;
 }
 
 

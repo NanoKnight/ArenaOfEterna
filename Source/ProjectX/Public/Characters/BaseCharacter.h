@@ -92,6 +92,7 @@ protected:
 private:
 
 	virtual int32 PlayWarriorCountMontageSection(UAnimMontage* Montage,bool IsHolding,const TArray<FName>& SectionNames);
+	void CheckComboCount(const int32& MaxSectionIndex, bool IsHolding);
 	int32 PlayRandomMontageSection(UAnimMontage* Montage, const TArray<FName>& SectionNames);
 	UPROPERTY(EditAnywhere, Category = Sounds)
 	USoundBase* HitSound;
