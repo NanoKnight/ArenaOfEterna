@@ -5,10 +5,12 @@
 #include "CoreMinimal.h"
 #include "Items/ItemActor.h"
 #include"./InterFaces/HitInterface.h"
+#include "../../Structs/InventoryStruct.h"
 #include "Weapon.generated.h"
 
 class USoundBase;
 class UBoxComponent;
+class AWarriorCharacter;
 
 /**
  * 
@@ -27,6 +29,8 @@ public:
 	void DisableSphereCollision();
 
 	void PlayEquipSound();
+
+	void PickUp(AWarriorCharacter* WarriorCharacter);
 
 	void AttachMeshToSocket(USceneComponent* InParent, const FName& InSocketName);
 

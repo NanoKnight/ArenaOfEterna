@@ -6,6 +6,7 @@
 #include "Kismet/GameplayStatics.h"
 #include "Components\SphereComponent.h"
 #include "Components\BoxComponent.h"
+#include"Components\InventorySystem\InventoryComponent.h"
 #include "Kismet/KismetSystemLibrary.h"
 #include"Interfaces\HitInterface.h"
 #include"GameMode\ArenaGameMode.h"
@@ -71,6 +72,20 @@ void AWeapon::PlayEquipSound()
 			EquipSound,
 			GetActorLocation()
 		);
+	}
+}
+
+void AWeapon::PickUp(AWarriorCharacter* WarriorCharacter)
+{
+
+	if (WarriorCharacter && WarriorCharacter->GetInventoryComponent())
+	{
+		FInventoryStruct NewItem;
+		NewItem.ItemName = "GoldSword";
+		NewItem.EquipmentSlot = EEquipmentSlot::Weapon;
+		NewItem.ItemClass = this->GetClass();
+		WarriorCharacter->GetInventoryComponent()->AddItem(NewItem);
+		this->Destroy();
 	}
 }
 

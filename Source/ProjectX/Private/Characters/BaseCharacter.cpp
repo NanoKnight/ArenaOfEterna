@@ -6,6 +6,7 @@
 #include"Components\CapsuleComponent.h"
 #include"Items\Weapons\Weapon.h"
 #include"Components/AttributeComponent.h"
+#include"Components\InventorySystem\InventoryComponent.h"
 #include"Kismet/KismetSystemLibrary.h"
 #include"Kismet/GameplayStatics.h"
 #include"CameraShakes\MainLegacyCameraShake.h"
@@ -21,6 +22,7 @@ ABaseCharacter::ABaseCharacter()
 	EnemyOutlineMesh = CreateDefaultSubobject<USkeletalMeshComponent>(TEXT("OutlineMesh"));
 	EnemyOutlineMesh->SetupAttachment(GetMesh());
 	Attributes = CreateDefaultSubobject<UAttributeComponent>(TEXT("EnemyAttributes"));
+	InventoryComponent = CreateDefaultSubobject<UInventoryComponent>(TEXT("InventoryComponent"));
 	GetCapsuleComponent()->SetCollisionResponseToChannel(ECollisionChannel::ECC_Camera, ECollisionResponse::ECR_Ignore);
 
 }
@@ -394,7 +396,7 @@ void ABaseCharacter::CheckComboCount(const int32& MaxSectionIndex, bool IsHoldin
 {
 	if (ComboCounts >= HoldingAttackMontageSections.Num() - 1)
 	{
-		HoldingComboCounts = 0;
+		HoldingComboCounts = HoldingAttackMontageSections.Num()-2;
 
 	}
 
@@ -414,6 +416,7 @@ void ABaseCharacter::CheckComboCount(const int32& MaxSectionIndex, bool IsHoldin
 	else if (ComboCounts >= MaxSectionIndex)
 	{
 		ComboCounts = 0;
+		HoldingComboCounts = 0;
 
 	}
 }

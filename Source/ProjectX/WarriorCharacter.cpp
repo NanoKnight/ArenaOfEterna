@@ -116,7 +116,7 @@ void AWarriorCharacter::Save()
 	GameMode = GetWorld()->GetAuthGameMode();
 	ArenaGameMode = Cast<AArenaGameMode>(GameMode);
 	if (ArenaGameMode) ArenaGameMode->SaveGame();
-
+	
 }
 
 void AWarriorCharacter::LoadSaveGame()
@@ -606,6 +606,15 @@ void AWarriorCharacter::EKeyPressed()
 	}
 }
 
+void AWarriorCharacter::Interact()
+{
+	AWeapon* OverlappingWeapon = Cast<AWeapon>(OverlappingItem);
+	if (OverlappingWeapon)
+	{
+		OverlappingWeapon->PickUp(this);
+	}
+}
+
 void AWarriorCharacter::MoveCamera()
 {
 	bCanMoveCamera = true;
@@ -1050,7 +1059,7 @@ void AWarriorCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputCo
 	PlayerInputComponent->BindAction(FName("MoveCamera"), IE_Pressed, this, &AWarriorCharacter::MoveCamera);
 	PlayerInputComponent->BindAction(FName("MoveCamera"), IE_Released, this, &AWarriorCharacter::MoveCameraReleased);
 	PlayerInputComponent->BindAction(FName("Jump"), IE_Pressed, this, &ACharacter::Jump);
-	PlayerInputComponent->BindAction(FName("Use"), IE_Pressed, this, &AWarriorCharacter::EKeyPressed);
+	PlayerInputComponent->BindAction(FName("Use"), IE_Pressed, this, &AWarriorCharacter::Interact);
 	PlayerInputComponent->BindAction(FName("Attack"), IE_Pressed, this, &AWarriorCharacter::Attack);
 	PlayerInputComponent->BindAction(FName("Attack"), IE_Released, this, &AWarriorCharacter::AttackReleassed);
 	PlayerInputComponent->BindAction(FName("Shield"), IE_Pressed, this, &AWarriorCharacter::Shield);
