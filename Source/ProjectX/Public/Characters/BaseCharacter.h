@@ -11,8 +11,8 @@
 
 
 class AWeapon;
-
 class UAttributeComponent;
+class UInventoryComponent;
 class UAnimMontage;
 class AEnemy;
 
@@ -28,6 +28,8 @@ public:
  
   UPROPERTY(VisibleAnywhere, Category = Weapon)
   AWeapon* EquippedWeapon;
+
+
 
   UPROPERTY(EditDefaultsOnly)
   USkeletalMeshComponent* EnemyOutlineMesh;
@@ -74,6 +76,8 @@ protected:
 	UPROPERTY(EditAnywhere, Category = Combat)
 	UAttributeComponent* Attributes;
 
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Inventory")
+	UInventoryComponent* InventoryComponent;
 	
 	UPROPERTY(BlueprintReadOnly, Category = Combat)
 	AActor* CombatTarget;

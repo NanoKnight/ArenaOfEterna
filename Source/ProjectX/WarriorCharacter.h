@@ -11,17 +11,6 @@
 #include "WarriorCharacter.generated.h"
 
 
-/*
-
-
-
-HOLDING ATTACKLA COMBO COUNTS UYUÞMADIÐI ÝÇÝN ÇÖKÜYOR
-YA IKI AYRI FONKSÝYON YAPICAKSIN YA DA IKISINI TEK BIR FONKSIYONDAN KONTROL EDICEKSIN
-
-
-
-
-*/
 
 
 class USpringArmComponent;
@@ -57,6 +46,7 @@ public:
 	void ClearShieldRegenerateTimer();
 	void StartShieldRegenerateTimer();
 	FORCEINLINE UAttributeComponent* GetAttributesComponent() const { return Attributes; }
+	FORCEINLINE UInventoryComponent* GetInventoryComponent() const { return InventoryComponent; }
 	void StaminaRegenerate(float DeltaTime);
 	/* </IHitInterface> */
 	
@@ -119,6 +109,7 @@ protected:
 	void CameraForward(float Value);
 	void CameraRight(float Value);
 	void EKeyPressed();
+	void Interact();
 	void MoveCamera();
 	void MoveCameraReleased();
 	/*
