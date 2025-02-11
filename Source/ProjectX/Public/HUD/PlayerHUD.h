@@ -8,6 +8,7 @@
 
 
 class UCharacterHUD;
+class UInventoryWidget;
 
 UCLASS()
 class PROJECTX_API APlayerHUD : public AHUD
@@ -22,10 +23,17 @@ private:
 		UPROPERTY(EditDefaultsOnly)
 		TSubclassOf<UCharacterHUD> CharacterHUDClass;
 		UCharacterHUD* CharacterHUD;
+
+		UPROPERTY(EditDefaultsOnly)
+		TSubclassOf<UInventoryWidget> InventoryWidgetClass;
+		UInventoryWidget* InventoryWidget;
 		
 
 public:
-		FORCEINLINE UCharacterHUD* GetPlayerOverlay() const { return CharacterHUD; }
+
+	void OpenInventory();
+
+	FORCEINLINE UCharacterHUD* GetPlayerOverlay() const { return CharacterHUD; }
 
 	
 };

@@ -81,9 +81,12 @@ void AWeapon::PickUp(AWarriorCharacter* WarriorCharacter)
 	if (WarriorCharacter && WarriorCharacter->GetInventoryComponent())
 	{
 		FInventoryStruct NewItem;
-		NewItem.ItemName = "GoldSword";
+		NewItem.ItemName = ItemName;
+		NewItem.ItemIcon = ItemIcon;
 		NewItem.EquipmentSlot = EEquipmentSlot::Weapon;
 		NewItem.ItemClass = this->GetClass();
+		GEngine->AddOnScreenDebugMessage(0, 2.f, FColor::Cyan, FString::Printf(TEXT("PickedUp")));
+
 		WarriorCharacter->GetInventoryComponent()->AddItem(NewItem);
 		this->Destroy();
 	}

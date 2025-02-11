@@ -65,6 +65,10 @@ protected:
 private:
 	void BoxTrace(FHitResult& BoxHit);
 
+	UPROPERTY(EditDefaultsOnly)
+	FString ItemName;
+	UPROPERTY(EditDefaultsOnly)
+	UTexture2D* ItemIcon;
 
 	UPROPERTY(VisibleAnywhere, Category = "WeaponProperties")
 	UBoxComponent* WeaponBox;

@@ -110,6 +110,7 @@ protected:
 	void CameraRight(float Value);
 	void EKeyPressed();
 	void Interact();
+	void OpenInventory();
 	void MoveCamera();
 	void MoveCameraReleased();
 	/*
@@ -245,6 +246,8 @@ private:
 
 	UPROPERTY(EditAnywhere)
 	TSubclassOf<class AShield> ShieldClass;
+
+
 
 	UPROPERTY(EditDefaultsOnly, Category = Montages)
 	UAnimMontage* EquipMontage;
