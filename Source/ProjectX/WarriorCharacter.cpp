@@ -22,6 +22,8 @@
 #include"Items\HealthPoint.h"
 #include"Items\EnemySpawner.h"
 #include"Items\SpawnManager.h"
+#include"HUD\InventoryWidget.h"
+#include"Components\InventorySystem\InventoryComponent.h"
 #include "Items\QuestActor.h"
 #include "EngineUtils.h"
 #include "Public\QuestStruct.h"
@@ -622,8 +624,22 @@ void AWarriorCharacter::OpenInventory()
 	{
 		APlayerHUD* PlayerHUD = Cast<APlayerHUD>(PlayerController->GetHUD());
 		PlayerHUD->OpenInventory();
+		PlayerHUD->GetInventory()->UpdateInventoryDisplay(InventoryComponent->InventoryItems);
+		
+		
+	
 	}
 
+}
+
+void AWarriorCharacter::EquipItem(const FInventoryStruct& Item)
+{
+	if (InventoryComponent)
+	{
+		InventoryComponent->EquipItem(Item);
+		GEngine->AddOnScreenDebugMessage(0, 5.f, FColor::Cyan, FString::Printf(TEXT("ItemEquipped")));
+
+	}
 }
 
 void AWarriorCharacter::MoveCamera()
@@ -1071,7 +1087,7 @@ void AWarriorCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputCo
 	PlayerInputComponent->BindAction(FName("MoveCamera"), IE_Released, this, &AWarriorCharacter::MoveCameraReleased);
 	PlayerInputComponent->BindAction(FName("Jump"), IE_Pressed, this, &ACharacter::Jump);
 	PlayerInputComponent->BindAction(FName("Use"), IE_Pressed, this, &AWarriorCharacter::Interact);
-	//PlayerInputComponent->BindAction(FName("Inventory"), IE_Pressed, this, &AWarriorCharacter::OpenInventory);
+	PlayerInputComponent->BindAction(FName("Inventory"), IE_Pressed, this, &AWarriorCharacter::OpenInventory);
 	PlayerInputComponent->BindAction(FName("Attack"), IE_Pressed, this, &AWarriorCharacter::Attack);
 	PlayerInputComponent->BindAction(FName("Attack"), IE_Released, this, &AWarriorCharacter::AttackReleassed);
 	PlayerInputComponent->BindAction(FName("Shield"), IE_Pressed, this, &AWarriorCharacter::Shield);
@@ -1170,7 +1186,6 @@ void AWarriorCharacter::Tick(float DeltaTime)
 	SetStaminaBar();
 	ResetCameraPosition();
 	CheckQuestProgress();
-	GEngine->AddOnScreenDebugMessage(1, 5.f, FColor::Cyan, FString::Printf(TEXT("COUNT : %d"), HoldingComboCounts));
 
 
 

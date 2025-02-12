@@ -9,7 +9,7 @@
 
 class UCharacterHUD;
 class UInventoryWidget;
-
+class UInventoryComponent;
 UCLASS()
 class PROJECTX_API APlayerHUD : public AHUD
 {
@@ -32,8 +32,11 @@ private:
 public:
 
 	void OpenInventory();
+	
 
 	FORCEINLINE UCharacterHUD* GetPlayerOverlay() const { return CharacterHUD; }
+
+	FORCEINLINE UInventoryWidget* GetInventory() const { return InventoryWidget;}
 
 	
 };

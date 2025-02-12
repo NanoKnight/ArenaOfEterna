@@ -60,6 +60,7 @@ void UInventoryComponent::EquipItem(const FInventoryStruct& ItemToEquip)
 			{
 				SpawnedWeapon->Equip(WarriorCharacter->GetMesh(), "WeaponSocket", WarriorCharacter, WarriorCharacter);
 				WarriorCharacter->EquippedWeapon = SpawnedWeapon;
+				WarriorCharacter->EquipWeapon(WarriorCharacter->EquippedWeapon);
 			}
 		}
 	}

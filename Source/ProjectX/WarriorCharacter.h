@@ -49,6 +49,7 @@ public:
 	FORCEINLINE UInventoryComponent* GetInventoryComponent() const { return InventoryComponent; }
 	void StaminaRegenerate(float DeltaTime);
 	/* </IHitInterface> */
+	void EquipWeapon(AWeapon* Weapon);
 	
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Materials")
 	UMaterialInterface* OverlayMaterial;
@@ -63,6 +64,8 @@ public:
 	void UpdateQuest(FName QuestRowName);
 	FQuestStruct GetCurrentQuest() const { return CurrentQuest; }
 
+	UFUNCTION()
+	void EquipItem(const FInventoryStruct& Item);
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Category = "SaveGame")
 	TArray<FString>KilledEnemiesNames;
@@ -111,12 +114,15 @@ protected:
 	void EKeyPressed();
 	void Interact();
 	void OpenInventory();
+
+
+
 	void MoveCamera();
 	void MoveCameraReleased();
 	/*
 	* Combat
 	*/
-	void EquipWeapon(AWeapon*Weapon);
+
 	virtual void Attack() override;
 	void AttackReleassed();
 	virtual void AttackEnd() override;
@@ -246,8 +252,6 @@ private:
 
 	UPROPERTY(EditAnywhere)
 	TSubclassOf<class AShield> ShieldClass;
-
-
 
 	UPROPERTY(EditDefaultsOnly, Category = Montages)
 	UAnimMontage* EquipMontage;
