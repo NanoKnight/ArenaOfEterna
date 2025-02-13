@@ -55,13 +55,18 @@ void UInventoryComponent::EquipItem(const FInventoryStruct& ItemToEquip)
 		UWorld* World = WarriorCharacter->GetWorld();
 		if (World)
 		{
-			AWeapon* SpawnedWeapon = World->SpawnActor<AWeapon>(ItemToEquip.ItemClass);
-			if (SpawnedWeapon)
+			if (ItemToEquip.ItemTypes == EItemTypes::Weapon)
 			{
-				SpawnedWeapon->Equip(WarriorCharacter->GetMesh(), "WeaponSocket", WarriorCharacter, WarriorCharacter);
-				WarriorCharacter->EquippedWeapon = SpawnedWeapon;
-				WarriorCharacter->EquipWeapon(WarriorCharacter->EquippedWeapon);
+				
+				AWeapon* SpawnedWeapon = World->SpawnActor<AWeapon>(ItemToEquip.ItemClass);
+				if (SpawnedWeapon)
+				{
+					SpawnedWeapon->Equip(WarriorCharacter->GetMesh(), "WeaponSocket", WarriorCharacter, WarriorCharacter);
+					WarriorCharacter->EquippedWeapon = SpawnedWeapon;
+					WarriorCharacter->EquipWeapon(WarriorCharacter->EquippedWeapon);
+				}
 			}
+			
 		}
 	}
 }

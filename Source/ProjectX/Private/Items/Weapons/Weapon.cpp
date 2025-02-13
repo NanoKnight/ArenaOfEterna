@@ -85,6 +85,7 @@ void AWeapon::PickUp(AWarriorCharacter* WarriorCharacter)
 		NewItem.ItemIcon = ItemIcon;
 		NewItem.EquipmentSlot = EEquipmentSlot::Weapon;
 		NewItem.ItemClass = this->GetClass();
+		NewItem.ItemTypes = EItemTypes::Weapon;
 		GEngine->AddOnScreenDebugMessage(0, 2.f, FColor::Cyan, FString::Printf(TEXT("PickedUp")));
 
 		WarriorCharacter->GetInventoryComponent()->AddItem(NewItem);

@@ -26,13 +26,18 @@ public:
 	UPROPERTY(meta = (BindWidget))
 	UTextBlock* ItemName;
 
-	UPROPERTY(meta = (BindWidget))
-	UButton* ItemButton;
+	FInventoryStruct Item;
+
+	//UPROPERTY(meta = (BindWidget))
+	//UButton* ItemButton;
 
 	void SetUp(const FInventoryStruct& NewItem);
 	UFUNCTION()
 	void OnItemClicked();
 
+	virtual FReply NativeOnMouseButtonDown(const FGeometry& InGeometry, const FPointerEvent& InMouseEvent)override;
+	virtual void NativeOnDragDetected(const FGeometry& InGeometry, const FPointerEvent& InMouseEvent , UDragDropOperation*& OutOperation)override;
+
 private:
-	FInventoryStruct Item;
+	
 };
