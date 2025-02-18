@@ -163,7 +163,7 @@ void AArenaGameMode::RemoveItemFormWorld()
 	for (AActor* Actor : AllItems)
 	{
 		AItemActor* Items = Cast<AItemActor>(Actor);
-		if (Items && AddedItems.Contains(Items->ItemName))
+		if (Items && AddedItems.Contains(Items->ItemID))
 		{
 			Items->Destroy();
 		}

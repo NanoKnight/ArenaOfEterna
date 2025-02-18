@@ -31,7 +31,7 @@ AItemActor::AItemActor()
 void AItemActor::BeginPlay()
 {
 	Super::BeginPlay();
-	ItemName = GetName();
+	ItemID = GetName();
 	Sphere->OnComponentBeginOverlap.AddDynamic(this, &AItemActor::OnSphereOverlap);
 	Sphere->OnComponentEndOverlap.AddDynamic(this, &AItemActor::OnSphereEndOverlap);
 
@@ -63,7 +63,7 @@ void AItemActor::OnSphereOverlap(UPrimitiveComponent* OverlappedComponent, AActo
 		AArenaGameMode* ArenaGameMode = Cast<AArenaGameMode>(GameMode);
 		if (ArenaGameMode)
 		{
-			ArenaGameMode->AddedItems.Add(ItemName);
+			ArenaGameMode->AddedItems.Add(ItemID);
 		}
 
 

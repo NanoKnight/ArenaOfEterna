@@ -22,6 +22,18 @@ enum class EEquipmentSlot : uint8
 
 };
 
+UENUM(BlueprintType)
+enum class EItemTypes : uint8
+{
+	Head,
+	Chest,
+	Legs,
+	Feet,
+	Weapon,
+	Shield
+
+};
+
 USTRUCT(BlueprintType)
 struct FInventoryStruct
 {
@@ -32,7 +44,13 @@ public:
 	FString ItemName;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	UTexture2D* ItemIcon;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	EEquipmentSlot EquipmentSlot;
+
+	UPROPERTY(EditAnywhere)
+	EItemTypes ItemTypes;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	TSubclassOf<AActor>ItemClass;
