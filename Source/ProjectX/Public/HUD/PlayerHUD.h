@@ -24,19 +24,15 @@ private:
 		TSubclassOf<UCharacterHUD> CharacterHUDClass;
 		UCharacterHUD* CharacterHUD;
 
-		UPROPERTY(EditDefaultsOnly)
-		TSubclassOf<UInventoryWidget> InventoryWidgetClass;
-		UInventoryWidget* InventoryWidget;
+
 		
 
 public:
 
-	void OpenInventory();
 	
 
 	FORCEINLINE UCharacterHUD* GetPlayerOverlay() const { return CharacterHUD; }
 
-	FORCEINLINE UInventoryWidget* GetInventory() const { return InventoryWidget;}
 
 	
 };

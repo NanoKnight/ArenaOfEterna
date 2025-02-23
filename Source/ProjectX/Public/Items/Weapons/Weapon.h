@@ -3,36 +3,37 @@
 #pragma once
 
 #include "CoreMinimal.h"
-#include "Items/ItemActor.h"
+#include "Items/Collectable.h"
+#include"../BaseItem.h"
 #include"./InterFaces/HitInterface.h"
 #include "../../Structs/InventoryStruct.h"
 #include "Weapon.generated.h"
 
-class USoundBase;
-class UBoxComponent;
-class AWarriorCharacter;
+
 
 /**
  * 
  */
 UCLASS()
-class PROJECTX_API AWeapon : public AItemActor , public IHitInterface
+class PROJECTX_API AWeapon : public ABaseItem, public IHitInterface
 {
 	GENERATED_BODY()
 public:
 
 	AWeapon();
-	void Equip(USceneComponent* InParent, FName InSocketName,AActor * NewOwner , APawn* NewInstigator );
 
-	void DeactivateEmbersEffect();
+	virtual void Equip(USceneComponent* InParent, FName InSocketName, AActor* NewOwner, APawn* NewInstigator);
 
-	void DisableSphereCollision();
+	virtual void AttachMeshToSocket(USceneComponent* InParent, const FName& InSocketName);
 
-	void PlayEquipSound();
+	virtual void DeactivateEmbersEffect();
+
+	virtual void DisableSphereCollision();
+
+	virtual void PlayEquipSound();
 
 	void PickUp(AWarriorCharacter* WarriorCharacter);
 
-	void AttachMeshToSocket(USceneComponent* InParent, const FName& InSocketName);
 
 	//****///
 
@@ -65,11 +66,6 @@ protected:
 private:
 	void BoxTrace(FHitResult& BoxHit);
 
-	UPROPERTY(EditAnywhere)
-	FString ItemName;
-	UPROPERTY(EditAnywhere)
-	UTexture2D* ItemIcon;
-
 	UPROPERTY(VisibleAnywhere, Category = "WeaponProperties")
 	UBoxComponent* WeaponBox;
 
@@ -78,9 +74,6 @@ private:
 
 	UPROPERTY(EditAnywhere, Category = "WeaponProperties")
 	bool bShowBoxDebug = false;
-
-	UPROPERTY(EditAnywhere, Category = "WeaponProperties")
-	USoundBase* EquipSound;
 
 	UPROPERTY(VisibleAnywhere)
 	USceneComponent* BoxTraceStart;
@@ -98,9 +91,6 @@ private:
 public:
 	FORCEINLINE UBoxComponent* GetWeaponBox()  const { return WeaponBox; }
 	FORCEINLINE float GetDamage() const { return Damage;}
-	
-	
-	
 	FORCEINLINE void SetDamage(float NewDamage) { Damage = NewDamage; }
 
 

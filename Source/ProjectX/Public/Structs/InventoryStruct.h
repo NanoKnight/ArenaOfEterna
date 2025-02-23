@@ -9,7 +9,7 @@
 /**
  * 
  */
-
+class ABaseItem;
 UENUM(BlueprintType)
 enum class EEquipmentSlot : uint8
 {
@@ -49,13 +49,19 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	EEquipmentSlot EquipmentSlot;
 
+	UPROPERTY(EditAnywhere,BlueprintReadwrite)
+	FName ItemSocketName;
+
 	UPROPERTY(EditAnywhere)
 	EItemTypes ItemTypes;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
-	TSubclassOf<AActor>ItemClass;
+	TSubclassOf<ABaseItem>ItemClass;
 
-
+	bool operator==(const FInventoryStruct& Other) const
+	{
+		return ItemName == Other.ItemName && EquipmentSlot == Other.EquipmentSlot && ItemTypes == Other.ItemTypes;
+	}
 
 	FInventoryStruct();
 	~FInventoryStruct();

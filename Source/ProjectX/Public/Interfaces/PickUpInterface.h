@@ -21,7 +21,7 @@ class PROJECTX_API IPickUpInterface
 	GENERATED_BODY()
 
 public:
-	virtual void SetOverlappingItem(class AItemActor* Item);
+	virtual void SetOverlappingItem(class ABaseItem* Item);
 	virtual void  AddXp(class AExperiencePoint* Xp);
 	virtual void AddGold(class ATreasure* Treasure);
 	virtual void AddHealth(class AHealthPoint* Health);

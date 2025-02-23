@@ -4,19 +4,31 @@
 #include "HUD/EqiupmentSlotWidget.h"
 #include"HUD/InventorySlotWidget.h"
 #include"../WarriorCharacter.h"
+#include"./Components/InventorySystem/InventoryComponent.h"
 #include "Blueprint/DragDropOperation.h"
-
+#include "Blueprint/WidgetBlueprintLibrary.h"
 #include"Components\Image.h"
+
+
 bool UEqiupmentSlotWidget::NativeOnDrop(const FGeometry& InGemotry, const FDragDropEvent& InDragDropEvent, UDragDropOperation* InOperation)
 {
 	UInventorySlotWidget* DraggedITem = Cast<UInventorySlotWidget>(InOperation->Payload);
-	if (DraggedITem)
+	if (DraggedITem && DraggedITem->Item.ItemTypes == ItemTypes)
 	{
-		
 		AWarriorCharacter* Warrior = Cast<AWarriorCharacter>(GetWorld()->GetFirstPlayerController()->GetPawn());
 		if (Warrior)
 		{
-			Warrior->EquipItem(DraggedITem->Item);
+			if (!EquippedItem.ItemName.IsEmpty())
+			{
+				Warrior->GetInventoryComponent()->UnEquipItem(EquippedItem,DraggedITem->EquippedItemActor);
+				Warrior->GetInventoryComponent()->InventoryItems.Add(EquippedItem);
+			}
+
+				Warrior->EquipItem(DraggedITem->Item);
+				Warrior->GetInventoryComponent()->RemoveFormInventory(DraggedITem->Item);
+				EquippedItem = DraggedITem->Item;
+				EquippedItemActor = DraggedITem->EquippedItemActor;
+				EquipmentIcon->SetBrushFromSoftTexture(DraggedITem->Item.ItemIcon);
 		}
 		return true;
 
@@ -30,5 +42,45 @@ void UEqiupmentSlotWidget::SetItemIcon(UTexture2D * NewIcon)
 	{
 		EquipmentIcon->SetBrushFromTexture(NewIcon);
 
+	}
+}
+
+void UEqiupmentSlotWidget::NativeConstruct()
+{
+	
+	SetDefaultWeaponIcon();
+}
+
+void UEqiupmentSlotWidget::SetDefaultWeaponIcon()
+{
+	
+		EquipmentIcon->SetBrushFromTexture(EquipmentImage);
+	
+}
+
+FReply UEqiupmentSlotWidget::NativeOnMouseButtonDown(const FGeometry& InGeometry, const FPointerEvent& InMouseEvent)
+{
+	 FReply Reply = Super::NativeOnMouseButtonDown(InGeometry, InMouseEvent);
+
+	 if (InMouseEvent.IsMouseButtonDown(EKeys::LeftMouseButton))
+	 {
+		 return UWidgetBlueprintLibrary::DetectDragIfPressed(InMouseEvent, this, EKeys::LeftMouseButton).NativeReply;
+	 }
+
+	 return FReply::Unhandled();
+}
+
+void UEqiupmentSlotWidget::NativeOnDragDetected(const FGeometry& InGeometry, const FPointerEvent& InMouseEvent, UDragDropOperation*& OutOperation)
+{
+
+	Super::NativeOnDragDetected(InGeometry, InMouseEvent, OutOperation);
+
+	UDragDropOperation* DragDropOp = UWidgetBlueprintLibrary::CreateDragDropOperation(UDragDropOperation::StaticClass());
+	if (DragDropOp)
+	{
+		DragDropOp->Payload = this;
+		DragDropOp->DefaultDragVisual = this;
+		DragDropOp->Pivot = EDragPivot::MouseDown;		
+		OutOperation = DragDropOp;
 	}
 }

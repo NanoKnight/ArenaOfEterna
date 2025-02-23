@@ -7,6 +7,7 @@
 #include"Components\Button.h"
 #include "Blueprint/WidgetBlueprintLibrary.h"
 #include "Blueprint/DragDropOperation.h"
+#include"Items\BaseItem.h"
 #include "Components/TextBlock.h"
 
 void UInventorySlotWidget::SetUp(const FInventoryStruct& NewItem)
@@ -22,12 +23,15 @@ void UInventorySlotWidget::SetUp(const FInventoryStruct& NewItem)
 	if (ItemIcon && Item.ItemIcon)
 	{
 		ItemIcon->SetBrushFromTexture(Item.ItemIcon);
+		
 	}
 
 	if (ItemName)
 	{
 		ItemName->SetText(FText::FromString(Item.ItemName));
 	}
+
+
 
 	
 }
@@ -64,7 +68,6 @@ void UInventorySlotWidget::NativeOnDragDetected(const FGeometry& InGeometry, con
 
 	Super::NativeOnDragDetected(InGeometry, InMouseEvent, OutOperation);
 
-	GEngine->AddOnScreenDebugMessage(-1, 5.f, FColor::Red, TEXT("dragging"));
 
 
 	UDragDropOperation* DragDropOp = UWidgetBlueprintLibrary::CreateDragDropOperation(UDragDropOperation::StaticClass());

@@ -22,9 +22,8 @@ ABaseCharacter::ABaseCharacter()
 	EnemyOutlineMesh = CreateDefaultSubobject<USkeletalMeshComponent>(TEXT("OutlineMesh"));
 	EnemyOutlineMesh->SetupAttachment(GetMesh());
 	Attributes = CreateDefaultSubobject<UAttributeComponent>(TEXT("EnemyAttributes"));
-	InventoryComponent = CreateDefaultSubobject<UInventoryComponent>(TEXT("InventoryComponent"));
 	GetCapsuleComponent()->SetCollisionResponseToChannel(ECollisionChannel::ECC_Camera, ECollisionResponse::ECR_Ignore);
-
+	InventoryComponent = CreateDefaultSubobject<UInventoryComponent>(TEXT("InventoryComponent"));
 }
 
 void ABaseCharacter::BeginPlay()
@@ -63,6 +62,7 @@ void ABaseCharacter::GetHit_Implementation(const FVector& ImpactPoint,AActor* Hi
 	else
 	{
 		Die();
+
 	}
 	PlayHitSound(ImpactPoint);
 	SpawnHitParticles(ImpactPoint);

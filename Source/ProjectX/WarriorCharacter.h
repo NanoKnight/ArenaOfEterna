@@ -8,15 +8,22 @@
 #include"Blueprint/UserWidget.h"
 #include"Public\Interfaces\PickUpInterface.h"
 #include "Public\QuestStruct.h"
+#include"Public\Items\ExperiencePoint.h"
+#include"Public\Items/HealthPoint.h"
+#include"Public\Items/Treasure.h"
+#include"Public\Items\BaseItem.h"
+#include"Public\Items\Collectable.h"
 #include "WarriorCharacter.generated.h"
-
 
 
 
 class USpringArmComponent;
 class AShield;
 class UCameraComponent;
-class AItemActor;
+class ABaseItem;
+class ACollectable;
+class AExperiencePoint;
+class AHealthPoint;
 class ATreasure;
 class USphereComponent;
 class AEnemy;
@@ -25,6 +32,7 @@ class UQuestUI;
 class AArenaGameMode;
 class ASpawnManager;
 class AQuestActor;
+class UInventoryWidget;
 
 
 
@@ -49,6 +57,7 @@ public:
 	FORCEINLINE UInventoryComponent* GetInventoryComponent() const { return InventoryComponent; }
 	void StaminaRegenerate(float DeltaTime);
 	/* </IHitInterface> */
+
 	void EquipWeapon(AWeapon* Weapon);
 	
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Materials")
@@ -102,6 +111,12 @@ public:
 
 	UPROPERTY(BlueprintReadOnly, Category = "Quest")
 	AQuestActor* QuestActor;
+
+
+	UPROPERTY(EditDefaultsOnly)
+	TSubclassOf<UInventoryWidget> InventoryWidgetClass;
+
+	UInventoryWidget* InventoryWidget;
 
 protected:
 	virtual void BeginPlay() override;
@@ -248,7 +263,7 @@ private:
 	UCameraComponent* ViewCamera;
 	
 	UPROPERTY(VisibleInstanceOnly)
-	AItemActor* OverlappingItem;
+	ABaseItem* OverlappingItem;
 
 	UPROPERTY(EditAnywhere)
 	TSubclassOf<class AShield> ShieldClass;
@@ -330,7 +345,7 @@ public:
 	void ComboCountTimer(float DeltaTime);
 	void StaminaRegen();
 	virtual void SetupPlayerInputComponent(class UInputComponent* PlayerInputComponent) override;
-	virtual void SetOverlappingItem(AItemActor* Item) override;  
+	virtual void SetOverlappingItem(ABaseItem* Item) override;
 	virtual void AddXp(AExperiencePoint* Xp) override;
 	bool ExpGreaterMaxExp();
 	void SetExpPoint(AExperiencePoint* Xp);
@@ -339,5 +354,8 @@ public:
 	FORCEINLINE ECharacterStates GetCharacterStates() const { return CharacterStates; }
 	FORCEINLINE EActionState GetActionState() const { return ActionState; }
 	FORCEINLINE EMovementState GetMovementState() const { return MovementState; }
+
+	FORCEINLINE void SetCharacterStates(ECharacterStates NewStates) { CharacterStates = NewStates; }
+
 
 };

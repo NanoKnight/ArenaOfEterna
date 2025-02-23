@@ -7,7 +7,7 @@
 #include "Kismet/GameplayStatics.h"
 #include "GameFramework/CharacterMovementComponent.h"
 #include "Components\SphereComponent.h"
-#include "Items\ItemActor.h"
+#include "Items\BaseItem.h"
 #include"Items\Weapons\Weapon.h"
 #include"Items\Weapons\Shield.h"
 #include"Enemy\Enemy.h"
@@ -67,8 +67,8 @@ void AWarriorCharacter::BeginPlay()
 	SpawnDefaultShield();
 	SpawnDefaultWeapon();
 	InitializePlayerOverlay();
+
 	defaultCameraLoc = ViewCamera->GetRelativeLocation();
-	
 
 
 	FString Path = TEXT("/Script/Engine.DataTable'/Game/Blueprints/Data/DT_QuestDataTable.DT_QuestDataTable'");
@@ -130,6 +130,7 @@ void AWarriorCharacter::LoadSaveGame()
 
 void AWarriorCharacter::SpawnDefaultWeapon()
 {
+	
 	UWorld* World = GetWorld();
 	if (World && WeaponClass)
 	{
@@ -550,11 +551,6 @@ void AWarriorCharacter::MoveRight(float value)
 
 }
 
-/*void AWarriorCharacter::Turn(float Value)
-{
-	float TurnRate = 0.5f;
-	AddControllerYawInput(Value * TurnRate);
-}*/
 
 void AWarriorCharacter::CameraForward(float Value)
 {
@@ -610,7 +606,7 @@ void AWarriorCharacter::EKeyPressed()
 
 void AWarriorCharacter::Interact()
 {
-	AWeapon* OverlappingWeapon = Cast<AWeapon>(OverlappingItem);
+	ABaseItem* OverlappingWeapon = Cast<ABaseItem>(OverlappingItem);
 	if (OverlappingWeapon)
 	{
 		OverlappingWeapon->PickUp(this);
@@ -619,16 +615,7 @@ void AWarriorCharacter::Interact()
 
 void AWarriorCharacter::OpenInventory()
 {
-	APlayerController* PlayerController = GetWorld()->GetFirstPlayerController();
-	if (PlayerController)
-	{
-		APlayerHUD* PlayerHUD = Cast<APlayerHUD>(PlayerController->GetHUD());
-		PlayerHUD->OpenInventory();
-		PlayerHUD->GetInventory()->UpdateInventoryDisplay(InventoryComponent->InventoryItems);
-		
-		
-	
-	}
+	InventoryComponent->OpenInventory();
 
 }
 
@@ -637,7 +624,6 @@ void AWarriorCharacter::EquipItem(const FInventoryStruct& Item)
 	if (InventoryComponent)
 	{
 		InventoryComponent->EquipItem(Item);
-		GEngine->AddOnScreenDebugMessage(0, 5.f, FColor::Cyan, FString::Printf(TEXT("ItemEquipped")));
 
 	}
 }
@@ -709,7 +695,7 @@ void AWarriorCharacter::PlayShieldReactMontage()
 
 void AWarriorCharacter::EquipWeapon(AWeapon* Weapon)
 {
-	Weapon->Equip(GetMesh(), FName("Sword"), this, this);
+	//Weapon->Equip(GetMesh(), FName("Sword"), this, this);
 	CharacterStates = ECharacterStates::ECS_EquippedOnehand;
 	OverlappingItem = nullptr;
 	EquippedWeapon = Weapon;
@@ -811,7 +797,7 @@ void AWarriorCharacter::SkillCanDamageF(float SphereRadiusFloat, float SkillDama
 		TraceType,
 		false,
 		IgnoredActors,
-		EDrawDebugTrace::ForDuration,
+		EDrawDebugTrace::None,
 		OutHits,
 		true
 	);
@@ -1102,7 +1088,7 @@ void AWarriorCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputCo
 }
 
 
-void AWarriorCharacter::SetOverlappingItem(AItemActor* Item)
+void AWarriorCharacter::SetOverlappingItem(ABaseItem* Item)
 {
 	OverlappingItem = Item;
 }
