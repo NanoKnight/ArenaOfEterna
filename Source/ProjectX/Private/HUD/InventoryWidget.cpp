@@ -2,7 +2,8 @@
 
 
 #include "HUD/InventoryWidget.h"
-#include "Components/VerticalBox.h"
+#include "Components/GridPanel.h"
+#include"Components\GridSlot.h"
 #include"HUD\EqiupmentSlotWidget.h"
 #include "Blueprint/DragDropOperation.h"
 #include"Components\InventorySystem\InventoryComponent.h"
@@ -13,6 +14,50 @@ bool UInventoryWidget::NativeOnDrop(const FGeometry& InGeometry, const FDragDrop
 {
 /********************************BU FONKSIYONU OPTIMIZE ETMEYE CALIS************************************/
 
+	CheckHoveringOnInventoryList(InDragDropEvent);
+	if (IsHoveringOnInventoryList())
+	{
+		UEqiupmentSlotWidget* DraggedItem = Cast<UEqiupmentSlotWidget>(InOperation->Payload);
+		if (DraggedItem)
+		{
+			AWarriorCharacter* Warrior = Cast<AWarriorCharacter>(GetWorld()->GetFirstPlayerController()->GetPawn());
+			if (Warrior && !DraggedItem->EquippedItem.ItemName.IsEmpty())
+			{
+				Warrior->GetInventoryComponent()->UnEquipItem(DraggedItem->EquippedItem, DraggedItem->EquippedItemActor);
+
+				TArray<FInventoryStruct> InventoryArray;
+
+				UInventorySlotWidget* ItemSlot = CreateWidget<UInventorySlotWidget>(this, InventorySlotWidgetClass);
+
+					if (ItemSlot)
+					{
+
+						ItemSlot->SetUp(DraggedItem->EquippedItem);
+						Warrior->GetInventoryComponent()->InventoryItems.Add(DraggedItem->EquippedItem);
+						//InventoryList->AddChild(ItemSlot);
+
+					
+						UGridSlot* GridSlot = InventoryList->AddChildToGrid(ItemSlot);
+						if (GridSlot)
+						{
+
+					 	   UpdateInventoryDisplay(Warrior->GetInventoryComponent()->InventoryItems);
+					 	   GridSlot->SetPadding(FMargin(5.f));
+
+						}
+
+					}
+				DraggedItem->SetDefaultWeaponIcon();
+				DraggedItem->EquippedItem = FInventoryStruct();
+
+			}
+		}
+	}
+	return true;
+}
+
+void UInventoryWidget::CheckHoveringOnInventoryList(const FDragDropEvent& InDragDropEvent)
+{
 	if (InventoryList)
 	{
 		FGeometry InventoryListGeometry = InventoryList->GetCachedGeometry();
@@ -31,40 +76,6 @@ bool UInventoryWidget::NativeOnDrop(const FGeometry& InGeometry, const FDragDrop
 		}
 
 	}
-	if (IsHoveringOnInventoryList())
-	{
-		UEqiupmentSlotWidget* DraggedItem = Cast<UEqiupmentSlotWidget>(InOperation->Payload);
-		if (DraggedItem)
-		{
-			AWarriorCharacter* Warrior = Cast<AWarriorCharacter>(GetWorld()->GetFirstPlayerController()->GetPawn());
-			if (Warrior && !DraggedItem->EquippedItem.ItemName.IsEmpty())
-			{
-				Warrior->GetInventoryComponent()->UnEquipItem(DraggedItem->EquippedItem, DraggedItem->EquippedItemActor);
-
-				TArray<FInventoryStruct> InventoryArray;
-				InventoryArray.Add(DraggedItem->EquippedItem);
-
-				for (const FInventoryStruct& Item : InventoryArray)
-				{
-					UInventorySlotWidget* ItemSlot = CreateWidget<UInventorySlotWidget>(this, InventorySlotWidgetClass);
-
-					if (ItemSlot)
-					{
-
-						ItemSlot->SetUp(Item);
-						Warrior->GetInventoryComponent()->InventoryItems.Add(DraggedItem->EquippedItem);
-						InventoryList->AddChild(ItemSlot);
-
-					}
-
-				}
-				DraggedItem->SetDefaultWeaponIcon();
-				DraggedItem->EquippedItem = FInventoryStruct();
-
-			}
-		}
-	}
-	return true;
 }
 
 bool UInventoryWidget::IsHoveringOnInventoryList()
@@ -72,14 +83,8 @@ bool UInventoryWidget::IsHoveringOnInventoryList()
 	return bIsHovering == true;
 }
 
-void UInventoryWidget::Hoverfunc()
-{
-	if (InventoryList->IsHovered())
-	{
-		GEngine->AddOnScreenDebugMessage(-1, 2.f, FColor::Cyan, FString(TEXT("Hovering")));
 
-	}
-}
+
 
 void UInventoryWidget::UpdateInventoryDisplay(const TArray<FInventoryStruct>& InventoryItems)
 {
@@ -87,14 +92,28 @@ void UInventoryWidget::UpdateInventoryDisplay(const TArray<FInventoryStruct>& In
 	if (!InventoryList || !InventorySlotWidgetClass)return;
 	InventoryList->ClearChildren();
 
-	for (const FInventoryStruct& Item : InventoryItems)
-	{	
+	for (int32 i = 0; i < InventoryItems.Num(); i++)
+	{
+		const FInventoryStruct& Item = InventoryItems[i];
 		UInventorySlotWidget* ItemSlot = CreateWidget<UInventorySlotWidget>(this, InventorySlotWidgetClass);
-		
+
 		if (ItemSlot)
 		{
 			ItemSlot->SetUp(Item);
 			InventoryList->AddChild(ItemSlot);
+			
+			int32 Row = i / 6;
+			int32 Column = i % 6;
+			UGridSlot* GridSlot = InventoryList->AddChildToGrid(ItemSlot, Row, Column);
+			if (GridSlot)
+			{
+		
+				
+					GridSlot->SetPadding(FMargin(5.f));
+				
+			}
+
+			//InventoryListt->AddChild(ItemSlot);
 		
 		
 		}
