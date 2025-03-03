@@ -3,6 +3,8 @@
 
 #include"./Components/InventorySystem/InventoryComponent.h"
 #include"../WarriorCharacter.h"
+#include "HUD/InventoryWidget.h"
+#include"Items\BaseItem.h"
 #include "./Items/Weapons/Weapon.h"
 
 
@@ -20,10 +22,7 @@ UInventoryComponent::UInventoryComponent()
 // Called when the game starts
 void UInventoryComponent::BeginPlay()
 {
-	Super::BeginPlay();
-
-	// ...
-	
+	Super::BeginPlay();	
 }
 
 
@@ -31,8 +30,6 @@ void UInventoryComponent::BeginPlay()
 void UInventoryComponent::TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction)
 {
 	Super::TickComponent(DeltaTime, TickType, ThisTickFunction);
-
-	// ...
 }
 
 void UInventoryComponent::AddItem(const FInventoryStruct& NewItem)
@@ -42,12 +39,9 @@ void UInventoryComponent::AddItem(const FInventoryStruct& NewItem)
 
 void UInventoryComponent::EquipItem(const FInventoryStruct& ItemToEquip)
 {
-	if (EquippedItems.Contains(ItemToEquip.EquipmentSlot))
-	{
-		UnEquipItem(ItemToEquip.EquipmentSlot);
-	}
+	/* bu fonksiyonun equip weapon kýsmý gözden geçirilmeli weaponeq yerine arrayden kullanmayý denemelisin  */
 
-	EquippedItems.Add(ItemToEquip.EquipmentSlot, ItemToEquip);
+	EquippedItems.Add(ItemToEquip);
 
 	AWarriorCharacter* WarriorCharacter = Cast<AWarriorCharacter>(GetOwner());
 	if (WarriorCharacter)
@@ -58,24 +52,136 @@ void UInventoryComponent::EquipItem(const FInventoryStruct& ItemToEquip)
 			if (ItemToEquip.ItemTypes == EItemTypes::Weapon)
 			{
 				
-				AWeapon* SpawnedWeapon = World->SpawnActor<AWeapon>(ItemToEquip.ItemClass);
-				if (SpawnedWeapon)
+				ABaseItem* SpawnedItem = GetWorld()->SpawnActor<ABaseItem>(ItemToEquip.ItemClass);
+				if (SpawnedItem)
 				{
-					SpawnedWeapon->Equip(WarriorCharacter->GetMesh(), "WeaponSocket", WarriorCharacter, WarriorCharacter);
-					WarriorCharacter->EquippedWeapon = SpawnedWeapon;
-					WarriorCharacter->EquipWeapon(WarriorCharacter->EquippedWeapon);
+				AWeapon* WeaponRef = Cast<AWeapon>(SpawnedItem);
+				WarriorCharacter->EquipWeapon(WeaponRef);
+				SpawnedItem->Equip(WarriorCharacter->GetMesh(), ItemToEquip.ItemSocketName, WarriorCharacter, WarriorCharacter);
+
 				}
+		
 			}
 			
+				ABaseItem* SpawnedItem = World->SpawnActor<ABaseItem>(ItemToEquip.ItemClass);
+				SpawnedItem->Equip(WarriorCharacter->GetMesh(), ItemToEquip.ItemSocketName, WarriorCharacter, WarriorCharacter);
+				WarriorCharacter->ItemsToEquip.Add(SpawnedItem);
 		}
 	}
 }
 
-void UInventoryComponent::UnEquipItem(EEquipmentSlot Slot)
+void UInventoryComponent::UnEquipItem(const FInventoryStruct& Item, ABaseItem* EquippedItem)
 {
-	if (EquippedItems.Contains(Slot))
+	if (EquippedItems.Contains(Item))
 	{
-		EquippedItems.Remove(Slot);
+		EquippedItems.Remove(Item);
+
+		AWarriorCharacter* WarriorCharacter = Cast<AWarriorCharacter>(GetOwner());
+		if (WarriorCharacter)
+		{
+			UWorld* World = WarriorCharacter->GetWorld();
+			if (World)
+			{
+				if (Item.ItemTypes == EItemTypes::Weapon)
+				{
+					WarriorCharacter->SetCharacterStates(ECharacterStates::ECS_UnEquipped);
+					WarriorCharacter->EquippedWeapon->Destroy();
+				}
+				
+					for (int32 i = WarriorCharacter->ItemsToEquip.Num() - 1; i >= 0; i--)
+					{
+						if (WarriorCharacter->ItemsToEquip[i] && WarriorCharacter->ItemsToEquip[i]->ItemType == Item.ItemTypes) {
+							WarriorCharacter->ItemsToEquip[i]->DetachFromActor(FDetachmentTransformRules::KeepWorldTransform);
+							WarriorCharacter->ItemsToEquip[i]->Destroy();
+							WarriorCharacter->ItemsToEquip.RemoveAt(i);
+						}
+					}
+				
+				  
+			}
+		}
+		
 	}
 }
+
+void UInventoryComponent::RemoveFormInventory(const FInventoryStruct& Item)
+{
+	
+	InventoryItems.Remove(Item);
+	InventoryWidget->UpdateInventoryDisplay(InventoryItems);
+
+
+}
+
+void UInventoryComponent::OpenInventory()
+{
+	
+	UWorld* World = GetWorld();
+	if (World)
+	{
+		APlayerController* Controller = World->GetFirstPlayerController();
+		if (InventoryWidgetClass && Controller)
+		{
+			//Controller->Pause();
+			CreateInventoryWidget(Controller);
+			ToggleInventory(Controller);
+
+		}
+	}
+}
+void UInventoryComponent::ToggleInventory(APlayerController* Controller)
+{
+	if (InventoryWidget)
+	{
+		if (InventoryWidget->GetVisibility() == ESlateVisibility::Visible)
+		{
+			InventoryWidget->SetVisibility(ESlateVisibility::Hidden);
+			InventoryWidget->UpdateInventoryDisplay(InventoryItems);
+			Controller->bShowMouseCursor = false;
+			FInputModeGameOnly InputMode;
+			Controller->SetInputMode(InputMode);
+
+		}
+		else
+		{
+			InventoryWidget->SetVisibility(ESlateVisibility::Visible);
+			InventoryWidget->UpdateInventoryDisplay(InventoryItems);
+			Controller->bShowMouseCursor = true;
+			FInputModeUIOnly InputMode;
+			InputMode.SetWidgetToFocus(InventoryWidget->TakeWidget());
+			Controller->SetInputMode(InputMode);
+           
+
+
+
+		}
+
+	}
+}
+
+
+
+void UInventoryComponent::CreateInventoryWidget(APlayerController* Controller)
+{
+	if (!InventoryWidget)
+	{
+		if (Controller && InventoryWidgetClass)
+		{
+			FInputModeUIOnly InputMode;
+
+			InventoryWidget = CreateWidget<UInventoryWidget>(Controller, InventoryWidgetClass);
+			InventoryWidget->AddToViewport();
+			InventoryWidget->UpdateInventoryDisplay(InventoryItems);
+
+			InputMode.SetWidgetToFocus(InventoryWidget->TakeWidget());  
+			//InputMode.SetLockMouseToViewportBehavior(EMouseLockMode::LockAlways);
+			Controller->SetInputMode(InputMode);
+			GEngine->AddOnScreenDebugMessage(0, 2.f, FColor::Cyan, FString::Printf(TEXT("First Opened")));
+			Controller->bShowMouseCursor = true;
+
+		}
+	}
+}
+
+
 

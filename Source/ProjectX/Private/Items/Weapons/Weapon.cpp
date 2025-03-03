@@ -13,6 +13,9 @@
 #include"NiagaraComponent.h"
 
 
+
+/******************GEREKSIZ KODLARI SIL DIKKATLI BAK********************************/
+
 AWeapon::AWeapon()
 {
 	WeaponBox = CreateDefaultSubobject<UBoxComponent>(TEXT("Box"));
@@ -24,73 +27,40 @@ AWeapon::AWeapon()
 	WeaponBox->SetCollisionEnabled(ECollisionEnabled::NoCollision);
 	WeaponBox->SetCollisionResponseToAllChannels(ECollisionResponse::ECR_Overlap);
 	WeaponBox->SetCollisionResponseToChannel(ECollisionChannel::ECC_Pawn, ECollisionResponse::ECR_Ignore);
+
+
+
 }
 
 
 
 void AWeapon::Equip(USceneComponent* InParent, FName InSocketName,AActor* NewOwner, APawn* NewInstigator)
 { 
-	ItemState = EItemState::EIS_Equipped;
-	SetOwner(NewOwner);
-	SetInstigator(NewInstigator);
-	AttachMeshToSocket(InParent, InSocketName);
-	DisableSphereCollision();
-	PlayEquipSound();
-	DeactivateEmbersEffect();
+	Super::Equip(InParent, InSocketName, NewOwner, NewInstigator);
 
-	AGameModeBase* GameMode = GetWorld()->GetAuthGameMode();
-	AArenaGameMode* ArenaGameMode = Cast<AArenaGameMode>(GameMode);
-	if (ArenaGameMode)
-	{
-		ArenaGameMode->AddedItems.Add(ItemName);
-	}
 }
 
 void AWeapon::DeactivateEmbersEffect()
 {
-	if (ItemEffect)
-	{
-		ItemEffect->Deactivate();
-	}
+	Super::DeactivateEmbersEffect();
+
 }
 
 void AWeapon::DisableSphereCollision()
 {
-	if (Sphere)
-	{
-		Sphere->SetCollisionEnabled(ECollisionEnabled::NoCollision);
-	}
+	Super::DisableSphereCollision();
+
 
 }
 
 void AWeapon::PlayEquipSound()
 {
-	if (EquipSound)
-	{
-		UGameplayStatics::PlaySoundAtLocation(
-			this,
-			EquipSound,
-			GetActorLocation()
-		);
-	}
+	Super::PlayEquipSound();
 }
 
 void AWeapon::PickUp(AWarriorCharacter* WarriorCharacter)
 {
-
-	if (WarriorCharacter && WarriorCharacter->GetInventoryComponent())
-	{
-		FInventoryStruct NewItem;
-		NewItem.ItemName = ItemName;
-		NewItem.ItemIcon = ItemIcon;
-		NewItem.EquipmentSlot = EEquipmentSlot::Weapon;
-		NewItem.ItemClass = this->GetClass();
-		NewItem.ItemTypes = EItemTypes::Weapon;
-		GEngine->AddOnScreenDebugMessage(0, 2.f, FColor::Cyan, FString::Printf(TEXT("PickedUp")));
-
-		WarriorCharacter->GetInventoryComponent()->AddItem(NewItem);
-		this->Destroy();
-	}
+	Super::PickUp(WarriorCharacter);
 }
 
 void AWeapon::BeginPlay()
@@ -101,31 +71,22 @@ void AWeapon::BeginPlay()
 
 void AWeapon::OnSphereOverlap(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult)
 {
-	AWarriorCharacter* WarriorCharacter = Cast<AWarriorCharacter>(UGameplayStatics::GetPlayerCharacter(GetWorld(), 0));
-	IPickUpInterface* ItemActorInterface = Cast<IPickUpInterface>(OtherActor);
-	if (ItemActorInterface)
-	{
-		ItemActorInterface->SetOverlappingItem(this);
-	}
+
+	Super::OnSphereOverlap(OverlappedComponent, OtherActor, OtherComp, OtherBodyIndex, bFromSweep, SweepResult);
+
 }
 
 void AWeapon::OnSphereEndOverlap(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex)
 {
-
-	IPickUpInterface* ItemActorInterface = Cast<IPickUpInterface>(OtherActor);
-	if (ItemActorInterface)
-	{
-		ItemActorInterface->SetOverlappingItem(nullptr);
-
-	}
+	Super::OnSphereEndOverlap(OverlappedComponent, OtherActor, OtherComp, OtherBodyIndex);
 }
 
 void AWeapon::AttachMeshToSocket(USceneComponent* InParent, const FName& InSocketName)
 {
-	FAttachmentTransformRules TransformRules(EAttachmentRule::SnapToTarget, true);
-	ItemMesh->AttachToComponent(InParent, TransformRules, InSocketName);
+	Super::AttachMeshToSocket(InParent, InSocketName);
+
 }
-/**********************************/
+
 
 void AWeapon::OnBoxOverlap(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult)
 {
@@ -133,6 +94,7 @@ void AWeapon::OnBoxOverlap(UPrimitiveComponent* OverlappedComponent, AActor* Oth
 	if (ActorIsSampleType(OtherActor))
 	{
 		return;
+
 	}
 	
 	FHitResult BoxHit;

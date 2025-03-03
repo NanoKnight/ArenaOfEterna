@@ -3,14 +3,14 @@
 #pragma once
 
 #include "CoreMinimal.h"
-#include "Items/ItemActor.h"
+#include "Items/Collectable.h"
 #include "ExperiencePoint.generated.h"
 
 /**
  * 
  */
 UCLASS()
-class PROJECTX_API AExperiencePoint : public AItemActor
+class PROJECTX_API AExperiencePoint : public ACollectable
 {
 	GENERATED_BODY()
 protected:

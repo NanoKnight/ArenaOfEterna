@@ -11,6 +11,7 @@
 
 
 class AWeapon;
+class ABaseItem;
 class UAttributeComponent;
 class UInventoryComponent;
 class UAnimMontage;
@@ -29,6 +30,8 @@ public:
   UPROPERTY(VisibleAnywhere, Category = Weapon)
   AWeapon* EquippedWeapon;
 
+  UPROPERTY(EditAnywhere)
+  TArray<ABaseItem*> ItemsToEquip;
 
 
   UPROPERTY(EditDefaultsOnly)

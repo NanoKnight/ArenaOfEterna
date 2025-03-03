@@ -7,7 +7,7 @@
 #include"../../Structs/InventoryStruct.h"
 #include "InventoryComponent.generated.h"
 
-
+class UInventoryWidget;
 UCLASS( ClassGroup=(Custom), meta=(BlueprintSpawnableComponent) )
 class PROJECTX_API UInventoryComponent : public UActorComponent
 {
@@ -29,7 +29,7 @@ public:
 	TArray<FInventoryStruct> InventoryItems;
 	
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Inventory")
-	TMap<EEquipmentSlot, FInventoryStruct>EquippedItems;
+	TArray<FInventoryStruct>EquippedItems;
 
 	UFUNCTION(BlueprintCallable,Category="Inventory")
 	void AddItem(const FInventoryStruct& NewItem);
@@ -38,7 +38,26 @@ public:
 	void EquipItem(const FInventoryStruct& ItemToEquip);
 
 	UFUNCTION(BlueprintCallable, Category = "Inventory")
-	void UnEquipItem(EEquipmentSlot Slot);
+	void UnEquipItem(const FInventoryStruct& Item , ABaseItem* EquippedItem);
+
+	UFUNCTION(BlueprintCallable,Category="Inventory")
+	void RemoveFormInventory(const FInventoryStruct& Item);
+
+	UFUNCTION(BlueprintCallable, Category = "Inventory")
+	void OpenInventory();
+
+	void ToggleInventory(APlayerController* Controller);
+
+
+
+	UPROPERTY(EditDefaultsOnly)
+	TSubclassOf<UInventoryWidget> InventoryWidgetClass;
+
+	UInventoryWidget* InventoryWidget;
+private:
+	void CreateInventoryWidget(APlayerController* Controller);
+
+
 
 };
 

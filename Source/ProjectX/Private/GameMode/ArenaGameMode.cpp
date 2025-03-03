@@ -5,7 +5,7 @@
 #include"Enemy\Enemy.h"
 #include"Components\AttributeComponent.h"
 #include "SaveGames/EternaSaveGame.h"
-#include"Items\ItemActor.h"
+#include"Items\BaseItem.h"
 #include "Kismet/GameplayStatics.h"
 #include "./Items/EnemySpawner.h"
 #include"../WarriorCharacter.h"
@@ -94,7 +94,6 @@ void AArenaGameMode::SaveGame()
 		{
 			SaveGameObject->AddItems(AddedItemsa);
 		}
-		SaveGameObject->EquippedWeapon  = WarriorCharacter->EquippedWeapon->GetClass();
 		UGameplayStatics::SaveGameToSlot(SaveGameObject, TEXT("Save"), 0);
 	}
 }
@@ -133,7 +132,7 @@ void AArenaGameMode::LoadGame()
 		for (FString AddedItemsArray : AddedItems)
 		{
 			RemoveItemFormWorld();
-			WarriorCharacter->WeaponClass = SaveGameObject->EquippedWeapon;
+			//WarriorCharacter->WeaponClass = SaveGameObject->EquippedWeapon;
 
 		}
 	}
@@ -159,10 +158,10 @@ void AArenaGameMode::RemoveEnemyFromWorld()
 void AArenaGameMode::RemoveItemFormWorld()
 {
 	TArray<AActor*> AllItems;
-	UGameplayStatics::GetAllActorsOfClass(GetWorld(), AItemActor::StaticClass(), AllItems);
+	UGameplayStatics::GetAllActorsOfClass(GetWorld(), ABaseItem::StaticClass(), AllItems);
 	for (AActor* Actor : AllItems)
 	{
-		AItemActor* Items = Cast<AItemActor>(Actor);
+		ABaseItem* Items = Cast<ABaseItem>(Actor);
 		if (Items && AddedItems.Contains(Items->ItemID))
 		{
 			Items->Destroy();

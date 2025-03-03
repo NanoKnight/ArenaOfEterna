@@ -11,6 +11,7 @@ class UButton;
 class UImage;
 class UTextBlock;
 class AWarriorCharacter;
+class ABaseItem;
 /**
  * 
  */
@@ -27,6 +28,8 @@ public:
 	UTextBlock* ItemName;
 
 	FInventoryStruct Item;
+
+	ABaseItem* EquippedItemActor;
 
 	//UPROPERTY(meta = (BindWidget))
 	//UButton* ItemButton;

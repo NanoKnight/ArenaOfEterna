@@ -3,14 +3,14 @@
 #pragma once
 
 #include "CoreMinimal.h"
-#include "Items/ItemActor.h"
+#include "Items/Collectable.h"
 #include "Treasure.generated.h"
 
 /**
  * 
  */
 UCLASS()
-class PROJECTX_API ATreasure : public AItemActor
+class PROJECTX_API ATreasure : public ACollectable
 {
 	GENERATED_BODY()
 protected:
