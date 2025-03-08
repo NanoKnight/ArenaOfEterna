@@ -27,12 +27,21 @@ public:
 	void SetXpText(int32 Xp);
 	void SetMaxXpText(int32 MaxXPTxt);
 	void SetLevelText(int32 Level);
+	void SetReceivedItemText(FString ItemName);
+	void PlayItemReceivedTextAnimationFadeIn();
+	void PlayItemReceivedTextAnimationFadeOut();
 
 	UPROPERTY(meta = (BindWidgetAnim), Transient)
 	UWidgetAnimation* QuestCompleteFadeIn;
 
 	UPROPERTY(meta = (BindWidgetAnim), Transient)
 	UWidgetAnimation* QuestCompleteFadeOut;
+
+	UPROPERTY(meta = (BindWidgetAnim),Transient)
+	UWidgetAnimation* ItemRecivedTextAnimationFadeIn;
+
+	UPROPERTY(meta = (BindWidgetAnim), Transient)
+	UWidgetAnimation* ItemRecivedTextAnimationFadeOut;
 
 	FORCEINLINE UQuestUI* GetQuestOverlay() { return QuestUI; }
 	FORCEINLINE UQuestCompleteWidget* GetQuestCompleteWidget() { return QuestCompleteWidget; }
@@ -61,6 +70,9 @@ private:
 
 	UPROPERTY(meta = (BindWidget))
 	class UTextBlock* LevelText;
+
+	UPROPERTY(meta =(BindWidget))
+	class UTextBlock* ReceivedItemText;
 
 	UPROPERTY(meta = (BindWidget))
 	class UQuestUI* QuestUI;

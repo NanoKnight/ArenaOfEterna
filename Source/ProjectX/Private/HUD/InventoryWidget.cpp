@@ -6,55 +6,18 @@
 #include"Components\GridSlot.h"
 #include"HUD\EqiupmentSlotWidget.h"
 #include "Blueprint/DragDropOperation.h"
+#include"./Components/TextBlock.h"
 #include"Components\InventorySystem\InventoryComponent.h"
 #include"../WarriorCharacter.h"
 #include "HUD/InventorySlotWidget.h"
 
-bool UInventoryWidget::NativeOnDrop(const FGeometry& InGeometry, const FDragDropEvent& InDragDropEvent, UDragDropOperation* InOperation)
+
+
+void UInventoryWidget::NativeConstruct()
 {
-/********************************BU FONKSIYONU OPTIMIZE ETMEYE CALIS************************************/
-
-	CheckHoveringOnInventoryList(InDragDropEvent);
-	if (IsHoveringOnInventoryList())
-	{
-		UEqiupmentSlotWidget* DraggedItem = Cast<UEqiupmentSlotWidget>(InOperation->Payload);
-		if (DraggedItem)
-		{
-			AWarriorCharacter* Warrior = Cast<AWarriorCharacter>(GetWorld()->GetFirstPlayerController()->GetPawn());
-			if (Warrior && !DraggedItem->EquippedItem.ItemName.IsEmpty())
-			{
-				Warrior->GetInventoryComponent()->UnEquipItem(DraggedItem->EquippedItem, DraggedItem->EquippedItemActor);
-
-				TArray<FInventoryStruct> InventoryArray;
-
-				UInventorySlotWidget* ItemSlot = CreateWidget<UInventorySlotWidget>(this, InventorySlotWidgetClass);
-
-					if (ItemSlot)
-					{
-
-						ItemSlot->SetUp(DraggedItem->EquippedItem);
-						Warrior->GetInventoryComponent()->InventoryItems.Add(DraggedItem->EquippedItem);
-						//InventoryList->AddChild(ItemSlot);
-
-					
-						UGridSlot* GridSlot = InventoryList->AddChildToGrid(ItemSlot);
-						if (GridSlot)
-						{
-
-					 	   UpdateInventoryDisplay(Warrior->GetInventoryComponent()->InventoryItems);
-					 	   GridSlot->SetPadding(FMargin(5.f));
-
-						}
-
-					}
-				DraggedItem->SetDefaultWeaponIcon();
-				DraggedItem->EquippedItem = FInventoryStruct();
-
-			}
-		}
-	}
-	return true;
 }
+
+
 
 void UInventoryWidget::CheckHoveringOnInventoryList(const FDragDropEvent& InDragDropEvent)
 {
@@ -86,38 +49,71 @@ bool UInventoryWidget::IsHoveringOnInventoryList()
 
 
 
+void UInventoryWidget::SwapItems(int32 FromIndex, int32 ToIndex)
+{
+
+	if (SlotIndices.IsValidIndex(FromIndex)&& SlotIndices.IsValidIndex(ToIndex))
+	{
+		SlotIndices.Swap(FromIndex, ToIndex);
+		
+		AWarriorCharacter* Warrior = Cast<AWarriorCharacter>(GetWorld()->GetFirstPlayerController()->GetPawn());
+		if (Warrior && Warrior->GetInventoryComponent())
+		{
+			Warrior->GetInventoryComponent()->InventoryItems.Swap(FromIndex, ToIndex);
+		}
+		UpdateInventoryDisplay(Warrior->GetInventoryComponent()->InventoryItems);
+	}
+}
+
 void UInventoryWidget::UpdateInventoryDisplay(const TArray<FInventoryStruct>& InventoryItems)
 {
 
-	if (!InventoryList || !InventorySlotWidgetClass)return;
+	if (!InventoryList || !InventorySlotWidgetClass) return;
+
 	InventoryList->ClearChildren();
+	InventorySlots.Empty();
+	
+	const int32 MaxSlots = 20;    
 
-	for (int32 i = 0; i < InventoryItems.Num(); i++)
+	if (SlotIndices.Num() != MaxSlots)
 	{
-		const FInventoryStruct& Item = InventoryItems[i];
-		UInventorySlotWidget* ItemSlot = CreateWidget<UInventorySlotWidget>(this, InventorySlotWidgetClass);
+		SlotIndices.Empty();
+		for (int32 i = 0; i < MaxSlots; i++)
+		{
+			SlotIndices.Add(i);
+		}
+	}
 
+	for (int32 i = 0; i < MaxSlots; i++)
+	{
+		UInventorySlotWidget* ItemSlot = CreateWidget<UInventorySlotWidget>(this, InventorySlotWidgetClass);
 		if (ItemSlot)
 		{
-			ItemSlot->SetUp(Item);
+
+			int32 RealIndex = SlotIndices.IsValidIndex(i) ? SlotIndices[i] : i;
+
+			if (InventoryItems.IsValidIndex(RealIndex) && !InventoryItems[RealIndex].ItemName.IsEmpty())
+			{
+				ItemSlot->SetUp(InventoryItems[i]);
+			}
+			else
+			{
+				//ItemSlot->SetUp(FInventoryStruct());
+			}
+
 			InventoryList->AddChild(ItemSlot);
-			
-			int32 Row = i / 6;
-			int32 Column = i % 6;
+
+			int32 Row = i / 7;
+			int32 Column = i % 7;
 			UGridSlot* GridSlot = InventoryList->AddChildToGrid(ItemSlot, Row, Column);
 			if (GridSlot)
 			{
-		
-				
-					GridSlot->SetPadding(FMargin(5.f));
-				
+				GridSlot->SetPadding(FMargin(10.f));
 			}
-
-			//InventoryListt->AddChild(ItemSlot);
-		
-		
+			InventorySlots.Add(ItemSlot);
 		}
 	}
+	
 }
 
 FReply UInventoryWidget::NativeOnKeyDown(const FGeometry& InGeometry, const FKeyEvent& InKeyEvent)
@@ -125,7 +121,6 @@ FReply UInventoryWidget::NativeOnKeyDown(const FGeometry& InGeometry, const FKey
 	FKey PressedKey = InKeyEvent.GetKey();
 	if (PressedKey == EKeys::I)
 	{
-		GEngine->AddOnScreenDebugMessage(-1, 2.f, FColor::Cyan, FString(TEXT("CalledClose")));
 		AWarriorCharacter* Warrior = Cast<AWarriorCharacter>(GetWorld()->GetFirstPlayerController()->GetPawn());
 		if (Warrior)
 		{
@@ -139,7 +134,3 @@ FReply UInventoryWidget::NativeOnKeyDown(const FGeometry& InGeometry, const FKey
 	return FReply::Unhandled();
 
 }
-
-
-
-

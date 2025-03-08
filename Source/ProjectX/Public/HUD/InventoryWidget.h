@@ -31,18 +31,28 @@ public:
 	UPROPERTY(EditAnywhere)
 	bool bIsHovering;
 
-	virtual bool NativeOnDrop(const FGeometry& Geometry, const FDragDropEvent& InDragDropEvent, UDragDropOperation* InOperation)override;
+	UPROPERTY()
+	TArray<UInventorySlotWidget*> InventorySlots;
+
+	TArray<int32>SlotIndices;
 
 	void CheckHoveringOnInventoryList(const FDragDropEvent& InDragDropEvent);
 
 	bool IsHoveringOnInventoryList();
 
+
+	void SwapItems(int32 FromIndex, int32 ToIndex);
+
 	UFUNCTION(BlueprintCallable)
 	void UpdateInventoryDisplay(const TArray<FInventoryStruct>& InventoryItems);
 
 
+
+
 	virtual FReply NativeOnKeyDown(const FGeometry& InGeometry, const FKeyEvent& InKeyEvent) override;
-	
+protected:
+	virtual void NativeConstruct() override;
+
 
 
 

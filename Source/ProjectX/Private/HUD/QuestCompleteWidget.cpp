@@ -13,6 +13,7 @@ void UQuestCompleteWidget::PlayFadeInAnimation()
 {
 
 	PlayAnimation(FadeIn);
+	
 }
 
 void UQuestCompleteWidget::PlayFadeOutAnimation()

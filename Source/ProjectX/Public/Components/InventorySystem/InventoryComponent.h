@@ -8,6 +8,10 @@
 #include "InventoryComponent.generated.h"
 
 class UInventoryWidget;
+class AWarriorCharacter;
+class APlayerHUD;
+class UCharacterHUD;
+
 UCLASS( ClassGroup=(Custom), meta=(BlueprintSpawnableComponent) )
 class PROJECTX_API UInventoryComponent : public UActorComponent
 {
@@ -34,6 +38,8 @@ public:
 	UFUNCTION(BlueprintCallable,Category="Inventory")
 	void AddItem(const FInventoryStruct& NewItem);
 
+	void PlayItemTextFadeOutAnim(UCharacterHUD* PlayerOverlay);
+
 	UFUNCTION(BlueprintCallable, Category = "Inventory")
 	void EquipItem(const FInventoryStruct& ItemToEquip);
 
@@ -47,7 +53,7 @@ public:
 	void OpenInventory();
 
 	void ToggleInventory(APlayerController* Controller);
-
+	
 
 
 	UPROPERTY(EditDefaultsOnly)
@@ -56,6 +62,15 @@ public:
 	UInventoryWidget* InventoryWidget;
 private:
 	void CreateInventoryWidget(APlayerController* Controller);
+
+	FTimerHandle ItemTextAnimTimer;
+
+	//APlayerController* PlayerController;
+	//AWarriorCharacter* MainCharacter;
+	//APlayerHUD* PlayerHUD;
+	//UCharacterHUD* PlayerOverlay;
+
+
 
 
 

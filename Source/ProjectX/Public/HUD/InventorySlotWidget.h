@@ -27,19 +27,31 @@ public:
 	UPROPERTY(meta = (BindWidget))
 	UTextBlock* ItemName;
 
+	UPROPERTY(EditAnywhere)
+	TObjectPtr<UTexture2D> ImageIconAsset;
+
 	FInventoryStruct Item;
 
 	ABaseItem* EquippedItemActor;
+
+	UPROPERTY()
+	int32 SlotIndex;
 
 	//UPROPERTY(meta = (BindWidget))
 	//UButton* ItemButton;
 
 	void SetUp(const FInventoryStruct& NewItem);
 	UFUNCTION()
+	void SetSlotIndex(int32 NewIndex);
+	UFUNCTION()
 	void OnItemClicked();
 
 	virtual FReply NativeOnMouseButtonDown(const FGeometry& InGeometry, const FPointerEvent& InMouseEvent)override;
 	virtual void NativeOnDragDetected(const FGeometry& InGeometry, const FPointerEvent& InMouseEvent , UDragDropOperation*& OutOperation)override;
+	virtual bool NativeOnDrop(const FGeometry& Geometry, const FDragDropEvent& InDragDropEvent, UDragDropOperation* InOperation)override;
+
+	bool IfInventorySlotItemIsValid();
+
 
 private:
 	

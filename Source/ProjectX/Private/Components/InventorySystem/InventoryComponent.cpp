@@ -4,7 +4,11 @@
 #include"./Components/InventorySystem/InventoryComponent.h"
 #include"../WarriorCharacter.h"
 #include "HUD/InventoryWidget.h"
+#include "Components/GridPanel.h"
+#include"Components\GridSlot.h"
 #include"Items\BaseItem.h"
+#include"HUD/CharacterHUD.h"
+#include"HUD\PlayerHUD.h"
 #include "./Items/Weapons/Weapon.h"
 
 
@@ -14,8 +18,6 @@ UInventoryComponent::UInventoryComponent()
 	// Set this component to be initialized when the game starts, and to be ticked every frame.  You can turn these features
 	// off to improve performance if you don't need them.
 	PrimaryComponentTick.bCanEverTick = true;
-
-	// ...
 }
 
 
@@ -23,6 +25,27 @@ UInventoryComponent::UInventoryComponent()
 void UInventoryComponent::BeginPlay()
 {
 	Super::BeginPlay();	
+	/******BUD DEÐÝÞKENNERÝ BÖYLE BEGÝNPLAYDE SETLEYÝP KULLANMAYI DENÝYCEÐÝZ BU SINIFIN H DOSYASINDAN BUNLARIN REFERANSLARINI AKTÝF ET KAPALILAR ÞUAN*******/
+	/* MainCharacter = Cast<AWarriorCharacter>(GetOwner());
+	 if (MainCharacter)
+	 {
+		 PlayerController = Cast<APlayerController>(MainCharacter->GetController());
+		 if (PlayerController)
+		 {
+			 PlayerHUD = Cast<APlayerHUD>(PlayerController->GetHUD());
+			 if (PlayerHUD)
+			 {
+				  PlayerOverlay = PlayerHUD->GetPlayerOverlay();
+
+
+			 }
+
+
+		 }
+
+	 }*/
+
+
 }
 
 
@@ -35,6 +58,29 @@ void UInventoryComponent::TickComponent(float DeltaTime, ELevelTick TickType, FA
 void UInventoryComponent::AddItem(const FInventoryStruct& NewItem)
 {
 	InventoryItems.Add(NewItem);
+	AWarriorCharacter* Warrior = Cast<AWarriorCharacter>(GetOwner());
+	if (Warrior)
+	{
+		APlayerController* PlayerController = Cast<APlayerController>(Warrior->GetController());
+		if (PlayerController)
+		{
+			APlayerHUD* HUDRef = Cast<APlayerHUD>(PlayerController->GetHUD());
+			UCharacterHUD* PlayerOverlay = HUDRef->GetPlayerOverlay();
+			if (PlayerOverlay)
+			{
+				PlayerOverlay->SetReceivedItemText(NewItem.ItemName);
+				PlayerOverlay->PlayItemReceivedTextAnimationFadeIn();
+				PlayItemTextFadeOutAnim(PlayerOverlay);
+				GetWorld()->GetTimerManager(ItemTextAnimTimer, this, UInventoryComponent::PlayItemTextFadeOutAnim, 1, false);
+			}
+		}
+	}
+
+}
+
+void UInventoryComponent::PlayItemTextFadeOutAnim(UCharacterHUD* PlayerOverlay)
+{
+	PlayerOverlay->PlayItemReceivedTextAnimationFadeOut();
 }
 
 void UInventoryComponent::EquipItem(const FInventoryStruct& ItemToEquip)
@@ -110,7 +156,6 @@ void UInventoryComponent::RemoveFormInventory(const FInventoryStruct& Item)
 	InventoryItems.Remove(Item);
 	InventoryWidget->UpdateInventoryDisplay(InventoryItems);
 
-
 }
 
 void UInventoryComponent::OpenInventory()
@@ -136,24 +181,18 @@ void UInventoryComponent::ToggleInventory(APlayerController* Controller)
 		if (InventoryWidget->GetVisibility() == ESlateVisibility::Visible)
 		{
 			InventoryWidget->SetVisibility(ESlateVisibility::Hidden);
-			InventoryWidget->UpdateInventoryDisplay(InventoryItems);
 			Controller->bShowMouseCursor = false;
 			FInputModeGameOnly InputMode;
 			Controller->SetInputMode(InputMode);
-
 		}
 		else
 		{
 			InventoryWidget->SetVisibility(ESlateVisibility::Visible);
-			InventoryWidget->UpdateInventoryDisplay(InventoryItems);
 			Controller->bShowMouseCursor = true;
 			FInputModeUIOnly InputMode;
 			InputMode.SetWidgetToFocus(InventoryWidget->TakeWidget());
+			InventoryWidget->UpdateInventoryDisplay(InventoryItems);
 			Controller->SetInputMode(InputMode);
-           
-
-
-
 		}
 
 	}
@@ -171,9 +210,10 @@ void UInventoryComponent::CreateInventoryWidget(APlayerController* Controller)
 
 			InventoryWidget = CreateWidget<UInventoryWidget>(Controller, InventoryWidgetClass);
 			InventoryWidget->AddToViewport();
+			InventoryWidget->InventoryList->ClearChildren();
+			InventoryWidget->InventorySlots.Empty();
 			InventoryWidget->UpdateInventoryDisplay(InventoryItems);
-
-			InputMode.SetWidgetToFocus(InventoryWidget->TakeWidget());  
+			InputMode.SetWidgetToFocus(InventoryWidget->TakeWidget());
 			//InputMode.SetLockMouseToViewportBehavior(EMouseLockMode::LockAlways);
 			Controller->SetInputMode(InputMode);
 			GEngine->AddOnScreenDebugMessage(0, 2.f, FColor::Cyan, FString::Printf(TEXT("First Opened")));
@@ -182,6 +222,7 @@ void UInventoryComponent::CreateInventoryWidget(APlayerController* Controller)
 		}
 	}
 }
+
 
 
 

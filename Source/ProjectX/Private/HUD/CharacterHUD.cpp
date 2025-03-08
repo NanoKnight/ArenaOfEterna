@@ -76,3 +76,29 @@ void UCharacterHUD::SetLevelText(int32 Level)
 	}
 
 }
+
+void UCharacterHUD::SetReceivedItemText(FString ItemName)
+{
+	if (!ItemName.IsEmpty())
+	{
+		ReceivedItemText->SetText(FText::FromString(ItemName));
+	}
+}
+
+void UCharacterHUD::PlayItemReceivedTextAnimationFadeIn()
+{
+	if (ItemRecivedTextAnimationFadeIn)
+	{
+		PlayAnimation(ItemRecivedTextAnimationFadeIn);
+	}
+}
+
+void UCharacterHUD::PlayItemReceivedTextAnimationFadeOut()
+{
+	if (ItemRecivedTextAnimationFadeOut)
+	{
+		PlayAnimation(ItemRecivedTextAnimationFadeOut);
+
+	}
+	GEngine->AddOnScreenDebugMessage(-1, 2.f, FColor::Cyan, FString(TEXT("PlayedAnimation")));
+}

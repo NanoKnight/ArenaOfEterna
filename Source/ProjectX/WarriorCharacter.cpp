@@ -849,6 +849,7 @@ void AWarriorCharacter::CompleteCurrentQuest()
 		{
 		PlayerOverlay->GetQuestCompleteWidget()->SetQuestText(CurrentQuest.QuestName);
 		PlayerOverlay->GetQuestCompleteWidget()->PlayFadeInAnimation();
+
 		PlayerOverlay->PlayAnimation(PlayerOverlay->QuestCompleteFadeIn);
 		GetWorld()->GetTimerManager().SetTimer(QuestCompleteUITimer, this, &AWarriorCharacter::QuesstCompleteFadeOutAnim, 3, false);		
 
