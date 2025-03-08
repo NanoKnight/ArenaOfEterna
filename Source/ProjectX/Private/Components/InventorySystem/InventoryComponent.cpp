@@ -9,6 +9,7 @@
 #include"Items\BaseItem.h"
 #include"HUD/CharacterHUD.h"
 #include"HUD\PlayerHUD.h"
+#include "TimerManager.h"
 #include "./Items/Weapons/Weapon.h"
 
 
@@ -71,8 +72,11 @@ void UInventoryComponent::AddItem(const FInventoryStruct& NewItem)
 				PlayerOverlay->SetReceivedItemText(NewItem.ItemName);
 				PlayerOverlay->PlayItemReceivedTextAnimationFadeIn();
 				PlayItemTextFadeOutAnim(PlayerOverlay);
-				GetWorld()->GetTimerManager(ItemTextAnimTimer, this, UInventoryComponent::PlayItemTextFadeOutAnim, 1, false);
-			}
+				GetOwner()->GetWorld()->GetTimerManager().SetTimer(ItemTextAnimTimer, FTimerDelegate::CreateUObject(this,&UInventoryComponent::PlayItemTextFadeOutAnim,PlayerOverlay),1.f,false);
+			
+			
+			}		
+
 		}
 	}
 
