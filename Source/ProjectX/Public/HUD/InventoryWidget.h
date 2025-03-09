@@ -43,6 +43,8 @@ public:
 
 	void SwapItems(int32 FromIndex, int32 ToIndex);
 
+	void SaveSlotIndices();
+
 	UFUNCTION(BlueprintCallable)
 	void UpdateInventoryDisplay(const TArray<FInventoryStruct>& InventoryItems);
 

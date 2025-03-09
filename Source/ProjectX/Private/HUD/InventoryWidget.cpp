@@ -65,6 +65,22 @@ void UInventoryWidget::SwapItems(int32 FromIndex, int32 ToIndex)
 	}
 }
 
+
+void UInventoryWidget::SaveSlotIndices()
+{
+	SlotIndices.Empty();
+	AWarriorCharacter* Warrior = Cast<AWarriorCharacter>(GetWorld()->GetFirstPlayerController()->GetPawn());
+
+	const TArray<FInventoryStruct>& InventoryItems = Warrior->GetInventoryComponent()->InventoryItems;
+
+	// InventoryItems dizisindeki item sýrasýný SlotIndices'e kopyalayalým
+	for (int32 i = 0; i < InventoryItems.Num(); i++)
+	{
+		SlotIndices.Add(i);
+	}
+}
+
+
 void UInventoryWidget::UpdateInventoryDisplay(const TArray<FInventoryStruct>& InventoryItems)
 {
 
@@ -125,7 +141,9 @@ FReply UInventoryWidget::NativeOnKeyDown(const FGeometry& InGeometry, const FKey
 		if (Warrior)
 		{
 			APlayerController* Controller = GetWorld()->GetFirstPlayerController();
+			SaveSlotIndices();
 			Warrior->GetInventoryComponent()->ToggleInventory(Controller);
+
 
 		}
 		return FReply::Handled();

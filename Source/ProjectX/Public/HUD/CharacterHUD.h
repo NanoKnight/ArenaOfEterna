@@ -30,6 +30,7 @@ public:
 	void SetReceivedItemText(FString ItemName);
 	void PlayItemReceivedTextAnimationFadeIn();
 	void PlayItemReceivedTextAnimationFadeOut();
+	void SetReceivedItemTextVisibility(ESlateVisibility ItemVisibility);
 
 	UPROPERTY(meta = (BindWidgetAnim), Transient)
 	UWidgetAnimation* QuestCompleteFadeIn;
@@ -45,8 +46,6 @@ public:
 
 	FORCEINLINE UQuestUI* GetQuestOverlay() { return QuestUI; }
 	FORCEINLINE UQuestCompleteWidget* GetQuestCompleteWidget() { return QuestCompleteWidget; }
-
-
 
 private:
 

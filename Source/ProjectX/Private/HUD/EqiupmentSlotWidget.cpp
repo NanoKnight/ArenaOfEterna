@@ -6,6 +6,7 @@
 #include"../WarriorCharacter.h"
 #include"./Components/InventorySystem/InventoryComponent.h"
 #include "Blueprint/DragDropOperation.h"
+#include"Components\TextBlock.h"
 #include "Blueprint/WidgetBlueprintLibrary.h"
 #include"Components\Image.h"
 
@@ -20,15 +21,34 @@ bool UEqiupmentSlotWidget::NativeOnDrop(const FGeometry& InGemotry, const FDragD
 		{
 			if (!EquippedItem.ItemName.IsEmpty())
 			{
+				FInventoryStruct TempItem = DraggedITem->Item;
+
 				Warrior->GetInventoryComponent()->UnEquipItem(EquippedItem,DraggedITem->EquippedItemActor);
-				Warrior->GetInventoryComponent()->InventoryItems.Add(EquippedItem);
+				GEngine->AddOnScreenDebugMessage(-1, 2.f, FColor::Cyan, FString::Printf(TEXT("dolu")));
+				EquipmentIcon->SetBrushFromSoftTexture(TempItem.ItemIcon);
+				Warrior->GetInventoryComponent()->EquipItem(TempItem);
+				DraggedITem->ItemIcon->SetBrushFromSoftTexture(EquippedItem.ItemIcon);
+				DraggedITem->ItemName->SetText(FText::FromString(EquippedItem.ItemName));
+				DraggedITem->Item = EquippedItem;
+				EquippedItem = TempItem;
+
+
 			}
 
+			else
+			{
 				Warrior->EquipItem(DraggedITem->Item);
 				Warrior->GetInventoryComponent()->RemoveFormInventory(DraggedITem->Item);
 				EquippedItem = DraggedITem->Item;
 				EquippedItemActor = DraggedITem->EquippedItemActor;
 				EquipmentIcon->SetBrushFromSoftTexture(DraggedITem->Item.ItemIcon);
+				DraggedITem->ItemIcon->SetBrushFromSoftTexture(DraggedITem->ImageIconAsset);
+				DraggedITem->Item = FInventoryStruct();
+				DraggedITem->ItemName->SetText(FText::GetEmpty());
+			}
+			
+			
+				
 		}
 		return true;
 

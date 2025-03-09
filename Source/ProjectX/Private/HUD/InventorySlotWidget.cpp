@@ -9,6 +9,7 @@
 #include "Blueprint/DragDropOperation.h"
 #include"HUD\EqiupmentSlotWidget.h"
 #include"Items\BaseItem.h"
+#include"HUD\InventoryWidget.h"
 #include"Components\InventorySystem\InventoryComponent.h"
 #include "Components/TextBlock.h"
 
@@ -47,6 +48,8 @@ void UInventorySlotWidget::OnItemClicked()
 	}
 
 }
+
+
 
 FReply UInventorySlotWidget::NativeOnMouseButtonDown(const FGeometry& InGeometry, const FPointerEvent& InMouseEvent)
 {
@@ -93,7 +96,6 @@ bool UInventorySlotWidget::NativeOnDrop(const FGeometry& Geometry, const FDragDr
 	//KODLARI DÜZElt burdaki moduler yap///
 	if (!InOperation || !InOperation->Payload)
 	{
-		GEngine->AddOnScreenDebugMessage(-1, 2.f, FColor::Red, TEXT("InOperation or Payload is null!"));
 		return false;
 	}
 
@@ -103,7 +105,7 @@ bool UInventorySlotWidget::NativeOnDrop(const FGeometry& Geometry, const FDragDr
 		AWarriorCharacter* Warrior = Cast<AWarriorCharacter>(GetWorld()->GetFirstPlayerController()->GetPawn());
 		
 		
-		if (Warrior && DraggedItem && !DraggedItem->EquippedItem.ItemName.IsEmpty())
+		if (!DraggedItem->EquippedItem.ItemName.IsEmpty() && Item.ItemName.IsEmpty())
 		{
 
 			Warrior->GetInventoryComponent()->InventoryItems.Add(DraggedItem->EquippedItem);
@@ -116,8 +118,27 @@ bool UInventorySlotWidget::NativeOnDrop(const FGeometry& Geometry, const FDragDr
 				    //ItemIcon->SetBrushFromTexture(DraggedItem->EquippedItem.ItemIcon);
 					DraggedItem->SetDefaultWeaponIcon();
 			}
+
 			
 		}
+		else if (!Item.ItemName.IsEmpty())
+		 {
+			 FInventoryStruct TempItem = DraggedItem->EquippedItem;
+			 if (Item.ItemTypes == DraggedItem->ItemTypes)
+			 {
+				 Warrior->GetInventoryComponent()->UnEquipItem(DraggedItem->EquippedItem, DraggedItem->EquippedItemActor);
+				 DraggedItem->EquipmentIcon->SetBrushFromSoftTexture(Item.ItemIcon);
+				 DraggedItem->EquippedItem = Item;
+				 DraggedItem->EquippedItemActor = EquippedItemActor;
+				 Warrior->GetInventoryComponent()->EquipItem(DraggedItem->EquippedItem);
+				 ItemIcon->SetBrushFromSoftTexture(TempItem.ItemIcon);
+				 ItemName->SetText(FText::FromString(TempItem.ItemName));
+				 Item = TempItem;
+			 }
+		
+
+		 }
+	
 		return true;
 
 
@@ -147,7 +168,7 @@ bool UInventorySlotWidget::NativeOnDrop(const FGeometry& Geometry, const FDragDr
 		}
 		DraggedOnSelf->Item = FInventoryStruct();
 
-	
+
 	
 
 	

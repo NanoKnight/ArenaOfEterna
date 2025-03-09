@@ -71,10 +71,9 @@ void UInventoryComponent::AddItem(const FInventoryStruct& NewItem)
 			{
 				PlayerOverlay->SetReceivedItemText(NewItem.ItemName);
 				PlayerOverlay->PlayItemReceivedTextAnimationFadeIn();
-				PlayItemTextFadeOutAnim(PlayerOverlay);
 				GetOwner()->GetWorld()->GetTimerManager().SetTimer(ItemTextAnimTimer, FTimerDelegate::CreateUObject(this,&UInventoryComponent::PlayItemTextFadeOutAnim,PlayerOverlay),1.f,false);
-			
-			
+				PlayerOverlay->SetReceivedItemTextVisibility(ESlateVisibility::Hidden);
+
 			}		
 
 		}
@@ -149,6 +148,7 @@ void UInventoryComponent::UnEquipItem(const FInventoryStruct& Item, ABaseItem* E
 				
 				  
 			}
+		
 		}
 		
 	}
@@ -158,7 +158,7 @@ void UInventoryComponent::RemoveFormInventory(const FInventoryStruct& Item)
 {
 	
 	InventoryItems.Remove(Item);
-	InventoryWidget->UpdateInventoryDisplay(InventoryItems);
+	//InventoryWidget->UpdateInventoryDisplay(InventoryItems);
 
 }
 
@@ -195,7 +195,7 @@ void UInventoryComponent::ToggleInventory(APlayerController* Controller)
 			Controller->bShowMouseCursor = true;
 			FInputModeUIOnly InputMode;
 			InputMode.SetWidgetToFocus(InventoryWidget->TakeWidget());
-			InventoryWidget->UpdateInventoryDisplay(InventoryItems);
+			//InventoryWidget->UpdateInventoryDisplay(InventoryItems);
 			Controller->SetInputMode(InputMode);
 		}
 
