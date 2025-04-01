@@ -8,6 +8,7 @@
 #include "EqiupmentSlotWidget.generated.h"
 
 class UImage;
+class UTextBlock;
 /**
  * 
  */
@@ -23,7 +24,7 @@ public:
 	UPROPERTY(meta = (BindWidget))
 	 UImage* EquipmentIcon;
 	 
-	 UPROPERTY(EditAnywhere)
+	 UPROPERTY(EditAnywhere,BlueprintReadWrite)
 	 EItemTypes ItemTypes;
 
 	 UPROPERTY(EditAnywhere)
@@ -35,14 +36,23 @@ public:
 	 UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	 ABaseItem* EquippedItemActor;
 
+	 UPROPERTY(meta = (BindWidget))
+	 UTextBlock* SlotName;
+
 
 
 	void SetItemIcon(UTexture2D* NewIcon);
 	void SetDefaultWeaponIcon();
 
+	void ClearSlot();
+	void UpdateSlot();
+	void SetUp(const FInventoryStruct& NewItem);
+
 
 protected:
 	virtual void NativeConstruct() override;
+
+	void SetEquipmentSlotsNames();
 
 
 	virtual FReply NativeOnMouseButtonDown(const FGeometry& InGeometry, const FPointerEvent& InMouseEvent)override;

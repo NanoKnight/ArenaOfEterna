@@ -46,7 +46,6 @@ void UInventoryComponent::BeginPlay()
 
 	 }*/
 
-
 }
 
 
@@ -184,6 +183,10 @@ void UInventoryComponent::ToggleInventory(APlayerController* Controller)
 	{
 		if (InventoryWidget->GetVisibility() == ESlateVisibility::Visible)
 		{
+			// KAPATIRKEN verileri kaydet
+			InventoryWidget->SaveSlotIndices();
+			SavedSlotIndices = InventoryWidget->StoredSlotIndices;
+
 			InventoryWidget->SetVisibility(ESlateVisibility::Hidden);
 			Controller->bShowMouseCursor = false;
 			FInputModeGameOnly InputMode;
@@ -191,15 +194,57 @@ void UInventoryComponent::ToggleInventory(APlayerController* Controller)
 		}
 		else
 		{
+			// AÇARKEN kayýtlý verileri yükle
+			InventoryWidget->StoredSlotIndices = SavedSlotIndices;
+			InventoryWidget->UpdateInventoryDisplay(InventoryItems);
+
 			InventoryWidget->SetVisibility(ESlateVisibility::Visible);
 			Controller->bShowMouseCursor = true;
 			FInputModeUIOnly InputMode;
 			InputMode.SetWidgetToFocus(InventoryWidget->TakeWidget());
-			//InventoryWidget->UpdateInventoryDisplay(InventoryItems);
 			Controller->SetInputMode(InputMode);
 		}
-
 	}
+}
+
+void UInventoryComponent::SwapInventoryItems(int32 FromIndex, int32 ToIndex)
+{
+
+	if (!InventoryItems.IsValidIndex(FromIndex) || !InventoryItems.IsValidIndex(ToIndex)) return;
+
+	InventoryItems.Swap(FromIndex, ToIndex);
+
+	// 2. Debug mesajý (INDEX'LERÝ KONTROL EDÝN)
+	UE_LOG(LogTemp, Warning, TEXT("Swapped %d (%s) <-> %d (%s)"),
+		FromIndex, *InventoryItems[FromIndex].ItemName,
+		ToIndex, *InventoryItems[ToIndex].ItemName);
+
+	// 3. Envanteri güncelle
+	if (InventoryWidget)
+	{
+		InventoryWidget->UpdateInventoryDisplay(InventoryItems);
+	}
+}
+
+void UInventoryComponent::MoveItem(int32 FromIndex, int32 ToIndex)
+{
+	if (!InventoryItems.IsValidIndex(FromIndex) || !InventoryItems.IsValidIndex(ToIndex)) return;
+
+	if (InventoryItems[ToIndex].ItemName.IsEmpty())
+	{
+		InventoryItems[ToIndex] = InventoryItems[FromIndex];
+		InventoryItems[FromIndex] = FInventoryStruct();
+	}
+	else
+	{
+		InventoryItems.Swap(FromIndex, ToIndex);
+	}
+	if (InventoryWidget)
+	{
+		InventoryWidget->UpdateInventoryDisplay(InventoryItems);
+	}
+
+	UE_LOG(LogTemp, Warning, TEXT("Moved: %d -> %d"), FromIndex, ToIndex);
 }
 
 

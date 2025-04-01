@@ -15,8 +15,9 @@ enum class EEquipmentSlot : uint8
 {
 	Head UMETA(DisplayName ="Head"),
 	Chest UMETA(DisplayName="Chest"),
-	Legs UMETA(DisplayName = "Legs"),
 	Feet UMETA(DisplayName = "Feet"),
+	Trousers UMETA(DisplayName = "trousers"),
+	Gloves UMETA(DisplayName = "Gloves"),
 	Weapon UMETA(DisplayName = "Weapon"),
 	Shield UMETA(DisplayName="Shield")
 
@@ -27,8 +28,9 @@ enum class EItemTypes : uint8
 {
 	Head,
 	Chest,
-	Legs,
 	Feet,
+	Trousers,
+	Gloves,
 	Weapon,
 	Shield
 

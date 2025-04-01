@@ -51,6 +51,10 @@ public:
 	virtual void NativeOnDragDetected(const FGeometry& InGeometry, const FPointerEvent& InMouseEvent , UDragDropOperation*& OutOperation)override;
 	virtual bool NativeOnDrop(const FGeometry& Geometry, const FDragDropEvent& InDragDropEvent, UDragDropOperation* InOperation)override;
 
+	int32 GetSlotIndex() const { return SlotIndex; }
+	FInventoryStruct GetItem() const { return Item; }
+	void ClearSlot();
+
 	bool IfInventorySlotItemIsValid();
 
 

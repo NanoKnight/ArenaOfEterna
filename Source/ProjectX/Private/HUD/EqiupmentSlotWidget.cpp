@@ -69,6 +69,50 @@ void UEqiupmentSlotWidget::NativeConstruct()
 {
 	
 	SetDefaultWeaponIcon();
+	SetEquipmentSlotsNames();
+}
+
+void UEqiupmentSlotWidget::SetEquipmentSlotsNames()
+{
+	if (!SlotName)return;
+	
+		switch (ItemTypes)
+		{
+		case EItemTypes::Weapon:
+			SlotName->SetText(FText::FromString(TEXT("Weapon")));
+			break;
+
+		case EItemTypes::Chest:
+			SlotName->SetText(FText::FromString(TEXT("Chest Armor")));
+			break;
+
+		case EItemTypes::Feet:
+			SlotName->SetText(FText::FromString(TEXT("Feet Armor")));
+			break;
+
+		case EItemTypes::Gloves:
+			SlotName->SetText(FText::FromString(TEXT("Gloves Armor")));
+			break;
+
+		case EItemTypes::Head:
+			SlotName->SetText(FText::FromString(TEXT("Head Armor")));
+			break;
+
+		case EItemTypes::Shield:
+			SlotName->SetText(FText::FromString(TEXT("Shield")));
+			break;
+
+		case EItemTypes::Trousers:
+			SlotName->SetText(FText::FromString(TEXT("Trousers Armor")));
+			break;
+
+		default:
+			SlotName->SetText(FText::FromString(TEXT("")));
+			break;
+
+		}
+
+	
 }
 
 void UEqiupmentSlotWidget::SetDefaultWeaponIcon()
@@ -92,15 +136,17 @@ FReply UEqiupmentSlotWidget::NativeOnMouseButtonDown(const FGeometry& InGeometry
 
 void UEqiupmentSlotWidget::NativeOnDragDetected(const FGeometry& InGeometry, const FPointerEvent& InMouseEvent, UDragDropOperation*& OutOperation)
 {
-
-	Super::NativeOnDragDetected(InGeometry, InMouseEvent, OutOperation);
-
-	UDragDropOperation* DragDropOp = UWidgetBlueprintLibrary::CreateDragDropOperation(UDragDropOperation::StaticClass());
-	if (DragDropOp)
+	if (!EquippedItem.ItemName.IsEmpty())
 	{
-		DragDropOp->Payload = this;
-		DragDropOp->DefaultDragVisual = this;
-		DragDropOp->Pivot = EDragPivot::MouseDown;		
-		OutOperation = DragDropOp;
+		Super::NativeOnDragDetected(InGeometry, InMouseEvent, OutOperation);
+		UDragDropOperation* DragDropOp = UWidgetBlueprintLibrary::CreateDragDropOperation(UDragDropOperation::StaticClass());
+		if (DragDropOp)
+		{
+			DragDropOp->Payload = this;
+			DragDropOp->DefaultDragVisual = this;
+			DragDropOp->Pivot = EDragPivot::MouseDown;
+			OutOperation = DragDropOp;
+		}
 	}
+
 }

@@ -35,6 +35,9 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Inventory")
 	TArray<FInventoryStruct>EquippedItems;
 
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Inventory")
+	TArray<int32> SavedSlotIndices;
+
 	UFUNCTION(BlueprintCallable,Category="Inventory")
 	void AddItem(const FInventoryStruct& NewItem);
 
@@ -54,7 +57,10 @@ public:
 
 	void ToggleInventory(APlayerController* Controller);
 	
+	void SwapInventoryItems(int32 FromIndex, int32 ToIndex);
 
+	UFUNCTION(BlueprintCallable)
+	void MoveItem(int32 FromIndex, int32 ToIndex);
 
 	UPROPERTY(EditDefaultsOnly)
 	TSubclassOf<UInventoryWidget> InventoryWidgetClass;

@@ -34,7 +34,7 @@ public:
 	UPROPERTY()
 	TArray<UInventorySlotWidget*> InventorySlots;
 
-	TArray<int32>SlotIndices;
+	TArray<int32> StoredSlotIndices;
 
 	void CheckHoveringOnInventoryList(const FDragDropEvent& InDragDropEvent);
 
@@ -48,10 +48,14 @@ public:
 	UFUNCTION(BlueprintCallable)
 	void UpdateInventoryDisplay(const TArray<FInventoryStruct>& InventoryItems);
 
-
-
-
 	virtual FReply NativeOnKeyDown(const FGeometry& InGeometry, const FKeyEvent& InKeyEvent) override;
+	private:
+		UPROPERTY()
+		int32 SlotIndex;
+
+
+
+
 protected:
 	virtual void NativeConstruct() override;
 

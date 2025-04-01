@@ -97,6 +97,7 @@ void ABaseItem::PickUp(AWarriorCharacter* WarriorCharacter)
 		NewItem.ItemClass = this->GetClass();
 		NewItem.ItemTypes = ItemType;
 		NewItem.ItemSocketName = ItemSocketName;
+		GEngine->AddOnScreenDebugMessage(-1, 2.f, FColor::Cyan, FString(TEXT("taked")));
 		WarriorCharacter->GetInventoryComponent()->AddItem(NewItem);
 		this->Destroy();
 	}

@@ -72,7 +72,6 @@ void UInventorySlotWidget::NativeOnDragDetected(const FGeometry& InGeometry, con
 	Super::NativeOnDragDetected(InGeometry, InMouseEvent, OutOperation);
 	if (Item.ItemName.IsEmpty())
 	{
-		GEngine->AddOnScreenDebugMessage(-1, 2.f, FColor::Cyan, FString::Printf(TEXT("bos")));
 
 		return;	
 
@@ -118,10 +117,11 @@ bool UInventorySlotWidget::NativeOnDrop(const FGeometry& Geometry, const FDragDr
 				    //ItemIcon->SetBrushFromTexture(DraggedItem->EquippedItem.ItemIcon);
 					DraggedItem->SetDefaultWeaponIcon();
 			}
+			DraggedItem->EquippedItem = FInventoryStruct();
 
 			
 		}
-		else if (!Item.ItemName.IsEmpty())
+		else if (!Item.ItemName.IsEmpty()&& !DraggedItem->EquippedItem.ItemName.IsEmpty())
 		 {
 			 FInventoryStruct TempItem = DraggedItem->EquippedItem;
 			 if (Item.ItemTypes == DraggedItem->ItemTypes)
@@ -145,62 +145,19 @@ bool UInventorySlotWidget::NativeOnDrop(const FGeometry& Geometry, const FDragDr
 	}
 	
 
+	// 1. Sürüklenen slotu al
+	UInventorySlotWidget* DraggedSlot = Cast<UInventorySlotWidget>(InOperation->Payload);
+	if (!DraggedSlot || DraggedSlot == this) return false;
 
-	UInventorySlotWidget* DraggedOnSelf = Cast <UInventorySlotWidget>(InOperation->Payload);
+	// 2. Componenti bul
 	AWarriorCharacter* Warrior = Cast<AWarriorCharacter>(GetWorld()->GetFirstPlayerController()->GetPawn());
+	if (!Warrior || !Warrior->GetInventoryComponent()) return false;
 
-	if (Warrior && DraggedOnSelf && !DraggedOnSelf->Item.ItemName.IsEmpty() && !IfInventorySlotItemIsValid())
-	{
-		if (DraggedOnSelf && DraggedOnSelf == this)
-		{
-			//return false;
-		}
-		
-		Warrior->GetInventoryComponent()->UnEquipItem(DraggedOnSelf->Item, DraggedOnSelf->EquippedItemActor);
-		Item = DraggedOnSelf->Item;
-		SetUp(DraggedOnSelf->Item);
-		DraggedOnSelf->ItemName->SetText(FText::GetEmpty());
+	// 3. TAÞIMA ÝÞLEMÝNÝ YAP (Artýk swap yok, direkt move!)
+	Warrior->GetInventoryComponent()->MoveItem(DraggedSlot->SlotIndex, this->SlotIndex);
 
-		
-		if (ItemIcon)
-		{
-			DraggedOnSelf->ItemIcon->SetBrushFromTexture(ImageIconAsset);
-		}
-		DraggedOnSelf->Item = FInventoryStruct();
-
-
-	
-
-	
-
-	}
-	else if (IfInventorySlotItemIsValid())
-	{
-		GEngine->AddOnScreenDebugMessage(-1, 2.f, FColor::Cyan, FString(FString::Printf(TEXT("InventorySlotItemISValid"))));
-	    //ýtem ismi buglý çalýþýyor
-		FInventoryStruct TempItem = DraggedOnSelf->Item;
-
-		DraggedOnSelf->ItemName->SetText(FText::FromString(Item.ItemName));
-		DraggedOnSelf->ItemIcon->SetBrushFromTexture(Item.ItemIcon);
-		DraggedOnSelf->Item = Item;
-		//ItemName->SetText(FText::FromString(DraggedOnSelf->Item.ItemName));
-	
-		Item = TempItem;
-
-		ItemName->SetText(FText::FromString(DraggedOnSelf->Item.ItemName));
-		ItemIcon->SetBrushFromTexture(DraggedOnSelf->Item.ItemIcon);
-		ItemIcon->SetBrushFromTexture(TempItem.ItemIcon);
-		ItemName->SetText(FText::FromString(TempItem.ItemName));
-		//Item = DraggedOnSelf->Item;
-
-		
-		//DraggedOnSelf->Item = FInventoryStruct();
-
-		
-		return true;
-	}
-
-	return false;
+	return true;
+	//return false;
 }
 
 bool UInventorySlotWidget::IfInventorySlotItemIsValid()

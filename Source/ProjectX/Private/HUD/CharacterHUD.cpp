@@ -101,11 +101,10 @@ void UCharacterHUD::PlayItemReceivedTextAnimationFadeOut()
 		PlayAnimation(ItemRecivedTextAnimationFadeOut);
 
 	}
-	GEngine->AddOnScreenDebugMessage(-1, 2.f, FColor::Cyan, FString(TEXT("PlayedAnimation")));
 }
 
 void UCharacterHUD::SetReceivedItemTextVisibility(ESlateVisibility ItemVisibility)
 {
-	ReceivedItemText->SetVisibility(Visibility);
+	ReceivedItemText->SetVisibility(ESlateVisibility::Visible);
 
 }
