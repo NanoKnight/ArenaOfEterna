@@ -46,6 +46,7 @@ void UInventoryComponent::BeginPlay()
 
 	 }*/
 
+	InventoryItems.SetNum(20);
 }
 
 
@@ -57,7 +58,18 @@ void UInventoryComponent::TickComponent(float DeltaTime, ELevelTick TickType, FA
 
 void UInventoryComponent::AddItem(const FInventoryStruct& NewItem)
 {
-	InventoryItems.Add(NewItem);
+	//InventoryItems.Add(NewItem);
+
+
+	for (int32 i =0 ; i< InventoryItems.Num(); i++)
+	{
+		if (InventoryItems[i].ItemName.IsEmpty())
+		{
+			InventoryItems[i] = NewItem;
+			break;
+		}
+	}
+
 	AWarriorCharacter* Warrior = Cast<AWarriorCharacter>(GetOwner());
 	if (Warrior)
 	{
@@ -228,23 +240,40 @@ void UInventoryComponent::SwapInventoryItems(int32 FromIndex, int32 ToIndex)
 
 void UInventoryComponent::MoveItem(int32 FromIndex, int32 ToIndex)
 {
-	if (!InventoryItems.IsValidIndex(FromIndex) || !InventoryItems.IsValidIndex(ToIndex)) return;
 
-	if (InventoryItems[ToIndex].ItemName.IsEmpty())
+	if (!InventoryItems.IsValidIndex(FromIndex))
+	{
+		UE_LOG(LogTemp, Error, TEXT("Invalid FromIndex: %d"), FromIndex);
+		return;
+	}
+
+	// Eðer hedef slot yoksa, yeni slot aç
+	if (!InventoryItems.IsValidIndex(ToIndex))
+	{
+
+	}
+
+	if (InventoryItems[ToIndex].ItemName.IsEmpty()) // Eðer hedef boþsa direkt taþý
 	{
 		InventoryItems[ToIndex] = InventoryItems[FromIndex];
 		InventoryItems[FromIndex] = FInventoryStruct();
+
 	}
-	else
+	else // Dolularýn yerini deðiþtir
 	{
 		InventoryItems.Swap(FromIndex, ToIndex);
 	}
+
 	if (InventoryWidget)
 	{
+	
+
 		InventoryWidget->UpdateInventoryDisplay(InventoryItems);
 	}
 
-	UE_LOG(LogTemp, Warning, TEXT("Moved: %d -> %d"), FromIndex, ToIndex);
+	UE_LOG(LogTemp, Warning, TEXT("Moved: %d -> %d, Inventory Size: %d"),
+		FromIndex, ToIndex, InventoryItems.Num());
+
 }
 
 

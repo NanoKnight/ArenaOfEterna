@@ -15,7 +15,15 @@
 
 void UInventorySlotWidget::SetUp(const FInventoryStruct& NewItem)
 {
+	if (NewItem.ItemName.IsEmpty())
+	{
+		return;
+	}
+
 	Item = NewItem;
+	//if (!Item.ItemIcon && Item.ItemName.IsEmpty()) return;
+
+
 	if (ItemIcon)
 	{
 		if (Item.ItemIcon)
@@ -155,9 +163,15 @@ bool UInventorySlotWidget::NativeOnDrop(const FGeometry& Geometry, const FDragDr
 
 	// 3. TAÞIMA ÝÞLEMÝNÝ YAP (Artýk swap yok, direkt move!)
 	Warrior->GetInventoryComponent()->MoveItem(DraggedSlot->SlotIndex, this->SlotIndex);
+	Warrior->GetInventoryComponent()->OldSlotIndex = SlotIndex;
 
 	return true;
 	//return false;
+
+
+
+
+
 }
 
 bool UInventorySlotWidget::IfInventorySlotItemIsValid()
