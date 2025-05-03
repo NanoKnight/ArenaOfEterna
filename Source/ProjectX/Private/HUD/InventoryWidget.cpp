@@ -82,7 +82,7 @@ void UInventoryWidget::SaveSlotIndices()
 
 void UInventoryWidget::UpdateInventoryDisplay(const TArray<FInventoryStruct>& InventoryItems)
 {
-
+    
     // 1. Null Check
     if (!InventoryList || !InventorySlotWidgetClass)
     {
@@ -103,6 +103,7 @@ void UInventoryWidget::UpdateInventoryDisplay(const TArray<FInventoryStruct>& In
         {
             // 5. Slot Index Atama
               SlotWidget->SetSlotIndex(i);
+              SlotWidget->ItemIndex = i;
 
             // 6. Item Varsa Görseli Güncelle
             if (InventoryItems.IsValidIndex(i))

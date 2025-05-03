@@ -13,6 +13,7 @@ class ABaseItem;
 UENUM(BlueprintType)
 enum class EEquipmentSlot : uint8
 {
+	None UMETA(DisplayName = "None"),
 	Head UMETA(DisplayName ="Head"),
 	Chest UMETA(DisplayName="Chest"),
 	Feet UMETA(DisplayName = "Feet"),
@@ -26,6 +27,7 @@ enum class EEquipmentSlot : uint8
 UENUM(BlueprintType)
 enum class EItemTypes : uint8
 {
+	None,
 	Head,
 	Chest,
 	Feet,

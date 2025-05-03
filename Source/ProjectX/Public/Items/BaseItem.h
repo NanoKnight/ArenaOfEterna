@@ -55,27 +55,21 @@ protected:
 	UFUNCTION()
 	virtual void OnSphereEndOverlap(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex);
 
-	UPROPERTY(EditAnywhere)
-	FString ItemName;
-
-	UPROPERTY(EditAnywhere)
-	UTexture2D* ItemIcon;
-
-	UPROPERTY(EditAnywhere)
-	FName ItemSocketName;
+	
 
 
 
-	UPROPERTY(EditAnywhere, Category = "WeaponProperties")
+
+	UPROPERTY(VisibleAnywhere, Category = "WeaponProperties")
 	USoundBase* EquipSound;
 
-	UPROPERTY(EditAnywhere,BlueprintReadOnly)
+	UPROPERTY(VisibleAnywhere,BlueprintReadOnly)
 	UStaticMeshComponent* ItemMesh;
 
 	UPROPERTY(VisibleAnywhere)
 	USphereComponent* Sphere;
 
-	UPROPERTY(EditAnywhere)
+	UPROPERTY(VisibleAnywhere)
 	class UNiagaraComponent* ItemEffect;
 
 	EItemState ItemState = EItemState::EIS_Hovering;
@@ -90,5 +84,15 @@ public:
 	UPROPERTY(EditAnywhere)
 	EItemTypes ItemType;
 
+	UPROPERTY(EditAnywhere)
+	FString ItemName;
+
+	UPROPERTY(VisibleAnywhere)
+	UTexture2D* ItemIcon;
+
+	UPROPERTY(EditAnywhere)
+	FName ItemSocketName;
+
+	FORCEINLINE UStaticMeshComponent* GetItemMesh() const { return ItemMesh; }
 
 };

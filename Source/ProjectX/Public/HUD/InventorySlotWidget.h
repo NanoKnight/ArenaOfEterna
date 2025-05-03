@@ -27,6 +27,9 @@ public:
 	UPROPERTY(meta = (BindWidget))
 	UTextBlock* ItemName;
 
+	UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = "Inventory")
+	int32 ItemIndex;
+
 	UPROPERTY(EditAnywhere)
 	TObjectPtr<UTexture2D> ImageIconAsset;
 
@@ -36,9 +39,6 @@ public:
 
 	UPROPERTY()
 	int32 SlotIndex;
-
-	//UPROPERTY(meta = (BindWidget))
-	//UButton* ItemButton;
 
 	void SetUp(const FInventoryStruct& NewItem);
 	UFUNCTION()
@@ -53,7 +53,6 @@ public:
 
 	int32 GetSlotIndex() const { return SlotIndex; }
 	FInventoryStruct GetItem() const { return Item; }
-	void ClearSlot();
 
 	bool IfInventorySlotItemIsValid();
 

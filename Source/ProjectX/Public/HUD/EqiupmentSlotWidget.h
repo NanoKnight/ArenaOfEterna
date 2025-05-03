@@ -19,7 +19,7 @@ class PROJECTX_API UEqiupmentSlotWidget : public UUserWidget
 
 public:
 
-	virtual bool NativeOnDrop(const FGeometry& InGemotry, const FDragDropEvent& InDragDropEvent, UDragDropOperation* InOperation)override;
+	virtual bool NativeOnDrop(const FGeometry& InGeometry, const FDragDropEvent& InDragDropEvent, UDragDropOperation* InOperation)override;
 
 	UPROPERTY(meta = (BindWidget))
 	 UImage* EquipmentIcon;
@@ -44,14 +44,14 @@ public:
 	void SetItemIcon(UTexture2D* NewIcon);
 	void SetDefaultWeaponIcon();
 
-	void ClearSlot();
-	void UpdateSlot();
-	void SetUp(const FInventoryStruct& NewItem);
+
 
 
 protected:
 	virtual void NativeConstruct() override;
 
+
+	  
 	void SetEquipmentSlotsNames();
 
 

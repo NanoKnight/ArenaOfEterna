@@ -3,7 +3,12 @@
 
 #include "HUD/CharacterHUD.h"
 #include"Components\ProgressBar.h"
+#include "UMG.h"
+#include "Animation/WidgetAnimation.h"
+#include "Animation/UMGSequencePlayer.h" // Bind için gerekli olabilir
 #include"Components\TextBlock.h"
+
+
 
 void UCharacterHUD::SetHealthBarPercent(float Percent)
 {
@@ -81,30 +86,52 @@ void UCharacterHUD::SetReceivedItemText(FString ItemName)
 {
 	if (!ItemName.IsEmpty())
 	{
-		ReceivedItemText->SetText(FText::FromString(ItemName));
+		ItemNotiftyText->SetText(FText::FromString(ItemName));
 	}
 }
 
 void UCharacterHUD::PlayItemReceivedTextAnimationFadeIn()
 {
-	if (ItemRecivedTextAnimationFadeIn)
+	if (NotifyTextAnimationFadeIn)
 	{
-		PlayAnimation(ItemRecivedTextAnimationFadeIn);
-		SetReceivedItemTextVisibility(ESlateVisibility::Visible);
+		NotifyTextVisiblity = ESlateVisibility::Visible;
+		PlayAnimation(NotifyTextAnimationFadeIn);
+		ItemNotiftyText->SetVisibility(NotifyTextVisiblity);
 	}
 }
 
 void UCharacterHUD::PlayItemReceivedTextAnimationFadeOut()
 {
-	if (ItemRecivedTextAnimationFadeOut)
+	if (NotifyTextAnimationFadeOut)
 	{
-		PlayAnimation(ItemRecivedTextAnimationFadeOut);
+		PlayAnimation(NotifyTextAnimationFadeOut);
+	
+
+
 
 	}
 }
 
-void UCharacterHUD::SetReceivedItemTextVisibility(ESlateVisibility ItemVisibility)
+void UCharacterHUD::NotifyAnimationFinished()
 {
-	ReceivedItemText->SetVisibility(ESlateVisibility::Visible);
-
+	GEngine->AddOnScreenDebugMessage(-1, 2.f, FColor::Cyan, FString::Printf(TEXT("bitti")));
+	NotifyTextVisiblity = ESlateVisibility::Hidden;
+	ItemNotiftyText->SetVisibility(NotifyTextVisiblity);
 }
+
+
+
+void UCharacterHUD::NativeConstruct()
+{
+	Super::NativeConstruct();
+	if (NotifyTextAnimationFadeIn)
+	{
+		FWidgetAnimationDynamicEvent EndDelegate;
+		EndDelegate.BindUFunction(this, FName("NotifyAnimationFinished"));
+		BindToAnimationFinished(NotifyTextAnimationFadeOut, EndDelegate);
+	}
+}
+
+
+	
+

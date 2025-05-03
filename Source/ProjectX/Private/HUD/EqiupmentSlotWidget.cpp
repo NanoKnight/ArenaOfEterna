@@ -11,7 +11,7 @@
 #include"Components\Image.h"
 
 
-bool UEqiupmentSlotWidget::NativeOnDrop(const FGeometry& InGemotry, const FDragDropEvent& InDragDropEvent, UDragDropOperation* InOperation)
+bool UEqiupmentSlotWidget::NativeOnDrop(const FGeometry& InGeometry, const FDragDropEvent& InDragDropEvent, UDragDropOperation* InOperation)
 {
 	UInventorySlotWidget* DraggedITem = Cast<UInventorySlotWidget>(InOperation->Payload);
 	if (DraggedITem && DraggedITem->Item.ItemTypes == ItemTypes)
@@ -19,33 +19,50 @@ bool UEqiupmentSlotWidget::NativeOnDrop(const FGeometry& InGemotry, const FDragD
 		AWarriorCharacter* Warrior = Cast<AWarriorCharacter>(GetWorld()->GetFirstPlayerController()->GetPawn());
 		if (Warrior)
 		{
-			if (!EquippedItem.ItemName.IsEmpty())
+			if (DraggedITem)
 			{
-				FInventoryStruct TempItem = DraggedITem->Item;
+				if (!EquippedItem.ItemName.IsEmpty())
+				{
+					FInventoryStruct TempItem = DraggedITem->Item;
 
-				Warrior->GetInventoryComponent()->UnEquipItem(EquippedItem,DraggedITem->EquippedItemActor);
-				GEngine->AddOnScreenDebugMessage(-1, 2.f, FColor::Cyan, FString::Printf(TEXT("dolu")));
-				EquipmentIcon->SetBrushFromSoftTexture(TempItem.ItemIcon);
-				Warrior->GetInventoryComponent()->EquipItem(TempItem);
-				DraggedITem->ItemIcon->SetBrushFromSoftTexture(EquippedItem.ItemIcon);
-				DraggedITem->ItemName->SetText(FText::FromString(EquippedItem.ItemName));
-				DraggedITem->Item = EquippedItem;
-				EquippedItem = TempItem;
+					Warrior->GetInventoryComponent()->UnEquipItem(EquippedItem, DraggedITem->EquippedItemActor);
+					GEngine->AddOnScreenDebugMessage(-1, 2.f, FColor::Cyan, FString::Printf(TEXT("dolu")));
+					if (TempItem.ItemIcon)
+					{
+						EquipmentIcon->SetBrushFromSoftTexture(TempItem.ItemIcon);
+
+					}
+
+					Warrior->GetInventoryComponent()->EquipItem(TempItem);
+					DraggedITem->ItemIcon->SetBrushFromSoftTexture(EquippedItem.ItemIcon);
+					DraggedITem->ItemName->SetText(FText::FromString(EquippedItem.ItemName));
+					DraggedITem->Item = EquippedItem;
+					EquippedItem = TempItem;
 
 
+
+				}
+
+				else
+				{
+					Warrior->EquipItem(DraggedITem->Item);
+					EquippedItem = DraggedITem->Item;
+					EquippedItemActor = DraggedITem->EquippedItemActor;
+					EquipmentIcon->SetBrushFromSoftTexture(DraggedITem->Item.ItemIcon);
+					DraggedITem->ItemIcon->SetBrushFromSoftTexture(DraggedITem->ImageIconAsset);
+					DraggedITem->Item = FInventoryStruct();
+					DraggedITem->ItemName->SetText(FText::GetEmpty());
+					GEngine->AddOnScreenDebugMessage(-1, 2.f, FColor::Cyan, FString(TEXT("eq item empty , added new item")));
+					Warrior->GetInventoryComponent()->SetDefaultInventoryValues(DraggedITem->Item, DraggedITem->ItemIndex);
+					
+
+
+
+
+
+				}
 			}
-
-			else
-			{
-				Warrior->EquipItem(DraggedITem->Item);
-				Warrior->GetInventoryComponent()->RemoveFormInventory(DraggedITem->Item);
-				EquippedItem = DraggedITem->Item;
-				EquippedItemActor = DraggedITem->EquippedItemActor;
-				EquipmentIcon->SetBrushFromSoftTexture(DraggedITem->Item.ItemIcon);
-				DraggedITem->ItemIcon->SetBrushFromSoftTexture(DraggedITem->ImageIconAsset);
-				DraggedITem->Item = FInventoryStruct();
-				DraggedITem->ItemName->SetText(FText::GetEmpty());
-			}
+			
 			
 			
 				
