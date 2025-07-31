@@ -51,8 +51,13 @@ void ABaseItem::AttachMeshToSocket(USceneComponent* InParent, const FName& InSoc
 {
 	if (ItemMesh)
 	{
+		
+
 		FAttachmentTransformRules TransformRules(EAttachmentRule::SnapToTarget, true);
 		ItemMesh->AttachToComponent(InParent, TransformRules, InSocketName);
+		ItemMesh->SetRelativeLocation(FVector::ZeroVector);
+		ItemMesh->SetRelativeRotation(FRotator::ZeroRotator);
+	
 	}
 
 }
@@ -86,20 +91,36 @@ void ABaseItem::PlayEquipSound()
 }
 
 void ABaseItem::PickUp(AWarriorCharacter* WarriorCharacter)
-{
-
-	if (WarriorCharacter && WarriorCharacter->GetInventoryComponent())
+{	
+	
+	for (const FInventoryStruct& Item: WarriorCharacter->GetInventoryComponent()->InventoryItems)
 	{
-		FInventoryStruct NewItem;
-		NewItem.ItemName = ItemName;
-		NewItem.ItemIcon = ItemIcon;
-		NewItem.EquipmentSlot = EEquipmentSlot::Weapon;
-		NewItem.ItemClass = this->GetClass();
-		NewItem.ItemTypes = ItemType;
-		NewItem.ItemSocketName = ItemSocketName;
-		WarriorCharacter->GetInventoryComponent()->AddItem(NewItem);
-		this->Destroy();
+		if (Item.ItemName.IsEmpty()) 
+		{
+
+			if (WarriorCharacter && WarriorCharacter->GetInventoryComponent())
+			{
+				FInventoryStruct NewItem;
+				NewItem.ItemName = ItemName;
+				NewItem.ItemIcon = ItemIcon;
+				NewItem.EquipmentSlot = EEquipmentSlot::Weapon;
+				NewItem.ItemClass = this->GetClass();
+				NewItem.ItemTypes = ItemType;
+				NewItem.ItemSocketName = ItemSocketName;
+				WarriorCharacter->GetInventoryComponent()->AddItem(NewItem);
+				this->Destroy();
+				break;
+			}
+		}
+		else 
+		{
+
+			WarriorCharacter->GetInventoryComponent()->InventoryFullText();
+		}
 	}
+
+
+
 }
 
 // Called when the game starts or when spawned

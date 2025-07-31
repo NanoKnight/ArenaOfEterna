@@ -1,4 +1,4 @@
-// Fill out your copyright notice in the Description page of Project Settings.
+﻿// Fill out your copyright notice in the Description page of Project Settings.
 
 
 #include "HUD/InventoryWidget.h"
@@ -51,85 +51,84 @@ bool UInventoryWidget::IsHoveringOnInventoryList()
 
 void UInventoryWidget::SwapItems(int32 FromIndex, int32 ToIndex)
 {
-
-	if (SlotIndices.IsValidIndex(FromIndex)&& SlotIndices.IsValidIndex(ToIndex))
-	{
-		SlotIndices.Swap(FromIndex, ToIndex);
-		
-		AWarriorCharacter* Warrior = Cast<AWarriorCharacter>(GetWorld()->GetFirstPlayerController()->GetPawn());
-		if (Warrior && Warrior->GetInventoryComponent())
-		{
-			Warrior->GetInventoryComponent()->InventoryItems.Swap(FromIndex, ToIndex);
-		}
-		UpdateInventoryDisplay(Warrior->GetInventoryComponent()->InventoryItems);
-	}
+    AWarriorCharacter* Warrior = Cast<AWarriorCharacter>(GetWorld()->GetFirstPlayerController()->GetPawn());
+    if (Warrior && Warrior->GetInventoryComponent())
+    {
+        Warrior->GetInventoryComponent()->SwapInventoryItems(FromIndex, ToIndex);
+    }
 }
 
 
 void UInventoryWidget::SaveSlotIndices()
 {
-	SlotIndices.Empty();
+    StoredSlotIndices.Empty();
 	AWarriorCharacter* Warrior = Cast<AWarriorCharacter>(GetWorld()->GetFirstPlayerController()->GetPawn());
-
 	const TArray<FInventoryStruct>& InventoryItems = Warrior->GetInventoryComponent()->InventoryItems;
-
-	// InventoryItems dizisindeki item s�ras�n� SlotIndices'e kopyalayal�m
-	for (int32 i = 0; i < InventoryItems.Num(); i++)
-	{
-		SlotIndices.Add(i);
-	}
+    if (Warrior && Warrior->GetInventoryComponent())
+    {
+        StoredSlotIndices = Warrior->GetInventoryComponent()->SavedSlotIndices;
+        if (StoredSlotIndices.Num() != 20)
+        {
+            StoredSlotIndices.SetNumUninitialized(20);
+            for (int32 i = 0; i < 20; ++i)
+            { 
+                StoredSlotIndices[i] = i;
+            }
+        }
+    }
+	
 }
 
 
 void UInventoryWidget::UpdateInventoryDisplay(const TArray<FInventoryStruct>& InventoryItems)
 {
+    
+    // 1. Null Check
+    if (!InventoryList || !InventorySlotWidgetClass)
+    {
+        UE_LOG(LogTemp, Warning, TEXT("InventoryList or SlotWidgetClass is null!"));
+        return;
+    }
 
-	if (!InventoryList || !InventorySlotWidgetClass) return;
+    // 2. Temizlik
+    InventoryList->ClearChildren();
+    InventorySlots.Empty();
 
-	InventoryList->ClearChildren();
-	InventorySlots.Empty();
-	
-	const int32 MaxSlots = 20;    
+    // 3. 20 Slot için döngü (7 sütunlu grid varsayımı)
+    for (int32 i = 0; i < 20; ++i)
+    {
+        // 4. Yeni Slot Widget Oluştur (DEĞİŞKEN ADI: SlotWidget)
+        UInventorySlotWidget* SlotWidget = CreateWidget<UInventorySlotWidget>(this, InventorySlotWidgetClass);
+        if (SlotWidget)
+        {
+            // 5. Slot Index Atama
+              SlotWidget->SetSlotIndex(i);
+              SlotWidget->ItemIndex = i;
 
-	if (SlotIndices.Num() != MaxSlots)
-	{
-		SlotIndices.Empty();
-		for (int32 i = 0; i < MaxSlots; i++)
-		{
-			SlotIndices.Add(i);
-		}
-	}
+            // 6. Item Varsa Görseli Güncelle
+            if (InventoryItems.IsValidIndex(i))
+            {
+                SlotWidget->SetUp(InventoryItems[i]);
+            }
 
-	for (int32 i = 0; i < MaxSlots; i++)
-	{
-		UInventorySlotWidget* ItemSlot = CreateWidget<UInventorySlotWidget>(this, InventorySlotWidgetClass);
-		if (ItemSlot)
-		{
+            // 7. Grid'e Ekleme (7 sütunlu grid)
+            if (UGridSlot* GridSlot = InventoryList->AddChildToGrid(SlotWidget, i / 7, i % 7))
+            {
+                GridSlot->SetPadding(FMargin(8.f));
+                GridSlot->SetHorizontalAlignment(HAlign_Fill);
+                GridSlot->SetVerticalAlignment(VAlign_Fill);
+            }
 
-			int32 RealIndex = SlotIndices.IsValidIndex(i) ? SlotIndices[i] : i;
+            // 8. Slot'u Diziye Ekle
+            
+            InventorySlots.Add(SlotWidget);
 
-			if (InventoryItems.IsValidIndex(RealIndex) && !InventoryItems[RealIndex].ItemName.IsEmpty())
-			{
-				ItemSlot->SetUp(InventoryItems[i]);
-			}
-			else
-			{
-				//ItemSlot->SetUp(FInventoryStruct());
-			}
-
-			InventoryList->AddChild(ItemSlot);
-
-			int32 Row = i / 7;
-			int32 Column = i % 7;
-			UGridSlot* GridSlot = InventoryList->AddChildToGrid(ItemSlot, Row, Column);
-			if (GridSlot)
-			{
-				GridSlot->SetPadding(FMargin(10.f));
-			}
-			InventorySlots.Add(ItemSlot);
-		}
-	}
-	
+            // Debug Log
+            UE_LOG(LogTemp, Verbose, TEXT("Created slot %d with item: %s"),
+                i,
+                InventoryItems.IsValidIndex(i) ? *InventoryItems[i].ItemName : TEXT("Empty"));
+        }
+    }
 }
 
 FReply UInventoryWidget::NativeOnKeyDown(const FGeometry& InGeometry, const FKeyEvent& InKeyEvent)

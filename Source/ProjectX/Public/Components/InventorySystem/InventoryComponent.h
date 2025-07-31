@@ -35,6 +35,11 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Inventory")
 	TArray<FInventoryStruct>EquippedItems;
 
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Inventory")
+	TArray<int32> SavedSlotIndices;
+	UPROPERTY()
+	int32 OldSlotIndex;
+
 	UFUNCTION(BlueprintCallable,Category="Inventory")
 	void AddItem(const FInventoryStruct& NewItem);
 
@@ -43,6 +48,11 @@ public:
 	UFUNCTION(BlueprintCallable, Category = "Inventory")
 	void EquipItem(const FInventoryStruct& ItemToEquip);
 
+	UFUNCTION(BlueprintCallable,Category = "Inventory")
+	void DropItem(const FInventoryStruct& ItemToDrop);
+
+	int32 FindFirstEmptySlot() const;
+
 	UFUNCTION(BlueprintCallable, Category = "Inventory")
 	void UnEquipItem(const FInventoryStruct& Item , ABaseItem* EquippedItem);
 
@@ -50,11 +60,22 @@ public:
 	void RemoveFormInventory(const FInventoryStruct& Item);
 
 	UFUNCTION(BlueprintCallable, Category = "Inventory")
+	void SetDefaultInventoryValues(FInventoryStruct& Item , int32 Index);
+
+	UFUNCTION(BlueprintCallable, Category = "Inventory")
 	void OpenInventory();
+
+
 
 	void ToggleInventory(APlayerController* Controller);
 	
+	void SwapInventoryItems(int32 FromIndex, int32 ToIndex);
+	
 
+	void InventoryFullText();
+
+	UFUNCTION(BlueprintCallable)
+	void MoveItem(int32 FromIndex, int32 ToIndex);
 
 	UPROPERTY(EditDefaultsOnly)
 	TSubclassOf<UInventoryWidget> InventoryWidgetClass;

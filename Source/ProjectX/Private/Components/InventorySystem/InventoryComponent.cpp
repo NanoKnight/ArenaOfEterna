@@ -46,7 +46,28 @@ void UInventoryComponent::BeginPlay()
 
 	 }*/
 
+	InventoryItems.SetNum(20);
 
+
+	for (int32 i = 0; i < InventoryItems.Num(); i++)
+	{
+		
+		FInventoryStruct& Item = InventoryItems[i];
+	
+			if (Item.ItemName.IsEmpty())
+			{
+				Item.ItemName = FString("");
+				Item.ItemIcon = nullptr;
+				Item.ItemClass = nullptr;
+				Item.ItemSocketName = NAME_None;
+				Item.ItemTypes = EItemTypes::None;
+				Item.EquipmentSlot = EEquipmentSlot::None;
+				
+
+			}
+	
+
+	}
 }
 
 
@@ -58,7 +79,43 @@ void UInventoryComponent::TickComponent(float DeltaTime, ELevelTick TickType, FA
 
 void UInventoryComponent::AddItem(const FInventoryStruct& NewItem)
 {
-	InventoryItems.Add(NewItem);
+	//InventoryItems.Add(NewItem);
+
+
+	for (int32 i =0 ; i< InventoryItems.Num(); i++)
+	{
+		if (InventoryItems[i].ItemName.IsEmpty())
+		{
+			InventoryItems[i] = NewItem;
+			break;
+		}
+	}
+	AWarriorCharacter* Warrior = Cast<AWarriorCharacter>(GetOwner());
+	if (Warrior)
+	{
+		APlayerController* PlayerController = Cast<APlayerController>(Warrior->GetController());
+		if (PlayerController)
+		{
+			APlayerHUD* HUDRef = Cast<APlayerHUD>(PlayerController->GetHUD());
+			if (HUDRef)
+			{
+				UCharacterHUD* PlayerOverlay = HUDRef->GetPlayerOverlay();
+				if (PlayerOverlay)
+				{
+					PlayerOverlay->SetReceivedItemText(NewItem.ItemName);
+					PlayerOverlay->PlayItemReceivedTextAnimationFadeIn();
+					GetOwner()->GetWorld()->GetTimerManager().SetTimer(ItemTextAnimTimer, FTimerDelegate::CreateUObject(this, &UInventoryComponent::PlayItemTextFadeOutAnim, PlayerOverlay), 1.f, false);
+				}
+			}
+					
+		}
+	}
+
+}
+
+
+void UInventoryComponent::InventoryFullText()
+{
 	AWarriorCharacter* Warrior = Cast<AWarriorCharacter>(GetOwner());
 	if (Warrior)
 	{
@@ -67,19 +124,21 @@ void UInventoryComponent::AddItem(const FInventoryStruct& NewItem)
 		{
 			APlayerHUD* HUDRef = Cast<APlayerHUD>(PlayerController->GetHUD());
 			UCharacterHUD* PlayerOverlay = HUDRef->GetPlayerOverlay();
-			if (PlayerOverlay)
+			if (PlayerOverlay && PlayerOverlay->NotifyTextVisiblity == ESlateVisibility::Hidden)
 			{
-				PlayerOverlay->SetReceivedItemText(NewItem.ItemName);
+				GEngine->AddOnScreenDebugMessage(-1, 2.f, FColor::Cyan, FString::Printf(TEXT("cagirildi")));
 				PlayerOverlay->PlayItemReceivedTextAnimationFadeIn();
-				GetOwner()->GetWorld()->GetTimerManager().SetTimer(ItemTextAnimTimer, FTimerDelegate::CreateUObject(this,&UInventoryComponent::PlayItemTextFadeOutAnim,PlayerOverlay),1.f,false);
-				PlayerOverlay->SetReceivedItemTextVisibility(ESlateVisibility::Hidden);
+				GetOwner()->GetWorld()->GetTimerManager().SetTimer(ItemTextAnimTimer, FTimerDelegate::CreateUObject(this, &UInventoryComponent::PlayItemTextFadeOutAnim, PlayerOverlay), 1.f, false);
+				PlayerOverlay->SetReceivedItemText("Inventory Is Full");
 
-			}		
-
+			}
 		}
 	}
 
 }
+
+
+
 
 void UInventoryComponent::PlayItemTextFadeOutAnim(UCharacterHUD* PlayerOverlay)
 {
@@ -90,33 +149,93 @@ void UInventoryComponent::EquipItem(const FInventoryStruct& ItemToEquip)
 {
 	/* bu fonksiyonun equip weapon kýsmý gözden geçirilmeli weaponeq yerine arrayden kullanmayý denemelisin  */
 
-	EquippedItems.Add(ItemToEquip);
+	if (ItemToEquip.ItemClass)
+	{
+		EquippedItems.Add(ItemToEquip);
 
+		AWarriorCharacter* WarriorCharacter = Cast<AWarriorCharacter>(GetOwner());
+		if (WarriorCharacter)
+		{
+			UWorld* World = WarriorCharacter->GetWorld();
+			if (World)
+			{
+				if (ItemToEquip.ItemTypes == EItemTypes::Weapon)
+				{
+
+					ABaseItem* SpawnedItem = GetWorld()->SpawnActor<ABaseItem>(ItemToEquip.ItemClass);
+					if (SpawnedItem)
+					{
+						SpawnedItem->GetItemMesh()->DetachFromComponent(FDetachmentTransformRules::KeepWorldTransform);
+						SpawnedItem->GetItemMesh()->SetCollisionEnabled(ECollisionEnabled::NoCollision);
+						SpawnedItem->GetItemMesh()->SetSimulatePhysics(false);
+
+						AWeapon* WeaponRef = Cast<AWeapon>(SpawnedItem);
+						WarriorCharacter->EquipWeapon(WeaponRef);
+						SpawnedItem->Equip(WarriorCharacter->GetMesh(), ItemToEquip.ItemSocketName, WarriorCharacter, WarriorCharacter);
+					}
+				}
+				else
+				{
+					ABaseItem* SpawnedItem = World->SpawnActor<ABaseItem>(ItemToEquip.ItemClass);
+					if (SpawnedItem)
+					{
+						SpawnedItem->Equip(WarriorCharacter->GetMesh(), ItemToEquip.ItemSocketName, WarriorCharacter, WarriorCharacter);
+						WarriorCharacter->ItemsToEquip.Add(SpawnedItem);
+					}
+				}
+			}
+		}
+	}
+	
+}
+
+void UInventoryComponent::DropItem(const FInventoryStruct& ItemToDrop)
+{
 	AWarriorCharacter* WarriorCharacter = Cast<AWarriorCharacter>(GetOwner());
 	if (WarriorCharacter)
 	{
 		UWorld* World = WarriorCharacter->GetWorld();
 		if (World)
 		{
-			if (ItemToEquip.ItemTypes == EItemTypes::Weapon)
+			ABaseItem* SpawnedItem = GetWorld()->SpawnActor<ABaseItem>(ItemToDrop.ItemClass);
+			if (SpawnedItem)
 			{
-				
-				ABaseItem* SpawnedItem = GetWorld()->SpawnActor<ABaseItem>(ItemToEquip.ItemClass);
-				if (SpawnedItem)
-				{
-				AWeapon* WeaponRef = Cast<AWeapon>(SpawnedItem);
-				WarriorCharacter->EquipWeapon(WeaponRef);
-				SpawnedItem->Equip(WarriorCharacter->GetMesh(), ItemToEquip.ItemSocketName, WarriorCharacter, WarriorCharacter);
+				//SpawnedItem->GetItemSocketName() = ItemToDrop.ItemSocketName;
+				//SpawnedItem->GetItemType() = ItemToDrop.ItemTypes;
 
+				AWeapon* WeaponRef = Cast<AWeapon>(SpawnedItem);
+				if (WeaponRef)
+				{
+					FVector Location = WarriorCharacter->GetActorLocation();
+					Location.X = Location.X + -150.f;
+					Location.Z = Location.Z + 30.f;
+					SpawnedItem->SetActorLocation(Location);
+					SpawnedItem->ItemSocketName = ItemToDrop.ItemSocketName;
+					SpawnedItem->ItemName = ItemToDrop.ItemName;
+					SpawnedItem->ItemIcon = ItemToDrop.ItemIcon;
+					SpawnedItem->ItemType = ItemToDrop.ItemTypes;
+
+					SpawnedItem->GetItemMesh()->SetSimulatePhysics(true);
+					SpawnedItem->GetItemMesh()->SetCollisionEnabled(ECollisionEnabled::QueryAndPhysics);
 				}
-		
+
+			   
+
 			}
-			
-				ABaseItem* SpawnedItem = World->SpawnActor<ABaseItem>(ItemToEquip.ItemClass);
-				SpawnedItem->Equip(WarriorCharacter->GetMesh(), ItemToEquip.ItemSocketName, WarriorCharacter, WarriorCharacter);
-				WarriorCharacter->ItemsToEquip.Add(SpawnedItem);
 		}
 	}
+}
+
+int32 UInventoryComponent::FindFirstEmptySlot() const
+{
+	for (int32 i = 0; i < InventoryItems.Num(); ++i)
+	{
+		if (InventoryItems[i].ItemName.IsEmpty())
+		{
+			return i;
+		}
+	}
+	return -1; // boþ slot yoksa
 }
 
 void UInventoryComponent::UnEquipItem(const FInventoryStruct& Item, ABaseItem* EquippedItem)
@@ -124,7 +243,7 @@ void UInventoryComponent::UnEquipItem(const FInventoryStruct& Item, ABaseItem* E
 	if (EquippedItems.Contains(Item))
 	{
 		EquippedItems.Remove(Item);
-
+		GEngine->AddOnScreenDebugMessage(-1, 2.f, FColor::Cyan, FString(TEXT("Deleted")));
 		AWarriorCharacter* WarriorCharacter = Cast<AWarriorCharacter>(GetOwner());
 		if (WarriorCharacter)
 		{
@@ -145,8 +264,6 @@ void UInventoryComponent::UnEquipItem(const FInventoryStruct& Item, ABaseItem* E
 							WarriorCharacter->ItemsToEquip.RemoveAt(i);
 						}
 					}
-				
-				  
 			}
 		
 		}
@@ -158,8 +275,30 @@ void UInventoryComponent::RemoveFormInventory(const FInventoryStruct& Item)
 {
 	
 	InventoryItems.Remove(Item);
-	//InventoryWidget->UpdateInventoryDisplay(InventoryItems);
+	if (InventoryWidget)
+	{
+		InventoryWidget->UpdateInventoryDisplay(InventoryItems);
 
+	}
+
+
+}
+
+void UInventoryComponent::SetDefaultInventoryValues(FInventoryStruct& Item, int32 Index)
+{
+
+	if (InventoryItems.IsValidIndex(Index))
+	{
+		InventoryItems[Index] = FInventoryStruct();
+	}
+
+
+	Item.ItemIcon = nullptr;
+	Item.ItemName = FString("");
+	Item.ItemClass = nullptr;
+	Item.ItemSocketName = FName("");
+	Item.ItemTypes = EItemTypes::None;
+	Item.EquipmentSlot = EEquipmentSlot::None;
 }
 
 void UInventoryComponent::OpenInventory()
@@ -184,6 +323,10 @@ void UInventoryComponent::ToggleInventory(APlayerController* Controller)
 	{
 		if (InventoryWidget->GetVisibility() == ESlateVisibility::Visible)
 		{
+			// KAPATIRKEN verileri kaydet
+			InventoryWidget->SaveSlotIndices();
+			SavedSlotIndices = InventoryWidget->StoredSlotIndices;
+
 			InventoryWidget->SetVisibility(ESlateVisibility::Hidden);
 			Controller->bShowMouseCursor = false;
 			FInputModeGameOnly InputMode;
@@ -191,15 +334,82 @@ void UInventoryComponent::ToggleInventory(APlayerController* Controller)
 		}
 		else
 		{
+			// AÇARKEN kayýtlý verileri yükle
+			InventoryWidget->StoredSlotIndices = SavedSlotIndices;
+			InventoryWidget->UpdateInventoryDisplay(InventoryItems);
+
 			InventoryWidget->SetVisibility(ESlateVisibility::Visible);
 			Controller->bShowMouseCursor = true;
 			FInputModeUIOnly InputMode;
 			InputMode.SetWidgetToFocus(InventoryWidget->TakeWidget());
-			//InventoryWidget->UpdateInventoryDisplay(InventoryItems);
 			Controller->SetInputMode(InputMode);
 		}
+	}
+}
+
+void UInventoryComponent::SwapInventoryItems(int32 FromIndex, int32 ToIndex)
+{
+
+	if (!InventoryItems.IsValidIndex(FromIndex) || !InventoryItems.IsValidIndex(ToIndex)) return;
+
+	InventoryItems.Swap(FromIndex, ToIndex);
+
+	// 2. Debug mesajý (INDEX'LERÝ KONTROL EDÝN)
+	UE_LOG(LogTemp, Warning, TEXT("Swapped %d (%s) <-> %d (%s)"),
+		FromIndex, *InventoryItems[FromIndex].ItemName,
+		ToIndex, *InventoryItems[ToIndex].ItemName);
+
+	// 3. Envanteri güncelle
+	if (InventoryWidget)
+	{
+		InventoryWidget->UpdateInventoryDisplay(InventoryItems);
+	}
+}
+
+
+
+void UInventoryComponent::MoveItem(int32 FromIndex, int32 ToIndex)
+{
+
+	if (!InventoryItems.IsValidIndex(FromIndex))
+	{
+		UE_LOG(LogTemp, Error, TEXT("Invalid FromIndex: %d"), FromIndex);
+		return;
+	}
+
+	// Eðer hedef slot yoksa, yeni slot aç
+	if (!InventoryItems.IsValidIndex(ToIndex))
+	{
 
 	}
+
+	if (InventoryItems[ToIndex].ItemName.IsEmpty()) // Eðer hedef boþsa direkt taþý
+	{
+		InventoryItems[ToIndex] = InventoryItems[FromIndex];
+		InventoryItems[FromIndex] = FInventoryStruct();
+		InventoryItems[FromIndex].ItemName = FString("");
+		InventoryItems[FromIndex].ItemClass = nullptr;
+		InventoryItems[FromIndex].EquipmentSlot = EEquipmentSlot::None;
+		InventoryItems[FromIndex].ItemSocketName = NAME_None;
+		InventoryItems[FromIndex].ItemTypes = EItemTypes::None;
+		InventoryItems[FromIndex].ItemIcon = nullptr;
+
+	}
+	else // Dolularýn yerini deðiþtir
+	{
+		InventoryItems.Swap(FromIndex, ToIndex);
+	}
+
+	if (InventoryWidget)
+	{
+	
+
+		InventoryWidget->UpdateInventoryDisplay(InventoryItems);
+	}
+
+	UE_LOG(LogTemp, Warning, TEXT("Moved: %d -> %d, Inventory Size: %d"),
+		FromIndex, ToIndex, InventoryItems.Num());
+
 }
 
 

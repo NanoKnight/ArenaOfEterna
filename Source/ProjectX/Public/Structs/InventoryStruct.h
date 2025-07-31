@@ -13,10 +13,12 @@ class ABaseItem;
 UENUM(BlueprintType)
 enum class EEquipmentSlot : uint8
 {
+	None UMETA(DisplayName = "None"),
 	Head UMETA(DisplayName ="Head"),
 	Chest UMETA(DisplayName="Chest"),
-	Legs UMETA(DisplayName = "Legs"),
 	Feet UMETA(DisplayName = "Feet"),
+	Trousers UMETA(DisplayName = "trousers"),
+	Gloves UMETA(DisplayName = "Gloves"),
 	Weapon UMETA(DisplayName = "Weapon"),
 	Shield UMETA(DisplayName="Shield")
 
@@ -25,10 +27,12 @@ enum class EEquipmentSlot : uint8
 UENUM(BlueprintType)
 enum class EItemTypes : uint8
 {
+	None,
 	Head,
 	Chest,
-	Legs,
 	Feet,
+	Trousers,
+	Gloves,
 	Weapon,
 	Shield
 

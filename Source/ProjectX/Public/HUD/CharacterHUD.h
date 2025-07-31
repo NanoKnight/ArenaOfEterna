@@ -12,10 +12,15 @@
 /**
  * 
  */
+//DECLARE_DYNAMIC_DELEGATE(FOnWidgetAnimationFinished);
+
 UCLASS()
+
 class PROJECTX_API UCharacterHUD : public UUserWidget
 {
 	GENERATED_BODY()
+
+
 
 
 public:
@@ -30,7 +35,10 @@ public:
 	void SetReceivedItemText(FString ItemName);
 	void PlayItemReceivedTextAnimationFadeIn();
 	void PlayItemReceivedTextAnimationFadeOut();
-	void SetReceivedItemTextVisibility(ESlateVisibility ItemVisibility);
+
+	
+	UFUNCTION()
+	void NotifyAnimationFinished();
 
 	UPROPERTY(meta = (BindWidgetAnim), Transient)
 	UWidgetAnimation* QuestCompleteFadeIn;
@@ -38,11 +46,15 @@ public:
 	UPROPERTY(meta = (BindWidgetAnim), Transient)
 	UWidgetAnimation* QuestCompleteFadeOut;
 
-	UPROPERTY(meta = (BindWidgetAnim),Transient)
-	UWidgetAnimation* ItemRecivedTextAnimationFadeIn;
+	UPROPERTY(Transient, meta = (BindWidgetAnim))
+	UWidgetAnimation* NotifyTextAnimationFadeIn;
 
 	UPROPERTY(meta = (BindWidgetAnim), Transient)
-	UWidgetAnimation* ItemRecivedTextAnimationFadeOut;
+	UWidgetAnimation* NotifyTextAnimationFadeOut;
+
+
+	UPROPERTY()
+	ESlateVisibility NotifyTextVisiblity;
 
 	FORCEINLINE UQuestUI* GetQuestOverlay() { return QuestUI; }
 	FORCEINLINE UQuestCompleteWidget* GetQuestCompleteWidget() { return QuestCompleteWidget; }
@@ -71,7 +83,7 @@ private:
 	class UTextBlock* LevelText;
 
 	UPROPERTY(meta =(BindWidget))
-	class UTextBlock* ReceivedItemText;
+	class UTextBlock* ItemNotiftyText;
 
 	UPROPERTY(meta = (BindWidget))
 	class UQuestUI* QuestUI;
@@ -79,7 +91,8 @@ private:
 	UPROPERTY(meta = (BindWidget))
 	class UQuestCompleteWidget* QuestCompleteWidget;
 
-
+protected:
+	virtual void NativeConstruct() override;
 
 
 };

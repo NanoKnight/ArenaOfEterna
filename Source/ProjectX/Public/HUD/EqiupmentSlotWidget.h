@@ -8,6 +8,7 @@
 #include "EqiupmentSlotWidget.generated.h"
 
 class UImage;
+class UTextBlock;
 /**
  * 
  */
@@ -18,12 +19,12 @@ class PROJECTX_API UEqiupmentSlotWidget : public UUserWidget
 
 public:
 
-	virtual bool NativeOnDrop(const FGeometry& InGemotry, const FDragDropEvent& InDragDropEvent, UDragDropOperation* InOperation)override;
+	virtual bool NativeOnDrop(const FGeometry& InGeometry, const FDragDropEvent& InDragDropEvent, UDragDropOperation* InOperation)override;
 
 	UPROPERTY(meta = (BindWidget))
 	 UImage* EquipmentIcon;
 	 
-	 UPROPERTY(EditAnywhere)
+	 UPROPERTY(EditAnywhere,BlueprintReadWrite)
 	 EItemTypes ItemTypes;
 
 	 UPROPERTY(EditAnywhere)
@@ -35,14 +36,23 @@ public:
 	 UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	 ABaseItem* EquippedItemActor;
 
+	 UPROPERTY(meta = (BindWidget))
+	 UTextBlock* SlotName;
+
 
 
 	void SetItemIcon(UTexture2D* NewIcon);
 	void SetDefaultWeaponIcon();
 
 
+
+
 protected:
 	virtual void NativeConstruct() override;
+
+
+	  
+	void SetEquipmentSlotsNames();
 
 
 	virtual FReply NativeOnMouseButtonDown(const FGeometry& InGeometry, const FPointerEvent& InMouseEvent)override;

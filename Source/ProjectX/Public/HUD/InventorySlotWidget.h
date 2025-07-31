@@ -27,6 +27,9 @@ public:
 	UPROPERTY(meta = (BindWidget))
 	UTextBlock* ItemName;
 
+	UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = "Inventory")
+	int32 ItemIndex;
+
 	UPROPERTY(EditAnywhere)
 	TObjectPtr<UTexture2D> ImageIconAsset;
 
@@ -36,9 +39,6 @@ public:
 
 	UPROPERTY()
 	int32 SlotIndex;
-
-	//UPROPERTY(meta = (BindWidget))
-	//UButton* ItemButton;
 
 	void SetUp(const FInventoryStruct& NewItem);
 	UFUNCTION()
@@ -50,6 +50,9 @@ public:
 	virtual FReply NativeOnMouseButtonDown(const FGeometry& InGeometry, const FPointerEvent& InMouseEvent)override;
 	virtual void NativeOnDragDetected(const FGeometry& InGeometry, const FPointerEvent& InMouseEvent , UDragDropOperation*& OutOperation)override;
 	virtual bool NativeOnDrop(const FGeometry& Geometry, const FDragDropEvent& InDragDropEvent, UDragDropOperation* InOperation)override;
+
+	int32 GetSlotIndex() const { return SlotIndex; }
+	FInventoryStruct GetItem() const { return Item; }
 
 	bool IfInventorySlotItemIsValid();
 
