@@ -26,6 +26,8 @@ ABaseItem::ABaseItem()
 	Sphere->SetupAttachment(GetRootComponent());
 	ItemEffect = CreateDefaultSubobject<UNiagaraComponent>(TEXT("Niagara"));
 	ItemEffect->SetupAttachment(GetRootComponent());
+	ItemInteraction = CreateDefaultSubobject<UWidgetComponent>(TEXT("ItemInteraction"));
+	ItemInteraction->SetupAttachment(GetRootComponent());
 
 }
 

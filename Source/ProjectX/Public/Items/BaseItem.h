@@ -12,6 +12,7 @@
 class USphereComponent;
 class USoundBase;
 class UBoxComponent;
+class UWidgetComponent;
 class AWarriorCharacter;
 
 
@@ -67,7 +68,7 @@ protected:
 	UStaticMeshComponent* ItemMesh;
 
 	UPROPERTY(VisibleAnywhere)
-	class UWidgetComponent* ItemInteraction;
+	UWidgetComponent* ItemInteraction;
 
 	UPROPERTY(VisibleAnywhere)
 	USphereComponent* Sphere;

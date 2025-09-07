@@ -15,7 +15,7 @@ class AEnemySpawner;
 
 UCLASS()
 class PROJECTX_API AEnemy : public ABaseCharacter, public ISkillHitInterface
-{
+{ 
 	GENERATED_BODY()
 
 protected:
