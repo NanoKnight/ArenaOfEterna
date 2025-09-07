@@ -105,7 +105,7 @@ void AWeapon::OnBoxOverlap(UPrimitiveComponent* OverlappedComponent, AActor* Oth
 		{
 			return;
 		}
-		UGameplayStatics::ApplyDamage(	BoxHit.GetActor(),Damage,GetInstigator()->GetController(),this,UDamageType::StaticClass());
+		UGameplayStatics::ApplyDamage(	BoxHit.GetActor(),WeaponDamage,GetInstigator()->GetController(),this,UDamageType::StaticClass());
 
 		ExecuteGetHit(BoxHit);
 

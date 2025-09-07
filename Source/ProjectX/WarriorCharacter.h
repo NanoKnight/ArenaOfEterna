@@ -52,7 +52,7 @@ public:
 	bool CheckShieldClose();
 	bool CheckShieldOpen();
 	void ClearShieldRegenerateTimer();
-	void StartShieldRegenerateTimer();
+	void StartShieldRegenerateTimer(float Time);
 	FORCEINLINE UAttributeComponent* GetAttributesComponent() const { return Attributes; }
 	FORCEINLINE UInventoryComponent* GetInventoryComponent() const { return InventoryComponent; }
 	void StaminaRegenerate(float DeltaTime);
@@ -62,6 +62,9 @@ public:
 	
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Materials")
 	UMaterialInterface* OverlayMaterial;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Materials")
+	UMaterialInterface* DefaultMat;
 
 	virtual float TakeDamage(float DamageAmount, struct FDamageEvent const& DamageEvent, class AController* EventInstigator, AActor* DamageCauser) override;
 	bool IsEnemyBehindCharacter();

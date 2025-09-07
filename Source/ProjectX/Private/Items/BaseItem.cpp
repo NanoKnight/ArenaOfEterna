@@ -9,6 +9,7 @@
 #include"../WarriorCharacter.h"
 #include "Kismet/KismetSystemLibrary.h"
 #include"Interfaces\HitInterface.h"
+#include"Components\WidgetComponent.h"
 #include"Components\InventorySystem\InventoryComponent.h"
 #include"GameMode\ArenaGameMode.h"
 
@@ -88,6 +89,19 @@ void ABaseItem::PlayEquipSound()
 			GetActorLocation()
 		);
 	}
+
+
+}
+
+void ABaseItem::SetInteractionVisibility(bool visiblity)
+{
+	if (ItemState != EItemState::EIS_Equipped)
+	{
+		ItemInteraction->SetVisibility(visiblity, false);
+	}
+	ItemInteraction->SetVisibility(visiblity, false);
+
+
 }
 
 void ABaseItem::PickUp(AWarriorCharacter* WarriorCharacter)
@@ -97,16 +111,18 @@ void ABaseItem::PickUp(AWarriorCharacter* WarriorCharacter)
 	{
 		if (Item.ItemName.IsEmpty()) 
 		{
-
 			if (WarriorCharacter && WarriorCharacter->GetInventoryComponent())
 			{
 				FInventoryStruct NewItem;
-				NewItem.ItemName = ItemName;
+				NewItem.ItemName = ItemName;				
 				NewItem.ItemIcon = ItemIcon;
 				NewItem.EquipmentSlot = EEquipmentSlot::Weapon;
 				NewItem.ItemClass = this->GetClass();
+				NewItem.ItemStaticMesh = ItemMesh->GetStaticMesh();
 				NewItem.ItemTypes = ItemType;
 				NewItem.ItemSocketName = ItemSocketName;
+				NewItem.Defense = Defense;
+				NewItem.Damage = Damage;
 				WarriorCharacter->GetInventoryComponent()->AddItem(NewItem);
 				this->Destroy();
 				break;

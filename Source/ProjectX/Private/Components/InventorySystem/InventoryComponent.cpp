@@ -3,6 +3,7 @@
 
 #include"./Components/InventorySystem/InventoryComponent.h"
 #include"../WarriorCharacter.h"
+#include"Components\AttributeComponent.h"
 #include "HUD/InventoryWidget.h"
 #include "Components/GridPanel.h"
 #include"Components\GridSlot.h"
@@ -27,8 +28,9 @@ void UInventoryComponent::BeginPlay()
 {
 	Super::BeginPlay();	
 	/******BUD DEÐÝÞKENNERÝ BÖYLE BEGÝNPLAYDE SETLEYÝP KULLANMAYI DENÝYCEÐÝZ BU SINIFIN H DOSYASINDAN BUNLARIN REFERANSLARINI AKTÝF ET KAPALILAR ÞUAN*******/
-	/* MainCharacter = Cast<AWarriorCharacter>(GetOwner());
-	 if (MainCharacter)
+	 MainCharacter = Cast<AWarriorCharacter>(GetOwner());
+	
+	 /*if (MainCharacter)
 	 {
 		 PlayerController = Cast<APlayerController>(MainCharacter->GetController());
 		 if (PlayerController)
@@ -59,13 +61,19 @@ void UInventoryComponent::BeginPlay()
 				Item.ItemName = FString("");
 				Item.ItemIcon = nullptr;
 				Item.ItemClass = nullptr;
+				Item.ItemStaticMesh = nullptr;
 				Item.ItemSocketName = NAME_None;
 				Item.ItemTypes = EItemTypes::None;
 				Item.EquipmentSlot = EEquipmentSlot::None;
-				
-
 			}
-	
+	}
+}
+
+void UInventoryComponent::SetDefensePoint()
+{
+	if (InventoryWidget)
+	{
+		InventoryWidget->SetDefenseText(MainCharacter->GetAttributesComponent()->GetDefense());
 
 	}
 }
@@ -86,10 +94,14 @@ void UInventoryComponent::AddItem(const FInventoryStruct& NewItem)
 	{
 		if (InventoryItems[i].ItemName.IsEmpty())
 		{
+			//i hangi slota yerleþeceðini gösteriyor
 			InventoryItems[i] = NewItem;
 			break;
 		}
 	}
+
+
+
 	AWarriorCharacter* Warrior = Cast<AWarriorCharacter>(GetOwner());
 	if (Warrior)
 	{
@@ -112,6 +124,59 @@ void UInventoryComponent::AddItem(const FInventoryStruct& NewItem)
 	}
 
 }
+
+void UInventoryComponent::AddItemWithIndex(const FInventoryStruct& NewItem, int32 Index)
+{
+
+
+	//InventoryItems.Add(NewItem);
+
+	for (int32 i = 0; i < InventoryItems.Num(); i++)
+	{
+
+		if (InventoryItems[i].ItemName.IsEmpty())
+		{
+			//i hangi slota yerleþeceðini gösteriyor
+			InventoryItems[Index] = NewItem;
+			break;
+		}
+	}
+}
+
+void UInventoryComponent::RemoveItem(const FInventoryStruct& Item)
+{
+
+	for (int32 i = 0; i< InventoryItems.Num(); i++)
+	{
+		if (InventoryItems[i].ItemName.IsEmpty())
+		{
+			InventoryItems[i] = Item;
+			break;
+		}
+	}
+
+
+
+	/*AWarriorCharacter* Warrior = Cast<AWarriorCharacter>(GetOwner());
+	if (Warrior)
+	{
+		APlayerController* PlayerController = Cast<APlayerController>(Warrior->GetController());
+		if (PlayerController)
+		{
+			APlayerHUD* PlayerHud = Cast<APlayerHUD>(PlayerController->GetHUD());
+			if (PlayerHud)
+			{
+				UCharacterHUD* PlayerOverlay = PlayerHud->GetPlayerOverlay();
+				if (PlayerOverlay)
+				{
+
+				}
+			}
+		}
+	}*/
+
+}
+
 
 
 void UInventoryComponent::InventoryFullText()
@@ -147,7 +212,6 @@ void UInventoryComponent::PlayItemTextFadeOutAnim(UCharacterHUD* PlayerOverlay)
 
 void UInventoryComponent::EquipItem(const FInventoryStruct& ItemToEquip)
 {
-	/* bu fonksiyonun equip weapon kýsmý gözden geçirilmeli weaponeq yerine arrayden kullanmayý denemelisin  */
 
 	if (ItemToEquip.ItemClass)
 	{
@@ -168,19 +232,33 @@ void UInventoryComponent::EquipItem(const FInventoryStruct& ItemToEquip)
 						SpawnedItem->GetItemMesh()->DetachFromComponent(FDetachmentTransformRules::KeepWorldTransform);
 						SpawnedItem->GetItemMesh()->SetCollisionEnabled(ECollisionEnabled::NoCollision);
 						SpawnedItem->GetItemMesh()->SetSimulatePhysics(false);
-
 						AWeapon* WeaponRef = Cast<AWeapon>(SpawnedItem);
 						WarriorCharacter->EquipWeapon(WeaponRef);
 						SpawnedItem->Equip(WarriorCharacter->GetMesh(), ItemToEquip.ItemSocketName, WarriorCharacter, WarriorCharacter);
+						SpawnedItem->GetItemMesh()->SetStaticMesh(ItemToEquip.ItemStaticMesh);
+
 					}
 				}
 				else
 				{
+
 					ABaseItem* SpawnedItem = World->SpawnActor<ABaseItem>(ItemToEquip.ItemClass);
 					if (SpawnedItem)
 					{
 						SpawnedItem->Equip(WarriorCharacter->GetMesh(), ItemToEquip.ItemSocketName, WarriorCharacter, WarriorCharacter);
 						WarriorCharacter->ItemsToEquip.Add(SpawnedItem);
+						SpawnedItem->GetItemMesh()->SetStaticMesh(ItemToEquip.ItemStaticMesh);
+
+						
+
+					}
+
+
+					if (SpawnedItem->Defense > 0 )
+					{
+						WarriorCharacter->GetAttributesComponent()->SetDefense(WarriorCharacter->GetAttributesComponent()->GetDefense() + SpawnedItem->Defense);
+						SetDefensePoint();
+
 					}
 				}
 			}
@@ -203,8 +281,8 @@ void UInventoryComponent::DropItem(const FInventoryStruct& ItemToDrop)
 				//SpawnedItem->GetItemSocketName() = ItemToDrop.ItemSocketName;
 				//SpawnedItem->GetItemType() = ItemToDrop.ItemTypes;
 
-				AWeapon* WeaponRef = Cast<AWeapon>(SpawnedItem);
-				if (WeaponRef)
+				ABaseItem* ItemRef = Cast<ABaseItem>(SpawnedItem);
+				if (ItemRef)
 				{
 					FVector Location = WarriorCharacter->GetActorLocation();
 					Location.X = Location.X + -150.f;
@@ -214,9 +292,9 @@ void UInventoryComponent::DropItem(const FInventoryStruct& ItemToDrop)
 					SpawnedItem->ItemName = ItemToDrop.ItemName;
 					SpawnedItem->ItemIcon = ItemToDrop.ItemIcon;
 					SpawnedItem->ItemType = ItemToDrop.ItemTypes;
-
 					SpawnedItem->GetItemMesh()->SetSimulatePhysics(true);
 					SpawnedItem->GetItemMesh()->SetCollisionEnabled(ECollisionEnabled::QueryAndPhysics);
+					RemoveFormInventory(ItemToDrop);
 				}
 
 			   
@@ -238,32 +316,59 @@ int32 UInventoryComponent::FindFirstEmptySlot() const
 	return -1; // boþ slot yoksa
 }
 
-void UInventoryComponent::UnEquipItem(const FInventoryStruct& Item, ABaseItem* EquippedItem)
+int32 UInventoryComponent::FindItemIndex(const FInventoryStruct& ItemToFind) const
+{
+
+	for (int32 i = 0; i < InventoryItems.Num(); i++)
+	{
+	    if (InventoryItems[i].ItemName == ItemToFind.ItemName)
+	    {
+			return i;
+	    }
+	}
+	return INDEX_NONE;
+}
+
+void UInventoryComponent::UnEquipItem(FInventoryStruct& Item, ABaseItem* EquippedItem)
 {
 	if (EquippedItems.Contains(Item))
-	{
+	{ 
+		float defins = Item.Defense;
 		EquippedItems.Remove(Item);
+
 		GEngine->AddOnScreenDebugMessage(-1, 2.f, FColor::Cyan, FString(TEXT("Deleted")));
+
 		AWarriorCharacter* WarriorCharacter = Cast<AWarriorCharacter>(GetOwner());
 		if (WarriorCharacter)
 		{
+			
+				WarriorCharacter->GetAttributesComponent()->SetDefense(WarriorCharacter->GetAttributesComponent()->GetDefense() - defins);
+				SetDefensePoint();
+
+			
 			UWorld* World = WarriorCharacter->GetWorld();
 			if (World)
 			{
+				
+
 				if (Item.ItemTypes == EItemTypes::Weapon)
 				{
 					WarriorCharacter->SetCharacterStates(ECharacterStates::ECS_UnEquipped);
 					WarriorCharacter->EquippedWeapon->Destroy();
 				}
+
 				
 					for (int32 i = WarriorCharacter->ItemsToEquip.Num() - 1; i >= 0; i--)
 					{
-						if (WarriorCharacter->ItemsToEquip[i] && WarriorCharacter->ItemsToEquip[i]->ItemType == Item.ItemTypes) {
+						if (WarriorCharacter->ItemsToEquip[i] && WarriorCharacter->ItemsToEquip[i]->ItemType == Item.ItemTypes) 
+						{
+							
 							WarriorCharacter->ItemsToEquip[i]->DetachFromActor(FDetachmentTransformRules::KeepWorldTransform);
 							WarriorCharacter->ItemsToEquip[i]->Destroy();
 							WarriorCharacter->ItemsToEquip.RemoveAt(i);
 						}
 					}
+				
 			}
 		
 		}
@@ -313,6 +418,7 @@ void UInventoryComponent::OpenInventory()
 			//Controller->Pause();
 			CreateInventoryWidget(Controller);
 			ToggleInventory(Controller);
+			SetDefensePoint();
 
 		}
 	}

@@ -35,11 +35,12 @@ public:
 	TArray<UInventorySlotWidget*> InventorySlots;
 
 	TArray<int32> StoredSlotIndices;
+	
+	void SetDefenseText(int32 DefensePoint);
 
 	void CheckHoveringOnInventoryList(const FDragDropEvent& InDragDropEvent);
 
 	bool IsHoveringOnInventoryList();
-
 
 	void SwapItems(int32 FromIndex, int32 ToIndex);
 
@@ -53,6 +54,8 @@ public:
 		UPROPERTY()
 		int32 SlotIndex;
 
+		UPROPERTY(meta = (BindWidget))
+		class UTextBlock* DefensePointText;
 
 
 

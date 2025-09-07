@@ -6,6 +6,7 @@
 #include"../WarriorCharacter.h"
 #include"./Components/InventorySystem/InventoryComponent.h"
 #include "Blueprint/DragDropOperation.h"
+#include "HUD/InventoryWidget.h"
 #include"Components\TextBlock.h"
 #include "Blueprint/WidgetBlueprintLibrary.h"
 #include"Components\Image.h"
@@ -23,23 +24,42 @@ bool UEqiupmentSlotWidget::NativeOnDrop(const FGeometry& InGeometry, const FDrag
 			{
 				if (!EquippedItem.ItemName.IsEmpty())
 				{
+
 					FInventoryStruct TempItem = DraggedITem->Item;
+					FInventoryStruct TempEqItem = EquippedItem;
+
 
 					Warrior->GetInventoryComponent()->UnEquipItem(EquippedItem, DraggedITem->EquippedItemActor);
-					GEngine->AddOnScreenDebugMessage(-1, 2.f, FColor::Cyan, FString::Printf(TEXT("dolu")));
+
+
+					//GEngine->AddOnScreenDebugMessage(-1, 2.f, FColor::Cyan, FString::Printf(TEXT("dolu")));
+					
+
+					Warrior->GetInventoryComponent()->EquipItem(TempItem);
+					DraggedITem->ItemIcon->SetBrushFromSoftTexture(TempEqItem.ItemIcon);
+					DraggedITem->ItemName->SetText(FText::FromString(TempEqItem.ItemName));
+					EquippedItem = TempItem;
+					
+
+					//Warrior->GetInventoryComponent()->AddItem(TempEqItem);
 					if (TempItem.ItemIcon)
 					{
 						EquipmentIcon->SetBrushFromSoftTexture(TempItem.ItemIcon);
 
 					}
-
-					Warrior->GetInventoryComponent()->EquipItem(TempItem);
-					DraggedITem->ItemIcon->SetBrushFromSoftTexture(EquippedItem.ItemIcon);
-					DraggedITem->ItemName->SetText(FText::FromString(EquippedItem.ItemName));
-					DraggedITem->Item = EquippedItem;
-					EquippedItem = TempItem;
+					//Warrior->GetInventoryComponent()->InventoryWidget->UpdateInventoryDisplay(Warrior->GetInventoryComponent()->InventoryItems);
 
 
+					int32 OldItemIndex = Warrior->GetInventoryComponent()->FindItemIndex(EquippedItem);
+					if (OldItemIndex != INDEX_NONE)
+					{
+						Warrior->GetInventoryComponent()->AddItemWithIndex(TempEqItem ,OldItemIndex);
+						Warrior->GetInventoryComponent()->RemoveFormInventory(DraggedITem->Item);
+						Warrior->GetInventoryComponent()->InventoryWidget->UpdateInventoryDisplay(Warrior->GetInventoryComponent()->InventoryItems);
+
+						
+					}				
+					
 
 				}
 
@@ -54,18 +74,8 @@ bool UEqiupmentSlotWidget::NativeOnDrop(const FGeometry& InGeometry, const FDrag
 					DraggedITem->ItemName->SetText(FText::GetEmpty());
 					GEngine->AddOnScreenDebugMessage(-1, 2.f, FColor::Cyan, FString(TEXT("eq item empty , added new item")));
 					Warrior->GetInventoryComponent()->SetDefaultInventoryValues(DraggedITem->Item, DraggedITem->ItemIndex);
-					
-
-
-
-
-
 				}
-			}
-			
-			
-			
-				
+			}				
 		}
 		return true;
 

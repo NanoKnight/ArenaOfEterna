@@ -57,7 +57,7 @@ protected:
 
 	
 
-
+	/* Itemi sahnede deðiþtirdiðinde kuþandýlan iteme etki etmiyor bunun için kuþanýrken yerden adlýðým itemlerin deðerlerini gircen*/
 
 
 	UPROPERTY(VisibleAnywhere, Category = "WeaponProperties")
@@ -67,10 +67,20 @@ protected:
 	UStaticMeshComponent* ItemMesh;
 
 	UPROPERTY(VisibleAnywhere)
+	class UWidgetComponent* ItemInteraction;
+
+	UPROPERTY(VisibleAnywhere)
 	USphereComponent* Sphere;
 
 	UPROPERTY(VisibleAnywhere)
 	class UNiagaraComponent* ItemEffect;
+
+
+
+
+	UPROPERTY(VisibleAnywhere)
+	TSubclassOf<UUserWidget> WidgetClass;
+
 
 	EItemState ItemState = EItemState::EIS_Hovering;
 
@@ -78,21 +88,32 @@ public:
 	// Called every frame
 	virtual void Tick(float DeltaTime) override;
 
-	UPROPERTY(EditAnywhere)
+
+
+	UPROPERTY()
 	FString ItemID;
 
 	UPROPERTY(EditAnywhere)
 	EItemTypes ItemType;
 
+	UPROPERTY(EditAnywhere,meta = (EditCondition = "ItemType == EItemTypes::Weapon", EditConditionHides))
+	float Damage = 20.f;
+	UPROPERTY(EditAnywhere, meta = (EditCondition = "ItemType != EItemTypes::Weapon", EditConditionHides))
+	float Defense;
+
+
 	UPROPERTY(EditAnywhere)
 	FString ItemName;
 
-	UPROPERTY(VisibleAnywhere)
+	UPROPERTY(EditAnywhere)
 	UTexture2D* ItemIcon;
 
 	UPROPERTY(EditAnywhere)
 	FName ItemSocketName;
 
+	void SetInteractionVisibility(bool visiblity);
+
 	FORCEINLINE UStaticMeshComponent* GetItemMesh() const { return ItemMesh; }
+	FORCEINLINE UWidgetComponent* GetItemInteractionWidget() const{ return ItemInteraction; }
 
 };

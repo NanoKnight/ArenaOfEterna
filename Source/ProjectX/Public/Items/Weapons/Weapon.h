@@ -82,16 +82,17 @@ private:
 	USceneComponent* BoxTraceEnd;
 
 	UPROPERTY(EditAnywhere, Category = "WeaponProperties")
-	float Damage = 20.f;
+	float WeaponDamage = 20.f;
 
 
 
 	
 
 public:
+
 	FORCEINLINE UBoxComponent* GetWeaponBox()  const { return WeaponBox; }
-	FORCEINLINE float GetDamage() const { return Damage;}
-	FORCEINLINE void SetDamage(float NewDamage) { Damage = NewDamage; }
+	FORCEINLINE float GetDamage() const { return WeaponDamage;}
+	FORCEINLINE void SetDamage(float NewDamage) { WeaponDamage = NewDamage; }
 
 
 };

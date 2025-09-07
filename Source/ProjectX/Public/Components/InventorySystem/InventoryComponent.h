@@ -25,6 +25,8 @@ protected:
 	// Called when the game starts
 	virtual void BeginPlay() override;
 
+	void SetDefensePoint();
+
 public:	
 	// Called every frame
 	virtual void TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction) override;
@@ -43,6 +45,12 @@ public:
 	UFUNCTION(BlueprintCallable,Category="Inventory")
 	void AddItem(const FInventoryStruct& NewItem);
 
+	void AddItemWithIndex(const FInventoryStruct& NewItem, int32 Index);
+
+
+	UFUNCTION(BlueprintCallable, Category = "Inventory")
+	void RemoveItem(const FInventoryStruct& Item);
+
 	void PlayItemTextFadeOutAnim(UCharacterHUD* PlayerOverlay);
 
 	UFUNCTION(BlueprintCallable, Category = "Inventory")
@@ -53,8 +61,10 @@ public:
 
 	int32 FindFirstEmptySlot() const;
 
+	int32 FindItemIndex(const FInventoryStruct& ItemToFind) const;
+
 	UFUNCTION(BlueprintCallable, Category = "Inventory")
-	void UnEquipItem(const FInventoryStruct& Item , ABaseItem* EquippedItem);
+	void UnEquipItem(FInventoryStruct& Item , ABaseItem* EquippedItem);
 
 	UFUNCTION(BlueprintCallable,Category="Inventory")
 	void RemoveFormInventory(const FInventoryStruct& Item);
@@ -87,7 +97,7 @@ private:
 	FTimerHandle ItemTextAnimTimer;
 
 	//APlayerController* PlayerController;
-	//AWarriorCharacter* MainCharacter;
+	AWarriorCharacter* MainCharacter;
 	//APlayerHUD* PlayerHUD;
 	//UCharacterHUD* PlayerOverlay;
 

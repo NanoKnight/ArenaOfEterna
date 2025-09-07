@@ -8,6 +8,7 @@
 #include "GameFramework/CharacterMovementComponent.h"
 #include "Components\SphereComponent.h"
 #include "Items\BaseItem.h"
+#include "./HUD/ItemInteractionWidget.h"
 #include"Items\Weapons\Weapon.h"
 #include"Items\Weapons\Shield.h"
 #include"Enemy\Enemy.h"
@@ -26,6 +27,8 @@
 #include"Components\InventorySystem\InventoryComponent.h"
 #include "Items\QuestActor.h"
 #include "EngineUtils.h"
+#include "UMG.h"
+#include"Components\WidgetComponent.h"
 #include "Public\QuestStruct.h"
 #include"GameMode\ArenaGameMode.h"
 #include"Runtime/Engine/Public/TimerManager.h"
@@ -162,8 +165,8 @@ void AWarriorCharacter::GetHit_Implementation(const FVector& ImpactPoint, AActor
 		SpawnShieldHitParticles(ImpactPoint);
 		PLayShieldHitSound(ImpactPoint);
 		PlayShieldReactMontage();
+		StartShieldRegenerateTimer(4);
 		ClearShieldRegenerateTimer();
-		StartShieldRegenerateTimer();
 
 	}
 	if (!ShieldAlive())
@@ -173,6 +176,10 @@ void AWarriorCharacter::GetHit_Implementation(const FVector& ImpactPoint, AActor
 		SetWeaponCollisionEnabled(ECollisionEnabled::NoCollision);
 		GetCharacterMovement()->MaxWalkSpeed = CharacterRunSpeed;
 		ComboCountReset();
+		StartShieldRegenerateTimer(2);
+		ClearShieldRegenerateTimer();
+
+
 	}
 }
 
@@ -316,9 +323,10 @@ void AWarriorCharacter::ClearShieldRegenerateTimer()
 	GetWorld()->GetTimerManager().ClearTimer(Attributes->Timer);
 }
 
-void AWarriorCharacter::StartShieldRegenerateTimer()
+void AWarriorCharacter::StartShieldRegenerateTimer(float Time)
 {
-	
+	GetWorld()->GetTimerManager().SetTimer(shieldRegenerateTime, this, &AWarriorCharacter::RegenerateShield, Time, false);
+
 }
 
 void AWarriorCharacter::StaminaRegenerate(float DeltaTime)
@@ -349,7 +357,7 @@ void AWarriorCharacter::GetClosestEnemy()
 			USkeletalMeshComponent* EnemyMesh = CloseEnemy->EnemyOutlineMesh;
 			if (EnemyMesh)
 			{
-				EnemyMesh->SetMaterial(0, nullptr);
+				EnemyMesh->SetMaterial(0, DefaultMat);
 			}
 				
 		}
@@ -365,7 +373,8 @@ void AWarriorCharacter::GetClosestEnemy()
 		}
 	}
 	CloseEnemy = NewClosestEnemy;
-}
+	
+	}
 
 void AWarriorCharacter::SpawnDefaultShield()
 {
@@ -886,19 +895,28 @@ void AWarriorCharacter::Shield()
 	
 	if (CharacterStates == ECharacterStates::ECS_UnEquipped)return;
 
-
-	if (ShieldAlive() && ActionState != EActionState::EAS_Dead && ActionState != EActionState::EAS_UsingSkill)
+	for (int32 i = 0; i < GetInventoryComponent()->EquippedItems.Num(); i++)
 	{
-		UAnimInstance* AnimInstance = GetMesh()->GetAnimInstance();
-		if (AnimInstance && ShieldMontage)
+		FInventoryStruct& Item = GetInventoryComponent()->EquippedItems[i];
+		if (Item.ItemTypes == EItemTypes::Shield)
 		{
-			AnimInstance->Montage_Play(ShieldMontage);
+			if (ShieldAlive() && ActionState != EActionState::EAS_Dead && ActionState != EActionState::EAS_UsingSkill)
+			{
+				UAnimInstance* AnimInstance = GetMesh()->GetAnimInstance();
+				if (AnimInstance && ShieldMontage)
+				{
+					AnimInstance->Montage_Play(ShieldMontage);
+				}
+				BShieldOn = true;
+				CharacterStates = ECharacterStates::ECS_EquippedShield;
+				ActionState = EActionState::EAS_Unoccupied;
+				GetCharacterMovement()->MaxWalkSpeed = CharacterWalkSpeed;
+			}
 		}
-		BShieldOn = true;
-		CharacterStates = ECharacterStates::ECS_EquippedShield;
-		ActionState = EActionState::EAS_Unoccupied;
-		GetCharacterMovement()->MaxWalkSpeed = CharacterWalkSpeed;
 	}
+
+
+	
 }
 
 void AWarriorCharacter::ShieldRealesed()
@@ -907,6 +925,11 @@ void AWarriorCharacter::ShieldRealesed()
 	CharacterStates = ECharacterStates::ECS_EquippedOnehand;
 	BShieldOn = false;
 	GetCharacterMovement()->MaxWalkSpeed = CharacterRunSpeed;
+	StartShieldRegenerateTimer(2);
+
+
+
+	
 }
 
 void AWarriorCharacter::PlayEquipMontage(const FName& SectionName)
@@ -1042,7 +1065,46 @@ void AWarriorCharacter::SphereCollisionBeginOverlap(UPrimitiveComponent* Overlap
 				EnemiesInRange.Remove(Enemy);
 			}		
 		}
+
+		ABaseItem* ItemRef = Cast<ABaseItem>(OtherActor);
+		if (ItemRef)
+		{
+			ItemRef->SetInteractionVisibility(true);
+
+                      /*BU KISIM OPTÝMÝZE EDÝLMELÝ  */
+			UWidgetComponent* WidgetComp = ItemRef->GetItemInteractionWidget();
+			if (WidgetComp)
+			{
+				UUserWidget* UserWidget = WidgetComp->GetUserWidgetObject();
+				if (UserWidget)
+				{
+					UItemInteractionWidget* ItemInteractWidget = Cast<UItemInteractionWidget>(UserWidget);
+					if (ItemInteractWidget)
+					{
+						if (ItemRef->ItemType == EItemTypes::Weapon)
+						{
+							ItemInteractWidget->SetInteractionValues(ItemRef->ItemName, ItemRef->Damage,ItemRef->ItemType);
+
+						}
+						else
+						{
+							ItemInteractWidget->SetInteractionValues(ItemRef->ItemName, ItemRef->Defense,ItemRef->ItemType);
+
+						}
+
+					}
+				}
+
+				
+			}
+
+			
+		}
+		
+
+		
 	}
+
 }
 
 void AWarriorCharacter::SphereCollisionEndOverlap(UPrimitiveComponent* OverlappedComp, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex)
@@ -1057,7 +1119,15 @@ void AWarriorCharacter::SphereCollisionEndOverlap(UPrimitiveComponent* Overlappe
 			EnemiesInRange.Remove(Enemy);
 		}
 
+		ABaseItem* ItemRef = Cast<ABaseItem>(OtherActor);
+		if (ItemRef)
+		{
+			ItemRef->SetInteractionVisibility(false);
+		}
+
+
 	}
+
 }
 
 void AWarriorCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputComponent)

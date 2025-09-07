@@ -57,7 +57,32 @@ void UAttributeComponent::AddHealth(float HealthAmmount)
 
 void UAttributeComponent::ReciveDamage(float Damage)
 {
+   
+	if (Defense == 0)
+	{
+		Damage = Damage * 1.f;
+	}
+	else if (Defense < 25)
+	{
+		Damage = Damage * (1.0f - 0.20);
+
+	}
+	else if(Defense < 50)
+	{
+		Damage = Damage * (1.0f - 0.30);
+	}
+
+	else if(Defense < 75)
+	{
+		Damage = Damage * (1.f - 0.45);
+	}
+	else 
+	{
+		Damage = Damage * (1.f - 0.60);
+	}
+
 	Health = FMath::Clamp(Health - Damage, 0.f, MaxHealth);
+
 }
 
 void UAttributeComponent::ReciveStamina(float Damage)

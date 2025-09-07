@@ -27,15 +27,14 @@ enum class EEquipmentSlot : uint8
 UENUM(BlueprintType)
 enum class EItemTypes : uint8
 {
-	None,
-	Head,
-	Chest,
-	Feet,
-	Trousers,
-	Gloves,
-	Weapon,
-	Shield
-
+	None UMETA(DisplayName = "None"),
+	Head UMETA(DisplayName = "Head"),
+	Chest UMETA(DisplayName = "Chest"),
+	Feet UMETA(DisplayName = "Feet"),
+	Trousers UMETA(DisplayName = "Trousers"),
+	Gloves UMETA(DisplayName = "Gloves"),
+	Weapon UMETA(DisplayName = "Weapon"),
+	Shield UMETA(DisplayName = "Shield")
 };
 
 USTRUCT(BlueprintType)
@@ -48,8 +47,11 @@ public:
 	FString ItemName;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	UStaticMesh* ItemStaticMesh;
+	
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	UTexture2D* ItemIcon;
-
+	
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	EEquipmentSlot EquipmentSlot;
 
@@ -58,6 +60,13 @@ public:
 
 	UPROPERTY(EditAnywhere)
 	EItemTypes ItemTypes;
+
+	UPROPERTY(EditAnywhere, BlueprintReadwrite, meta = (EditCondition = "ItemTypes == EItemTypes::Weapon", EditConditionHides))
+	float Damage;
+
+	UPROPERTY(EditAnywhere, BlueprintReadwrite,meta = (EditCondition = "ItemTypes != EItemTypes::Weapon",EditConditionHides))
+	float Defense;
+
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	TSubclassOf<ABaseItem>ItemClass;

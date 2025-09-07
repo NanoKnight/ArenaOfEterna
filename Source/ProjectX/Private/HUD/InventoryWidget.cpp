@@ -19,6 +19,13 @@ void UInventoryWidget::NativeConstruct()
 
 
 
+void UInventoryWidget::SetDefenseText(int32 DefensePoint)
+{
+   const FString DPString = FString::Printf(TEXT("Defense Point :  %d"),DefensePoint);
+   const FText DPText = FText::FromString(DPString);
+   DefensePointText->SetText(DPText);
+}
+
 void UInventoryWidget::CheckHoveringOnInventoryList(const FDragDropEvent& InDragDropEvent)
 {
 	if (InventoryList)

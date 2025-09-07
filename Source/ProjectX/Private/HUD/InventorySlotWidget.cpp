@@ -100,7 +100,6 @@ void UInventorySlotWidget::NativeOnDragDetected(const FGeometry& InGeometry, con
 
 bool UInventorySlotWidget::NativeOnDrop(const FGeometry& Geometry, const FDragDropEvent& InDragDropEvent, UDragDropOperation* InOperation)
 {
-	//KODLARI DÜZElt burdaki moduler yap///
 	if (!InOperation || !InOperation->Payload)
 	{
 		return false;
@@ -140,21 +139,27 @@ bool UInventorySlotWidget::NativeOnDrop(const FGeometry& Geometry, const FDragDr
 			 FInventoryStruct TempItem = DraggedItem->EquippedItem;
 			 if (Item.ItemTypes == DraggedItem->ItemTypes)
 			 {
+				 int32 OldIndex = Warrior->GetInventoryComponent()->FindItemIndex(Item);
 				 Warrior->GetInventoryComponent()->UnEquipItem(DraggedItem->EquippedItem, DraggedItem->EquippedItemActor);
-				 Warrior->GetInventoryComponent()->InventoryItems.Add(DraggedItem->EquippedItem);
+				 Warrior->GetInventoryComponent()->AddItemWithIndex(DraggedItem->EquippedItem,OldIndex);
+				 Warrior->GetInventoryComponent()->RemoveFormInventory(Item);
+				 Warrior->GetInventoryComponent()->InventoryWidget->UpdateInventoryDisplay(Warrior->GetInventoryComponent()->InventoryItems);
+
 
 				 // 2. Yeni itemi kuþan
 				 DraggedItem->EquipmentIcon->SetBrushFromSoftTexture(Item.ItemIcon);
 				 DraggedItem->EquippedItem = Item;
 				 DraggedItem->EquippedItemActor = EquippedItemActor;
 				 Warrior->GetInventoryComponent()->EquipItem(DraggedItem->EquippedItem);
+				 GEngine->AddOnScreenDebugMessage(-1, 2.f, FColor::Cyan, FString::Printf(TEXT("eq item cikti")));
 
 				 // 3. Slot'u güncelle
 				 ItemIcon->SetBrushFromSoftTexture(TempItem.ItemIcon);
 				 ItemName->SetText(FText::FromString(TempItem.ItemName));
 				 Item = TempItem;
+				  
 			 }
-		
+          		
 		 }
 	
 		return true;
@@ -162,7 +167,7 @@ bool UInventorySlotWidget::NativeOnDrop(const FGeometry& Geometry, const FDragDr
 
 	}
 	
-
+    
 	// 1. Sürüklenen slotu al
 	UInventorySlotWidget* DraggedSlot = Cast<UInventorySlotWidget>(InOperation->Payload);
 	if (!DraggedSlot || DraggedSlot == this) return false;
@@ -174,8 +179,11 @@ bool UInventorySlotWidget::NativeOnDrop(const FGeometry& Geometry, const FDragDr
 	// 3. TAÞIMA ÝÞLEMÝNÝ YAP (Artýk swap yok, direkt move!)
 	Warrior->GetInventoryComponent()->MoveItem(DraggedSlot->SlotIndex, this->SlotIndex);
 	Warrior->GetInventoryComponent()->OldSlotIndex = SlotIndex;
+	
 	return true;
 	//return false;
+	
+
 }
 
 bool UInventorySlotWidget::IfInventorySlotItemIsValid()
