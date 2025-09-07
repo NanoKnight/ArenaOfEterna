@@ -65,15 +65,17 @@ bool UEqiupmentSlotWidget::NativeOnDrop(const FGeometry& InGeometry, const FDrag
 
 				else
 				{
+
 					Warrior->EquipItem(DraggedITem->Item);
 					EquippedItem = DraggedITem->Item;
 					EquippedItemActor = DraggedITem->EquippedItemActor;
 					EquipmentIcon->SetBrushFromSoftTexture(DraggedITem->Item.ItemIcon);
+					Warrior->GetInventoryComponent()->SetDefaultInventoryValues(DraggedITem->Item,DraggedITem->ItemIndex);
+
 					DraggedITem->ItemIcon->SetBrushFromSoftTexture(DraggedITem->ImageIconAsset);
 					DraggedITem->Item = FInventoryStruct();
 					DraggedITem->ItemName->SetText(FText::GetEmpty());
-					GEngine->AddOnScreenDebugMessage(-1, 2.f, FColor::Cyan, FString(TEXT("eq item empty , added new item")));
-					Warrior->GetInventoryComponent()->SetDefaultInventoryValues(DraggedITem->Item, DraggedITem->ItemIndex);
+					
 				}
 			}				
 		}

@@ -395,15 +395,20 @@ void UInventoryComponent::SetDefaultInventoryValues(FInventoryStruct& Item, int3
 	if (InventoryItems.IsValidIndex(Index))
 	{
 		InventoryItems[Index] = FInventoryStruct();
+		InventoryItems[Index].ItemIcon = nullptr;
+		InventoryItems[Index].ItemName = FString("");
+		InventoryItems[Index].ItemClass = nullptr;
+		InventoryItems[Index].Damage = 31;
+		InventoryItems[Index].ItemSocketName = FName("");
+		InventoryItems[Index].ItemTypes = EItemTypes::None;
+		InventoryItems[Index].Defense = 31;
+		InventoryItems[Index].ItemStaticMesh = nullptr;
+		InventoryItems[Index].EquipmentSlot = EEquipmentSlot::None;
+		GEngine->AddOnScreenDebugMessage(-1, 2.f, FColor::Cyan, FString::Printf(TEXT("Default values set for item at index %d"), Index));
+
 	}
 
-
-	Item.ItemIcon = nullptr;
-	Item.ItemName = FString("");
-	Item.ItemClass = nullptr;
-	Item.ItemSocketName = FName("");
-	Item.ItemTypes = EItemTypes::None;
-	Item.EquipmentSlot = EEquipmentSlot::None;
+;
 }
 
 void UInventoryComponent::OpenInventory()
