@@ -71,7 +71,6 @@ bool UEqiupmentSlotWidget::NativeOnDrop(const FGeometry& InGeometry, const FDrag
 					EquippedItemActor = DraggedITem->EquippedItemActor;
 					EquipmentIcon->SetBrushFromSoftTexture(DraggedITem->Item.ItemIcon);
 					Warrior->GetInventoryComponent()->SetDefaultInventoryValues(DraggedITem->Item,DraggedITem->ItemIndex);
-
 					DraggedITem->ItemIcon->SetBrushFromSoftTexture(DraggedITem->ImageIconAsset);
 					DraggedITem->Item = FInventoryStruct();
 					DraggedITem->ItemName->SetText(FText::GetEmpty());

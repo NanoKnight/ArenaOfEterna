@@ -122,14 +122,13 @@ bool UInventorySlotWidget::NativeOnDrop(const FGeometry& Geometry, const FDragDr
 				Item = DraggedItem->EquippedItem;
 				SetUp(DraggedItem->EquippedItem);
 				Warrior->GetInventoryComponent()->InventoryItems[TargetIndex] = DraggedItem->EquippedItem;
-
+				
 
 				Warrior->GetInventoryComponent()->UnEquipItem(DraggedItem->EquippedItem, DraggedItem->EquippedItemActor);
 
 				DraggedItem->EquippedItem = FInventoryStruct();
 				DraggedItem->EquippedItemActor = nullptr;
 				DraggedItem->SetDefaultWeaponIcon();
-
 				return true;
 			}
 		

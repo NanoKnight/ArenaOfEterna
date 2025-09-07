@@ -99,7 +99,7 @@ void UInventoryComponent::AddItem(const FInventoryStruct& NewItem)
 			break;
 		}
 	}
-
+	
 
 
 	AWarriorCharacter* Warrior = Cast<AWarriorCharacter>(GetOwner());
@@ -246,7 +246,6 @@ void UInventoryComponent::EquipItem(const FInventoryStruct& ItemToEquip)
 					if (SpawnedItem)
 					{
 						SpawnedItem->Equip(WarriorCharacter->GetMesh(), ItemToEquip.ItemSocketName, WarriorCharacter, WarriorCharacter);
-						WarriorCharacter->ItemsToEquip.Add(SpawnedItem);
 						SpawnedItem->GetItemMesh()->SetStaticMesh(ItemToEquip.ItemStaticMesh);
 
 						
@@ -351,12 +350,14 @@ void UInventoryComponent::UnEquipItem(FInventoryStruct& Item, ABaseItem* Equippe
 			{
 				
 
-				if (Item.ItemTypes == EItemTypes::Weapon)
-				{
-					WarriorCharacter->SetCharacterStates(ECharacterStates::ECS_UnEquipped);
-					WarriorCharacter->EquippedWeapon->Destroy();
-				}
+			
+					if (Item.ItemTypes == EItemTypes::Weapon)
+					{
+						WarriorCharacter->SetCharacterStates(ECharacterStates::ECS_UnEquipped);
+						WarriorCharacter->EquippedWeapon->Destroy();
+					
 
+					}
 				
 					for (int32 i = WarriorCharacter->ItemsToEquip.Num() - 1; i >= 0; i--)
 					{
@@ -368,6 +369,8 @@ void UInventoryComponent::UnEquipItem(FInventoryStruct& Item, ABaseItem* Equippe
 							WarriorCharacter->ItemsToEquip.RemoveAt(i);
 						}
 					}
+
+				
 				
 			}
 		

@@ -1065,13 +1065,13 @@ void AWarriorCharacter::SphereCollisionBeginOverlap(UPrimitiveComponent* Overlap
 				EnemiesInRange.Remove(Enemy);
 			}		
 		}
-
+/*
 		ABaseItem* ItemRef = Cast<ABaseItem>(OtherActor);
 		if (ItemRef)
 		{
 			ItemRef->SetInteractionVisibility(true);
 
-                      /*BU KISIM OPTÝMÝZE EDÝLMELÝ  */
+                ///      BU KISIM OPTÝMÝZE EDÝLMELÝ  
 			UWidgetComponent* WidgetComp = ItemRef->GetItemInteractionWidget();
 			if (WidgetComp)
 			{
@@ -1101,10 +1101,9 @@ void AWarriorCharacter::SphereCollisionBeginOverlap(UPrimitiveComponent* Overlap
 			
 		}
 		
-
+		*/
 		
-	}
-
+	}	
 }
 
 void AWarriorCharacter::SphereCollisionEndOverlap(UPrimitiveComponent* OverlappedComp, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex)
