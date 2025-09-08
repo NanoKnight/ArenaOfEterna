@@ -247,6 +247,7 @@ void UInventoryComponent::EquipItem(const FInventoryStruct& ItemToEquip)
 					{
 						SpawnedItem->Equip(WarriorCharacter->GetMesh(), ItemToEquip.ItemSocketName, WarriorCharacter, WarriorCharacter);
 						SpawnedItem->GetItemMesh()->SetStaticMesh(ItemToEquip.ItemStaticMesh);
+						WarriorCharacter->ItemsToEquip.Add(SpawnedItem);
 
 						
 
