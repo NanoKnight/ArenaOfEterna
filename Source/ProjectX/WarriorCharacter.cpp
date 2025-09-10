@@ -1065,7 +1065,7 @@ void AWarriorCharacter::SphereCollisionBeginOverlap(UPrimitiveComponent* Overlap
 				EnemiesInRange.Remove(Enemy);
 			}		
 		}
-/*
+
 		ABaseItem* ItemRef = Cast<ABaseItem>(OtherActor);
 		if (ItemRef)
 		{
@@ -1101,7 +1101,7 @@ void AWarriorCharacter::SphereCollisionBeginOverlap(UPrimitiveComponent* Overlap
 			
 		}
 		
-		*/
+		
 		
 	}	
 }
@@ -1118,11 +1118,15 @@ void AWarriorCharacter::SphereCollisionEndOverlap(UPrimitiveComponent* Overlappe
 			EnemiesInRange.Remove(Enemy);
 		}
 
-		ABaseItem* ItemRef = Cast<ABaseItem>(OtherActor);
-		if (ItemRef)
-		{
-			ItemRef->SetInteractionVisibility(false);
-		}
+
+	
+			ABaseItem* ItemRef = Cast<ABaseItem>(OtherActor);
+			if (ItemRef)
+			{
+				ItemRef->SetInteractionVisibility(false);
+			}
+		
+		
 
 
 	}

@@ -99,7 +99,7 @@ void ABaseItem::SetInteractionVisibility(bool visiblity)
 {
 	if (ItemState != EItemState::EIS_Equipped)
 	{
-		ItemInteraction->SetVisibility(visiblity, false);
+		//ItemInteraction->SetVisibility(false, false);
 	}
 	ItemInteraction->SetVisibility(visiblity, false);
 
