@@ -97,6 +97,8 @@ void UCharacterHUD::PlayItemReceivedTextAnimationFadeIn()
 		NotifyTextVisiblity = ESlateVisibility::Visible;
 		PlayAnimation(NotifyTextAnimationFadeIn);
 		ItemNotiftyText->SetVisibility(NotifyTextVisiblity);
+		UE_LOG(LogTemp, Warning, TEXT(" anims work"));
+
 	}
 }
 
@@ -105,6 +107,7 @@ void UCharacterHUD::PlayItemReceivedTextAnimationFadeOut()
 	if (NotifyTextAnimationFadeOut)
 	{
 		PlayAnimation(NotifyTextAnimationFadeOut);
+
 	
 
 
