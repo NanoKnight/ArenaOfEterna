@@ -107,11 +107,6 @@ void UCharacterHUD::PlayItemReceivedTextAnimationFadeOut()
 	if (NotifyTextAnimationFadeOut)
 	{
 		PlayAnimation(NotifyTextAnimationFadeOut);
-
-	
-
-
-
 	}
 }
 
