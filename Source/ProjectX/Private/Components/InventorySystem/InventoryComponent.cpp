@@ -5,6 +5,7 @@
 #include"../WarriorCharacter.h"
 #include"Components\AttributeComponent.h"
 #include "HUD/InventoryWidget.h"
+#include "HUD\EqiupmentSlotWidget.h"
 #include "Components/GridPanel.h"
 #include"Components\GridSlot.h"
 #include"Items\BaseItem.h"
@@ -26,48 +27,75 @@ UInventoryComponent::UInventoryComponent()
 // Called when the game starts
 void UInventoryComponent::BeginPlay()
 {
-	Super::BeginPlay();	
+	Super::BeginPlay();
 	/******BUD DEÐÝÞKENNERÝ BÖYLE BEGÝNPLAYDE SETLEYÝP KULLANMAYI DENÝYCEÐÝZ BU SINIFIN H DOSYASINDAN BUNLARIN REFERANSLARINI AKTÝF ET KAPALILAR ÞUAN*******/
-	 MainCharacter = Cast<AWarriorCharacter>(GetOwner());
-	
-	 /*if (MainCharacter)
-	 {
-		 PlayerController = Cast<APlayerController>(MainCharacter->GetController());
-		 if (PlayerController)
-		 {
-			 PlayerHUD = Cast<APlayerHUD>(PlayerController->GetHUD());
-			 if (PlayerHUD)
-			 {
-				  PlayerOverlay = PlayerHUD->GetPlayerOverlay();
+	MainCharacter = Cast<AWarriorCharacter>(GetOwner());
+
+	/*if (MainCharacter)
+	{
+		PlayerController = Cast<APlayerController>(MainCharacter->GetController());
+		if (PlayerController)
+		{
+			PlayerHUD = Cast<APlayerHUD>(PlayerController->GetHUD());
+			if (PlayerHUD)
+			{
+				 PlayerOverlay = PlayerHUD->GetPlayerOverlay();
 
 
-			 }
+			}
 
 
-		 }
+		}
 
-	 }*/
+	}*/
 
 	InventoryItems.SetNum(20);
 
 
 	for (int32 i = 0; i < InventoryItems.Num(); i++)
 	{
-		
+
 		FInventoryStruct& Item = InventoryItems[i];
-	
-			if (Item.ItemName.IsEmpty())
+
+		if (Item.ItemName.IsEmpty() && Item.ItemClass == nullptr)
+		{
+			Item.ItemName = FString("");
+			Item.ItemIcon = nullptr;
+			Item.ItemClass = nullptr;
+			Item.ItemStaticMesh = nullptr;
+			Item.ItemSocketName = NAME_None;
+			Item.ItemTypes = EItemTypes::None;
+			Item.EquipmentSlot = EEquipmentSlot::None;
+		}
+		
+		
+
+		if (Item.ItemName.IsEmpty() && Item.ItemClass != nullptr)
+		{
+
+			if (TSubclassOf<ABaseItem> BaseItemClass = Item.ItemClass)
 			{
-				Item.ItemName = FString("");
-				Item.ItemIcon = nullptr;
-				Item.ItemClass = nullptr;
-				Item.ItemStaticMesh = nullptr;
-				Item.ItemSocketName = NAME_None;
-				Item.ItemTypes = EItemTypes::None;
-				Item.EquipmentSlot = EEquipmentSlot::None;
+			 if(ABaseItem* BaseItem = BaseItemClass.GetDefaultObject())
+			 {
+				 Item.ItemName = BaseItem->ItemName;
+				 Item.ItemIcon = BaseItem->ItemIcon;
+				 Item.ItemStaticMesh = BaseItem->GetItemMesh()->GetStaticMesh();
+				 Item.ItemSocketName = BaseItem->ItemSocketName;
+				 Item.ItemTypes = BaseItem->ItemType;
+				 Item.EquipmentSlot = BaseItem->ItemEquipmentSlot;
+				 Item.Damage = BaseItem->Damage;
+				 Item.Defense = BaseItem->Defense;
+
+				 UE_LOG(LogTemp, Warning, TEXT("item adi bos ama class var "));
+			 }
 			}
+		}
 	}
+
 }
+
+
+	
 
 void UInventoryComponent::SetDefensePoint()
 {
@@ -212,10 +240,24 @@ void UInventoryComponent::PlayItemTextFadeOutAnim(UCharacterHUD* PlayerOverlay)
 
 void UInventoryComponent::EquipItem(const FInventoryStruct& ItemToEquip)
 {
-
 	if (ItemToEquip.ItemClass)
 	{
-		EquippedItems.Add(ItemToEquip);
+	    
+		bool itemExists = false;
+		for (const FInventoryStruct& EquippedItem : EquippedItems)
+		{
+			if ( EquippedItem.ItemName == ItemToEquip.ItemName)
+			{
+				itemExists = true;
+				break;
+
+			}
+		}
+		if (itemExists == false)
+		{
+			EquippedItems.Add(ItemToEquip);
+
+		}
 
 		AWarriorCharacter* WarriorCharacter = Cast<AWarriorCharacter>(GetOwner());
 		if (WarriorCharacter)
@@ -441,7 +483,6 @@ void UInventoryComponent::ToggleInventory(APlayerController* Controller)
 			// KAPATIRKEN verileri kaydet
 			InventoryWidget->SaveSlotIndices();
 			SavedSlotIndices = InventoryWidget->StoredSlotIndices;
-
 			InventoryWidget->SetVisibility(ESlateVisibility::Hidden);
 			Controller->bShowMouseCursor = false;
 			FInputModeGameOnly InputMode;
@@ -454,6 +495,7 @@ void UInventoryComponent::ToggleInventory(APlayerController* Controller)
 			InventoryWidget->UpdateInventoryDisplay(InventoryItems);
 
 			InventoryWidget->SetVisibility(ESlateVisibility::Visible);
+			
 			Controller->bShowMouseCursor = true;
 			FInputModeUIOnly InputMode;
 			InputMode.SetWidgetToFocus(InventoryWidget->TakeWidget());

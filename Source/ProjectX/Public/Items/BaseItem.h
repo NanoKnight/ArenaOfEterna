@@ -97,6 +97,9 @@ public:
 	UPROPERTY(EditAnywhere)
 	EItemTypes ItemType;
 
+	UPROPERTY(EditAnywhere)
+	EEquipmentSlot ItemEquipmentSlot;
+
 	UPROPERTY(EditAnywhere,meta = (EditCondition = "ItemType == EItemTypes::Weapon", EditConditionHides))
 	float Damage = 20.f;
 	UPROPERTY(EditAnywhere, meta = (EditCondition = "ItemType != EItemTypes::Weapon", EditConditionHides))

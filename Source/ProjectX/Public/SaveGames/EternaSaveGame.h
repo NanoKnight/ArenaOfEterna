@@ -4,6 +4,7 @@
 
 #include "CoreMinimal.h"
 #include "GameFramework/SaveGame.h"
+#include"../Structs/InventoryStruct.h"
 #include "EternaSaveGame.generated.h"
 
 class AWeapon;
@@ -41,6 +42,12 @@ class PROJECTX_API UEternaSaveGame : public USaveGame
 
 	UPROPERTY(EditDefaultsOnly)
 	int32 WaveCount = 1;
+
+	UPROPERTY(EditDefaultsOnly)
+	TArray<FInventoryStruct> SavedInventoryItems;
+
+	UPROPERTY(EditDefaultsOnly)
+	TArray<FInventoryStruct> SavedEquipItems;
 
 
 

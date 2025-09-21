@@ -123,6 +123,7 @@ void ABaseItem::PickUp(AWarriorCharacter* WarriorCharacter)
 				NewItem.ItemStaticMesh = ItemMesh->GetStaticMesh();
 				NewItem.ItemTypes = ItemType;
 				NewItem.ItemSocketName = ItemSocketName;
+				NewItem.EquipmentSlot = ItemEquipmentSlot;
 				NewItem.Defense = Defense;
 				NewItem.Damage = Damage;
 				WarriorCharacter->GetInventoryComponent()->AddItem(NewItem);

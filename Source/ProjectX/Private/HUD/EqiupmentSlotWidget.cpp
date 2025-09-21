@@ -98,6 +98,32 @@ void UEqiupmentSlotWidget::NativeConstruct()
 	
 	SetDefaultWeaponIcon();
 	SetEquipmentSlotsNames();
+	
+	
+	
+	
+	// SONRA KONTROL EDÝLMESÝ GEREKN BÝR YER
+	AWarriorCharacter* WarriorChar = Cast<AWarriorCharacter>(GetWorld()->GetFirstPlayerController()->GetPawn());
+	if (WarriorChar)
+	{
+		UE_LOG(LogTemp, Warning, TEXT("warrior succesfluy casted from equipment widget"));
+		int32 EquipItemsCount = WarriorChar->GetInventoryComponent()->EquippedItems.Num();
+		for (int32 i = 0; i < EquipItemsCount; i++)
+		{
+			FInventoryStruct& WarEquipItems = WarriorChar->GetInventoryComponent()->EquippedItems[i];
+			if (WarEquipItems.ItemTypes == ItemTypes)
+			{
+				ItemTypes = WarEquipItems.ItemTypes;
+				EquippedItem = WarEquipItems;
+				EquipmentIcon->SetBrushFromTexture(WarEquipItems.ItemIcon);
+				EquippedItemActor = WarEquipItems.ItemClass.GetDefaultObject();
+			    
+			}
+		}
+	}
+
+
+
 }
 
 void UEqiupmentSlotWidget::SetEquipmentSlotsNames()

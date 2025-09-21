@@ -4,6 +4,7 @@
 #include "GameMode/ArenaGameMode.h"
 #include"Enemy\Enemy.h"
 #include"Components\AttributeComponent.h"
+#include"Components\InventorySystem\InventoryComponent.h"
 #include "SaveGames/EternaSaveGame.h"
 #include"Items\BaseItem.h"
 #include "Kismet/GameplayStatics.h"
@@ -73,6 +74,8 @@ void AArenaGameMode::SaveGame()
 	{
 		Attributes = WarriorCharacter->GetAttributesComponent();
 		SaveGameObject->PlayerLocation = WarriorCharacter->GetActorLocation();
+		SaveGameObject->SavedInventoryItems = WarriorCharacter->GetInventoryComponent()->InventoryItems;
+		SaveGameObject->SavedEquipItems = WarriorCharacter->GetInventoryComponent()->EquippedItems;
 		SaveGameObject->Health = Attributes->GetHealth();
 		SaveGameObject->Level = Attributes->GetLevel();
 		SaveGameObject->Stamina = Attributes->GetStamina();
@@ -115,9 +118,28 @@ void AArenaGameMode::LoadGame()
 			Attributes->SetMaxExp(SaveGameObject->MaxExp);
 			Attributes->SetGold(SaveGameObject->Gold);
 			WarriorCharacter->SetActorLocation(SaveGameObject->PlayerLocation);
+			WarriorCharacter->GetInventoryComponent()->InventoryItems = SaveGameObject->SavedInventoryItems;
+			WarriorCharacter->GetInventoryComponent()->EquippedItems = SaveGameObject->SavedEquipItems;
 			WaveCount = SaveGameObject->WaveCount;
 			NextWaveEnemyCount = SaveGameObject->EnemyNextWaveCount;
 		}
+
+		int32 EquipItemsCount = WarriorCharacter->GetInventoryComponent()->EquippedItems.Num();
+		for (int32 i = 0; i < EquipItemsCount; i ++)
+		{
+			FInventoryStruct& EquipItems = WarriorCharacter->GetInventoryComponent()->EquippedItems[i];
+			WarriorCharacter->GetInventoryComponent()->EquipItem(EquipItems);
+
+		}
+
+			
+		
+
+
+
+
+
+
 		TArray<FString> LoadedEnemies = SaveGameObject->KilledEnemiesName;
 		KilledEnemiesNames = LoadedEnemies;
 
