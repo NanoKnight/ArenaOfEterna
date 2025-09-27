@@ -900,21 +900,7 @@ void AWarriorCharacter::Shield()
 		FInventoryStruct& Item = GetInventoryComponent()->EquippedItems[i];
 		if (Item.ItemTypes == EItemTypes::Shield)
 		{
-			if (CloseEnemy)
-			{
-				FString EnemyName = CloseEnemy->GetName();
-				
-				GEngine->AddOnScreenDebugMessage(-1, 2.f, FColor::Red, FString::Printf(TEXT("Enemy : %s"), *EnemyName));
-				FVector EnemyLocation = CloseEnemy->GetActorLocation();
-				FVector CharcterLOCation = GetActorLocation();
-
-				FRotator NewRot = (EnemyLocation - CharcterLOCation).Rotation();
-				SetActorRotation(NewRot);
 			
-			
-			
-			
-			}
 			if (ShieldAlive() && ActionState != EActionState::EAS_Dead && ActionState != EActionState::EAS_UsingSkill)
 			{
 				UAnimInstance* AnimInstance = GetMesh()->GetAnimInstance();
@@ -1269,8 +1255,10 @@ void AWarriorCharacter::Tick(float DeltaTime)
 		{
 			FString EnemyName = CloseEnemy->GetName();
 			FVector EnemyLocation = CloseEnemy->GetActorLocation();
-			FVector CharcterLOCation = GetActorLocation();
-			FRotator NewRot = (EnemyLocation - CharcterLOCation).Rotation();
+			FVector CharcterLoCation = GetActorLocation();
+			FRotator TargetRotation = (EnemyLocation - CharcterLoCation).Rotation();
+			FRotator CurrentRot = GetActorRotation();
+			FRotator NewRot = FMath::Lerp(CurrentRot, TargetRotation, 0.3f);
 			SetActorRotation(NewRot);
 		}
 	}
