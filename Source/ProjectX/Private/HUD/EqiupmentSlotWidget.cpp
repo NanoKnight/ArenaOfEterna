@@ -98,10 +98,7 @@ void UEqiupmentSlotWidget::NativeConstruct()
 	
 	SetDefaultWeaponIcon();
 	SetEquipmentSlotsNames();
-	
-	
-	
-	
+
 	// SONRA KONTROL EDÝLMESÝ GEREKN BÝR YER
 	AWarriorCharacter* WarriorChar = Cast<AWarriorCharacter>(GetWorld()->GetFirstPlayerController()->GetPawn());
 	if (WarriorChar)

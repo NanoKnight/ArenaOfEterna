@@ -23,6 +23,7 @@ void UEternaSaveGame::AddItems(FString AddedItemsName)
 	if (!AddedItems.Contains(AddedItemsName))
 	{
 		AddedItems.Add(AddedItemsName);
+
 	}
 }
 

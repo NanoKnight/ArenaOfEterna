@@ -41,13 +41,6 @@ void ABaseItem::Equip(USceneComponent* InParent, FName InSocketName, AActor* New
 	DisableSphereCollision();
 	PlayEquipSound();
 	DeactivateEmbersEffect();
-
-	AGameModeBase* GameMode = GetWorld()->GetAuthGameMode();
-	AArenaGameMode* ArenaGameMode = Cast<AArenaGameMode>(GameMode);
-	if (ArenaGameMode)
-	{
-		ArenaGameMode->AddedItems.Add(ItemName);
-	}
 }
 
 void ABaseItem::AttachMeshToSocket(USceneComponent* InParent, const FName& InSocketName)
@@ -115,6 +108,13 @@ void ABaseItem::PickUp(AWarriorCharacter* WarriorCharacter)
 		{
 			if (WarriorCharacter && WarriorCharacter->GetInventoryComponent())
 			{
+				AGameModeBase* GameMode = GetWorld()->GetAuthGameMode();
+				AArenaGameMode* ArenaGameMode = Cast<AArenaGameMode>(GameMode);
+				if (ArenaGameMode)
+				{
+					ArenaGameMode->AddedItems.Add(ItemID);
+				}
+
 				FInventoryStruct NewItem;
 				NewItem.ItemName = ItemName;				
 				NewItem.ItemIcon = ItemIcon;
@@ -126,9 +126,13 @@ void ABaseItem::PickUp(AWarriorCharacter* WarriorCharacter)
 				NewItem.EquipmentSlot = ItemEquipmentSlot;
 				NewItem.Defense = Defense;
 				NewItem.Damage = Damage;
+				
 				WarriorCharacter->GetInventoryComponent()->AddItem(NewItem);
 				this->Destroy();
 				break;
+
+
+			
 			}
 		}
 		else 

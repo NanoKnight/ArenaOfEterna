@@ -278,7 +278,7 @@ void UInventoryComponent::EquipItem(const FInventoryStruct& ItemToEquip)
 						WarriorCharacter->EquipWeapon(WeaponRef);
 						SpawnedItem->Equip(WarriorCharacter->GetMesh(), ItemToEquip.ItemSocketName, WarriorCharacter, WarriorCharacter);
 						SpawnedItem->GetItemMesh()->SetStaticMesh(ItemToEquip.ItemStaticMesh);
-
+						SpawnedItem->Damage = ItemToEquip.Damage;
 					}
 				}
 				else
@@ -289,6 +289,7 @@ void UInventoryComponent::EquipItem(const FInventoryStruct& ItemToEquip)
 					{
 						SpawnedItem->Equip(WarriorCharacter->GetMesh(), ItemToEquip.ItemSocketName, WarriorCharacter, WarriorCharacter);
 						SpawnedItem->GetItemMesh()->SetStaticMesh(ItemToEquip.ItemStaticMesh);
+						SpawnedItem->Defense = ItemToEquip.Defense;
 						WarriorCharacter->ItemsToEquip.Add(SpawnedItem);
 
 						
