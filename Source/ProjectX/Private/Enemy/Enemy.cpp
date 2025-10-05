@@ -8,6 +8,7 @@
 #include"GameFramework/CharacterMovementComponent.h"
 #include"ProjectX\DebugMacros.h"	
 #include"Components/AttributeComponent.h"
+#include "Components\InventorySystem\InventoryComponent.h" ///*////
 #include "Components/CapsuleComponent.h"
 #include"HUD/HealthBarComponent.h"
 #include"../WarriorCharacter.h"
@@ -40,6 +41,7 @@ AEnemy::AEnemy()
 	bUseControllerRotationPitch = false;
 	bUseControllerRotationRoll = false;
 	bUseControllerRotationYaw = false;
+
 
 }
 
@@ -85,12 +87,17 @@ void AEnemy::Die()
 	ClearAttackTimer();
 	HideHealthBar();
 	DisableCapsule();
-	SetLifeSpan(DeathLifeSpan);
 	GetCharacterMovement()->bOrientRotationToMovement = false;
 	SetWeaponCollisionEnabled(ECollisionEnabled::NoCollision);
-	SpawnExperience();
 	IncreaseQuestKillCount();
-
+	SetLifeSpan(DeathLifeSpan);
+	DestroyEquipItems();
+	SpawnEquipedItemsToWorld();
+	GetWorld()->GetTimerManager().SetTimer(SpawnExperienceTimer, this, &AEnemy::SpawnExperience, 2.f);
+	
+	
+	
+	
 	TArray<AActor*>FoundSpawners;
 	UGameplayStatics::GetAllActorsOfClass(GetWorld(), AEnemySpawner::StaticClass(), FoundSpawners);
 	for (AActor* Actor : FoundSpawners)
@@ -108,6 +115,35 @@ void AEnemy::Die()
 	//ArenaGameMode->DecrementEnemyAlive();
 	
 
+
+}
+
+void AEnemy::SpawnEquipedItemsToWorld()
+{
+	int32 EquippedItemCount = InventoryComponent->EquippedItems.Num();
+	for (int32 i = 0; i < EquippedItemCount; i++)
+
+	{
+		FInventoryStruct& EquipItems = InventoryComponent->EquippedItems[i];
+		//GetInventoryComponent()->EquipItem(EquipItems);
+		ABaseItem* SpawnedItem = GetWorld()->SpawnActor<ABaseItem>(EquipItems.ItemClass);
+		if (SpawnedItem)
+		{
+			FVector SpawnLocation = GetActorLocation() + FVector(i * 100, 0, 0);
+			SpawnedItem->SetActorLocation(SpawnLocation);
+			SpawnedItem->GetItemMesh()->SetSimulatePhysics(true);
+		}
+
+	}
+}
+
+void AEnemy::DestroyEquipItems()
+{
+	for (ABaseItem* Item : ItemsToEquip)
+	{
+		Item->Destroy();
+
+	}
 }
 
 void AEnemy::RespawnInfiniteEnemy(AEnemySpawner* SpawnerActor)
@@ -306,7 +342,7 @@ void AEnemy::ResetRagdoll()
 	GetCapsuleComponent()->SetCollisionEnabled(ECollisionEnabled::QueryAndPhysics);
 	GetMesh()->SetRelativeLocation(FVector(0.f, 0.f, -90));
 	EnemyOutlineMesh->SetRelativeLocation(FVector(0.f, 0.f, -90));
-    FRotator meshrot(0.f, -90.f, 0.f);
+    FRotator meshrot(0.f, -90.f, 0);
 	GetMesh()->SetRelativeRotation(meshrot);
 	EnemyOutlineMesh->SetRelativeRotation(meshrot);
 

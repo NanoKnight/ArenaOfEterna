@@ -25,6 +25,8 @@ class PROJECTX_API ABaseCharacter : public ACharacter, public IHitInterface
 public:
 	ABaseCharacter();
   virtual void Tick(float DeltaTime) override;
+
+  FORCEINLINE UInventoryComponent* GetInventoryComponent() const { return InventoryComponent; }
   FORCEINLINE TEnumAsByte<EDeadPose> GetDeathPose() const { return DeadPose; }
  
   UPROPERTY(VisibleAnywhere, Category = Weapon)
@@ -41,6 +43,7 @@ public:
 
 protected:
 	virtual void BeginPlay() override;
+	void InitializeEquipItems();
     virtual void Attack();
 	virtual void GetHit_Implementation(const FVector& ImpactPoint,AActor* Hitter) override;
 	void DirectionalHit(const FVector& ImpactPoint);

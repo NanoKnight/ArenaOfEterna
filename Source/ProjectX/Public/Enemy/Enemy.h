@@ -24,6 +24,8 @@ protected:
 	virtual void BeginPlay() override;
 	void InitializeEnemy();
 	virtual void Die() override;
+	void SpawnEquipedItemsToWorld();
+	void DestroyEquipItems();
 	void IncreaseQuestKillCount();
 	void SetEnemyDead();
 	void AddKilledEnemy();
@@ -120,6 +122,8 @@ private:
 	double PatrolRadius = 200.f;
 
 	FTimerHandle PatrolTimer;
+
+	FTimerHandle SpawnExperienceTimer;
 
 	UPROPERTY(EditDefaultsOnly, Category = "AI Navigation")
 	float PatrolWaitTimeMin = 2.f;
