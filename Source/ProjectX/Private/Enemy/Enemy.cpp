@@ -247,11 +247,7 @@ void AEnemy::PlayHitSound(const FVector& ImpactPoint)
 void AEnemy::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
-	if (IsDead()) return;
-	if (EnemyState == EEnemyState::EAS_Stun)
-	{
-		return;
-	}
+	
 	if (EnemyState > EEnemyState::EES_Patrolling )
 	{
 		CheckCombatTarget();
@@ -261,8 +257,32 @@ void AEnemy::Tick(float DeltaTime)
 		CheckPatrolTarget(); 
 	}
 
-	
+	if (Ragdoll)
+	{
+		FVector newLoc = GetMesh()->GetSocketLocation("pelvis");
+		GetCapsuleComponent()->SetWorldLocation(newLoc);
 
+		FVector SocketLoc = GetMesh()->GetSocketLocation("pelvis");
+		FRotator SocketRot = GetMesh()->GetSocketRotation("pelvis");
+		FHitResult OutHit;
+		FVector Start = SocketLoc;
+		FVector ForwardVector = GetActorForwardVector();
+		FVector End = Start + (GetMesh()->GetForwardVector() * -25);
+		FCollisionQueryParams CollisionParams;
+		CollisionParams.AddIgnoredActor(this);
+		CollisionParams.AddIgnoredActor(WarriorCharacter);
+		FHitResult HitResult;
+		bool Bhit = GetWorld()->LineTraceSingleByChannel(HitResult, Start, End, ECC_Visibility, CollisionParams);
+		//DrawDebugLine(GetWorld(), Start, End, FColor::Red, false, 1, 0, 1);
+		//DrawDebugPoint(GetWorld(), HitResult.Location, 10, FColor::Green, false, 1);
+		if (Bhit)
+		{
+			FrontAnim = true;
+		}
+	}
+
+
+	
 }
 
 float AEnemy::TakeDamage(float DamageAmount, FDamageEvent const & DamageEvent, AController* EventInstigator, AActor* DamageCauser)
@@ -306,6 +326,7 @@ void AEnemy::Destroyed()
 
 void AEnemy::SetRagdoll()
 {
+	Ragdoll = true;
 	EnemyOutlineMesh->SetVisibility(false);
 	GetMesh()->SetSimulatePhysics(true);
 	CombatTarget = nullptr;
@@ -314,7 +335,7 @@ void AEnemy::SetRagdoll()
 	GetCapsuleComponent()->SetCollisionEnabled(ECollisionEnabled::NoCollision);
 	EnemyState = EEnemyState::EAS_Stun;
 	GetWorld()->GetTimerManager().SetTimer(HideHealthBarTimer, this, &AEnemy::HideHealthBar, 1.f);
-	GetWorld()->GetTimerManager().SetTimer(RagdollTimer, this, &AEnemy::ResetRagdoll, 4.f);
+	GetWorld()->GetTimerManager().SetTimer(RagdollTimer, this, &AEnemy::ResetRagdoll, 3.f);
 	
 
 }
@@ -322,29 +343,53 @@ void AEnemy::SetRagdoll()
 void AEnemy::ResetRagdoll()
 {
 	if (IsDead())return;
-	FVector loc = GetMesh()->GetRelativeLocation();
-	GetCapsuleComponent()->SetRelativeLocation(loc);
-	UAnimInstance* AnimInstance1 = GetMesh()->GetAnimInstance();
-	UAnimInstance* AnimInstance2 = EnemyOutlineMesh->GetAnimInstance();
 	GetMesh()->SetSimulatePhysics(false);
 	EnemyOutlineMesh->SetSimulatePhysics(false);
 	UCapsuleComponent* CapsuleComp = GetCapsuleComponent();
+	GetMesh()->AttachToComponent(CapsuleComp, FAttachmentTransformRules::SnapToTargetIncludingScale);
+	EnemyOutlineMesh->AttachToComponent(CapsuleComp, FAttachmentTransformRules::SnapToTargetIncludingScale);
+	GetCapsuleComponent()->SetCollisionEnabled(ECollisionEnabled::QueryAndPhysics);
+	UAnimInstance* AnimInstance1 = GetMesh()->GetAnimInstance();
+	UAnimInstance* AnimInstance2 = EnemyOutlineMesh->GetAnimInstance();
+	
+	
 	if (AnimInstance1)
 	{
 		AnimInstance1->Montage_Play(SkillDamageMontage);
+
+		if (FrontAnim)
+		{
+			AnimInstance1->Montage_JumpToSection("Front",SkillDamageMontage);
+		}
+
+		else
+		{
+			AnimInstance1->Montage_JumpToSection("Back",SkillDamageMontage);
+
+		}
+	  
 	}
 	if (AnimInstance2)
 	{
 		AnimInstance2->Montage_Play(SkillDamageMontage);
+		if (FrontAnim)
+		{
+			AnimInstance2->Montage_JumpToSection("Front", SkillDamageMontage);
+		}
+		else
+		{
+			AnimInstance2->Montage_JumpToSection("Back", SkillDamageMontage);
+
+		}
+		//AnimInstance2->Montage_Play(SkillDamageMontage);
 	}
-	GetMesh()->AttachToComponent(CapsuleComp, FAttachmentTransformRules::SnapToTargetIncludingScale);
-	EnemyOutlineMesh->AttachToComponent(CapsuleComp, FAttachmentTransformRules::SnapToTargetIncludingScale);
-	GetCapsuleComponent()->SetCollisionEnabled(ECollisionEnabled::QueryAndPhysics);
-	GetMesh()->SetRelativeLocation(FVector(0.f, 0.f, -90));
-	EnemyOutlineMesh->SetRelativeLocation(FVector(0.f, 0.f, -90));
-    FRotator meshrot(0.f, -90.f, 0);
-	GetMesh()->SetRelativeRotation(meshrot);
-	EnemyOutlineMesh->SetRelativeRotation(meshrot);
+	
+	Ragdoll = false;
+
+	FRotator MeshRot(0,-90,0);
+	FVector MeshLoc(0, 0, -90);
+	GetMesh()->SetRelativeLocationAndRotation(MeshLoc, MeshRot);
+	EnemyOutlineMesh->SetRelativeLocationAndRotation(MeshLoc, MeshRot);
 
 }
 
@@ -409,6 +454,13 @@ void AEnemy::SpawnDefaultWeapon()
 
 void AEnemy::CheckPatrolTarget()
 {
+
+	if (IsDead()) return;
+	if (EnemyState == EEnemyState::EAS_Stun)
+	{
+		return;
+	}
+
 	if (InTargetRange(PatrolTarget, PatrolRadius))
 	{
 		PatrolTarget = ChoosePatrolTarget();
@@ -421,6 +473,12 @@ void AEnemy::CheckPatrolTarget()
 
 void AEnemy::CheckCombatTarget()
 {
+	if (IsDead()) return;
+	if (EnemyState == EEnemyState::EAS_Stun)
+	{
+		return;
+	}
+
 	if (IsOutsideCombatRadius())
 	{
 		ClearAttackTimer();

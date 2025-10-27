@@ -140,7 +140,12 @@ private:
 	TArray <AActor*> PatrolTargets;
 	
 	UPROPERTY(EditAnywhere, Category = "Combat")
+	
 	float WalkSpeed = 125.f;
+
+	bool Ragdoll;
+	bool FrontAnim;
+
 	FTimerHandle AttackTimer;
 	FTimerHandle RagdollTimer;
 	FTimerHandle HideHealthBarTimer;

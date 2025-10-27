@@ -51,10 +51,10 @@ void UInventoryComponent::BeginPlay()
 	}*/
 
 	
-
+	
 	if (!GetOwner()->ActorHasTag("Enemy"))
 	{
-		InventoryItems.SetNum(20);
+    	InventoryItems.SetNum(20);
 
 		for (int32 i = 0; i < InventoryItems.Num(); i++)
 		{
@@ -162,6 +162,7 @@ void UInventoryComponent::AddItem(const FInventoryStruct& NewItem)
 		}
 	}
 	
+	
 
 
 	AWarriorCharacter* Warrior = Cast<AWarriorCharacter>(GetOwner());
@@ -185,6 +186,13 @@ void UInventoryComponent::AddItem(const FInventoryStruct& NewItem)
 		}
 	}
 
+
+	if (InventoryWidget)
+	{
+		InventoryWidget->UpdateInventoryDisplay(InventoryItems);
+
+	}
+
 }
 
 void UInventoryComponent::AddItemWithIndex(const FInventoryStruct& NewItem, int32 Index)
@@ -205,39 +213,6 @@ void UInventoryComponent::AddItemWithIndex(const FInventoryStruct& NewItem, int3
 	}
 }
 
-void UInventoryComponent::RemoveItem(const FInventoryStruct& Item)
-{
-
-	for (int32 i = 0; i< InventoryItems.Num(); i++)
-	{
-		if (InventoryItems[i].ItemName.IsEmpty())
-		{
-			InventoryItems[i] = Item;
-			break;
-		}
-	}
-
-
-
-	/*AWarriorCharacter* Warrior = Cast<AWarriorCharacter>(GetOwner());
-	if (Warrior)
-	{
-		APlayerController* PlayerController = Cast<APlayerController>(Warrior->GetController());
-		if (PlayerController)
-		{
-			APlayerHUD* PlayerHud = Cast<APlayerHUD>(PlayerController->GetHUD());
-			if (PlayerHud)
-			{
-				UCharacterHUD* PlayerOverlay = PlayerHud->GetPlayerOverlay();
-				if (PlayerOverlay)
-				{
-
-				}
-			}
-		}
-	}*/
-
-}
 
 
 
@@ -289,9 +264,11 @@ void UInventoryComponent::EquipItem(const FInventoryStruct& ItemToEquip)
 		}
 		if (itemExists == false)
 		{
-			EquippedItems.Add(ItemToEquip);
+			//EquippedItems.Add(ItemToEquip);
 
 		}
+		EquippedItems.Add(ItemToEquip);
+
 
 		AWarriorCharacter* WarriorCharacter = Cast<AWarriorCharacter>(GetOwner());
 		if (WarriorCharacter)
@@ -460,7 +437,7 @@ void UInventoryComponent::UnEquipItem(FInventoryStruct& Item, ABaseItem* Equippe
 void UInventoryComponent::RemoveFormInventory(const FInventoryStruct& Item)
 {
 	
-	InventoryItems.Remove(Item);
+	InventoryItems.RemoveSingle(Item);
 	if (InventoryWidget)
 	{
 		InventoryWidget->UpdateInventoryDisplay(InventoryItems);

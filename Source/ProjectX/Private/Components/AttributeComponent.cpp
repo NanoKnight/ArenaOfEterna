@@ -119,9 +119,18 @@ void UAttributeComponent::LevelUp()
 	if (ExperiencePoint >= MaxExperiencePoint)
 	{
 		Level = ++ Level;
-		ExperiencePoint = 0;
+		
+		ExperiencePoint -= MaxExperiencePoint;
 		MaxExperiencePoint += MaxExperiencePoint *0.5;
+
+		while (ExperiencePoint >= MaxExperiencePoint)
+		{
+			Level++;
+			ExperiencePoint -= MaxExperiencePoint;
+			MaxExperiencePoint += MaxExperiencePoint * 0.5;
+		}
 	}
+	
 
 }
 

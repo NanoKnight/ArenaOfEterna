@@ -9,6 +9,8 @@
 #include"Components\InventorySystem\InventoryComponent.h"
 #include"Kismet/KismetSystemLibrary.h"
 #include"Kismet/GameplayStatics.h"
+#include "DrawDebugHelpers.h"
+#include "CollisionQueryParams.h"
 #include"CameraShakes\MainLegacyCameraShake.h"
 #include "Camera/PlayerCameraManager.h"
 #include "NiagaraFunctionLibrary.h"
