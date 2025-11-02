@@ -8,6 +8,7 @@
 #include"GameFramework/CharacterMovementComponent.h"
 #include"ProjectX\DebugMacros.h"	
 #include"Components/AttributeComponent.h"
+#include "Components\InventorySystem\InventoryComponent.h" ///*////
 #include "Components/CapsuleComponent.h"
 #include"HUD/HealthBarComponent.h"
 #include"../WarriorCharacter.h"
@@ -40,6 +41,7 @@ AEnemy::AEnemy()
 	bUseControllerRotationPitch = false;
 	bUseControllerRotationRoll = false;
 	bUseControllerRotationYaw = false;
+
 
 }
 
@@ -85,12 +87,17 @@ void AEnemy::Die()
 	ClearAttackTimer();
 	HideHealthBar();
 	DisableCapsule();
-	SetLifeSpan(DeathLifeSpan);
 	GetCharacterMovement()->bOrientRotationToMovement = false;
 	SetWeaponCollisionEnabled(ECollisionEnabled::NoCollision);
-	SpawnExperience();
 	IncreaseQuestKillCount();
-
+	SetLifeSpan(DeathLifeSpan);
+	DestroyEquipItems();
+	SpawnEquipedItemsToWorld();
+	GetWorld()->GetTimerManager().SetTimer(SpawnExperienceTimer, this, &AEnemy::SpawnExperience, 2.f);
+	
+	
+	
+	
 	TArray<AActor*>FoundSpawners;
 	UGameplayStatics::GetAllActorsOfClass(GetWorld(), AEnemySpawner::StaticClass(), FoundSpawners);
 	for (AActor* Actor : FoundSpawners)
@@ -108,6 +115,35 @@ void AEnemy::Die()
 	//ArenaGameMode->DecrementEnemyAlive();
 	
 
+
+}
+
+void AEnemy::SpawnEquipedItemsToWorld()
+{
+	int32 EquippedItemCount = InventoryComponent->EquippedItems.Num();
+	for (int32 i = 0; i < EquippedItemCount; i++)
+
+	{
+		FInventoryStruct& EquipItems = InventoryComponent->EquippedItems[i];
+		//GetInventoryComponent()->EquipItem(EquipItems);
+		ABaseItem* SpawnedItem = GetWorld()->SpawnActor<ABaseItem>(EquipItems.ItemClass);
+		if (SpawnedItem)
+		{
+			FVector SpawnLocation = GetActorLocation() + FVector(i * 100, 0, 0);
+			SpawnedItem->SetActorLocation(SpawnLocation);
+			SpawnedItem->GetItemMesh()->SetSimulatePhysics(true);
+		}
+
+	}
+}
+
+void AEnemy::DestroyEquipItems()
+{
+	for (ABaseItem* Item : ItemsToEquip)
+	{
+		Item->Destroy();
+
+	}
 }
 
 void AEnemy::RespawnInfiniteEnemy(AEnemySpawner* SpawnerActor)
@@ -211,11 +247,7 @@ void AEnemy::PlayHitSound(const FVector& ImpactPoint)
 void AEnemy::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
-	if (IsDead()) return;
-	if (EnemyState == EEnemyState::EAS_Stun)
-	{
-		return;
-	}
+	
 	if (EnemyState > EEnemyState::EES_Patrolling )
 	{
 		CheckCombatTarget();
@@ -225,8 +257,32 @@ void AEnemy::Tick(float DeltaTime)
 		CheckPatrolTarget(); 
 	}
 
-	
+	if (Ragdoll)
+	{
+		FVector newLoc = GetMesh()->GetSocketLocation("pelvis");
+		GetCapsuleComponent()->SetWorldLocation(newLoc);
 
+		FVector SocketLoc = GetMesh()->GetSocketLocation("pelvis");
+		FRotator SocketRot = GetMesh()->GetSocketRotation("pelvis");
+		FHitResult OutHit;
+		FVector Start = SocketLoc;
+		FVector ForwardVector = GetActorForwardVector();
+		FVector End = Start + (GetMesh()->GetForwardVector() * -25);
+		FCollisionQueryParams CollisionParams;
+		CollisionParams.AddIgnoredActor(this);
+		CollisionParams.AddIgnoredActor(WarriorCharacter);
+		FHitResult HitResult;
+		bool Bhit = GetWorld()->LineTraceSingleByChannel(HitResult, Start, End, ECC_Visibility, CollisionParams);
+		//DrawDebugLine(GetWorld(), Start, End, FColor::Red, false, 1, 0, 1);
+		//DrawDebugPoint(GetWorld(), HitResult.Location, 10, FColor::Green, false, 1);
+		if (Bhit)
+		{
+			FrontAnim = true;
+		}
+	}
+
+
+	
 }
 
 float AEnemy::TakeDamage(float DamageAmount, FDamageEvent const & DamageEvent, AController* EventInstigator, AActor* DamageCauser)
@@ -270,6 +326,7 @@ void AEnemy::Destroyed()
 
 void AEnemy::SetRagdoll()
 {
+	Ragdoll = true;
 	EnemyOutlineMesh->SetVisibility(false);
 	GetMesh()->SetSimulatePhysics(true);
 	CombatTarget = nullptr;
@@ -278,7 +335,7 @@ void AEnemy::SetRagdoll()
 	GetCapsuleComponent()->SetCollisionEnabled(ECollisionEnabled::NoCollision);
 	EnemyState = EEnemyState::EAS_Stun;
 	GetWorld()->GetTimerManager().SetTimer(HideHealthBarTimer, this, &AEnemy::HideHealthBar, 1.f);
-	GetWorld()->GetTimerManager().SetTimer(RagdollTimer, this, &AEnemy::ResetRagdoll, 4.f);
+	GetWorld()->GetTimerManager().SetTimer(RagdollTimer, this, &AEnemy::ResetRagdoll, 3.f);
 	
 
 }
@@ -286,29 +343,53 @@ void AEnemy::SetRagdoll()
 void AEnemy::ResetRagdoll()
 {
 	if (IsDead())return;
-	FVector loc = GetMesh()->GetRelativeLocation();
-	GetCapsuleComponent()->SetRelativeLocation(loc);
-	UAnimInstance* AnimInstance1 = GetMesh()->GetAnimInstance();
-	UAnimInstance* AnimInstance2 = EnemyOutlineMesh->GetAnimInstance();
 	GetMesh()->SetSimulatePhysics(false);
 	EnemyOutlineMesh->SetSimulatePhysics(false);
 	UCapsuleComponent* CapsuleComp = GetCapsuleComponent();
+	GetMesh()->AttachToComponent(CapsuleComp, FAttachmentTransformRules::SnapToTargetIncludingScale);
+	EnemyOutlineMesh->AttachToComponent(CapsuleComp, FAttachmentTransformRules::SnapToTargetIncludingScale);
+	GetCapsuleComponent()->SetCollisionEnabled(ECollisionEnabled::QueryAndPhysics);
+	UAnimInstance* AnimInstance1 = GetMesh()->GetAnimInstance();
+	UAnimInstance* AnimInstance2 = EnemyOutlineMesh->GetAnimInstance();
+	
+	
 	if (AnimInstance1)
 	{
 		AnimInstance1->Montage_Play(SkillDamageMontage);
+
+		if (FrontAnim)
+		{
+			AnimInstance1->Montage_JumpToSection("Front",SkillDamageMontage);
+		}
+
+		else
+		{
+			AnimInstance1->Montage_JumpToSection("Back",SkillDamageMontage);
+
+		}
+	  
 	}
 	if (AnimInstance2)
 	{
 		AnimInstance2->Montage_Play(SkillDamageMontage);
+		if (FrontAnim)
+		{
+			AnimInstance2->Montage_JumpToSection("Front", SkillDamageMontage);
+		}
+		else
+		{
+			AnimInstance2->Montage_JumpToSection("Back", SkillDamageMontage);
+
+		}
+		//AnimInstance2->Montage_Play(SkillDamageMontage);
 	}
-	GetMesh()->AttachToComponent(CapsuleComp, FAttachmentTransformRules::SnapToTargetIncludingScale);
-	EnemyOutlineMesh->AttachToComponent(CapsuleComp, FAttachmentTransformRules::SnapToTargetIncludingScale);
-	GetCapsuleComponent()->SetCollisionEnabled(ECollisionEnabled::QueryAndPhysics);
-	GetMesh()->SetRelativeLocation(FVector(0.f, 0.f, -90));
-	EnemyOutlineMesh->SetRelativeLocation(FVector(0.f, 0.f, -90));
-    FRotator meshrot(0.f, -90.f, 0.f);
-	GetMesh()->SetRelativeRotation(meshrot);
-	EnemyOutlineMesh->SetRelativeRotation(meshrot);
+	
+	Ragdoll = false;
+
+	FRotator MeshRot(0,-90,0);
+	FVector MeshLoc(0, 0, -90);
+	GetMesh()->SetRelativeLocationAndRotation(MeshLoc, MeshRot);
+	EnemyOutlineMesh->SetRelativeLocationAndRotation(MeshLoc, MeshRot);
 
 }
 
@@ -373,6 +454,13 @@ void AEnemy::SpawnDefaultWeapon()
 
 void AEnemy::CheckPatrolTarget()
 {
+
+	if (IsDead()) return;
+	if (EnemyState == EEnemyState::EAS_Stun)
+	{
+		return;
+	}
+
 	if (InTargetRange(PatrolTarget, PatrolRadius))
 	{
 		PatrolTarget = ChoosePatrolTarget();
@@ -385,6 +473,12 @@ void AEnemy::CheckPatrolTarget()
 
 void AEnemy::CheckCombatTarget()
 {
+	if (IsDead()) return;
+	if (EnemyState == EEnemyState::EAS_Stun)
+	{
+		return;
+	}
+
 	if (IsOutsideCombatRadius())
 	{
 		ClearAttackTimer();

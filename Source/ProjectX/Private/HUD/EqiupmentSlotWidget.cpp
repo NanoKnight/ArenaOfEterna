@@ -32,7 +32,6 @@ bool UEqiupmentSlotWidget::NativeOnDrop(const FGeometry& InGeometry, const FDrag
 					Warrior->GetInventoryComponent()->UnEquipItem(EquippedItem, DraggedITem->EquippedItemActor);
 
 
-					//GEngine->AddOnScreenDebugMessage(-1, 2.f, FColor::Cyan, FString::Printf(TEXT("dolu")));
 					
 
 					Warrior->GetInventoryComponent()->EquipItem(TempItem);
@@ -53,12 +52,12 @@ bool UEqiupmentSlotWidget::NativeOnDrop(const FGeometry& InGeometry, const FDrag
 					int32 OldItemIndex = Warrior->GetInventoryComponent()->FindItemIndex(EquippedItem);
 					if (OldItemIndex != INDEX_NONE)
 					{
-						Warrior->GetInventoryComponent()->AddItemWithIndex(TempEqItem ,OldItemIndex);
 						Warrior->GetInventoryComponent()->RemoveFormInventory(DraggedITem->Item);
+						Warrior->GetInventoryComponent()->AddItemWithIndex(TempEqItem ,OldItemIndex);
 						Warrior->GetInventoryComponent()->InventoryWidget->UpdateInventoryDisplay(Warrior->GetInventoryComponent()->InventoryItems);
 
 						
-					}				
+					}		
 					
 
 				}

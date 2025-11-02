@@ -9,6 +9,8 @@
 #include"Components\InventorySystem\InventoryComponent.h"
 #include"Kismet/KismetSystemLibrary.h"
 #include"Kismet/GameplayStatics.h"
+#include "DrawDebugHelpers.h"
+#include "CollisionQueryParams.h"
 #include"CameraShakes\MainLegacyCameraShake.h"
 #include "Camera/PlayerCameraManager.h"
 #include "NiagaraFunctionLibrary.h"
@@ -30,6 +32,63 @@ void ABaseCharacter::BeginPlay()
 {
 	Super::BeginPlay();
 	
+	InitializeEquipItems();
+}
+
+void ABaseCharacter::InitializeEquipItems()
+{
+	int32 EquippedItemCount = InventoryComponent->EquippedItems.Num();
+	for (int32 i = 0; i < EquippedItemCount; i++)
+
+	{
+		FInventoryStruct& EquipItems = InventoryComponent->EquippedItems[i];
+
+		ABaseItem* SpawnedItem = GetWorld()->SpawnActor<ABaseItem>(EquipItems.ItemClass);
+
+
+		if (EquipItems.ItemName.IsEmpty())
+		{
+			if (SpawnedItem)
+			{
+				SpawnedItem->Equip(GetMesh(), SpawnedItem->ItemSocketName, this, this);
+				ItemsToEquip.Add(SpawnedItem);
+				if (SpawnedItem->ItemType == EItemTypes::Weapon)
+				{
+					AWeapon* BaseWeapon = Cast<AWeapon>(SpawnedItem);
+					EquippedWeapon = BaseWeapon;
+
+				}
+				else if (SpawnedItem->Defense > 0)
+				{
+					Attributes->SetDefense(Attributes->GetDefense() + SpawnedItem->Defense);
+				}
+			}
+		}
+		else
+		{
+			SpawnedItem->ItemName = EquipItems.ItemName;
+			SpawnedItem->ItemIcon = EquipItems.ItemIcon;
+			SpawnedItem->ItemEquipmentSlot = EquipItems.EquipmentSlot;
+			SpawnedItem->ItemSocketName = EquipItems.ItemSocketName;
+			SpawnedItem->ItemType = EquipItems.ItemTypes;
+			SpawnedItem->GetItemMesh()->SetStaticMesh(EquipItems.ItemStaticMesh);
+
+			if (SpawnedItem->ItemType == EItemTypes::Weapon)
+			{
+				AWeapon* EquipWeapon = Cast<AWeapon>(SpawnedItem);
+				if (EquipWeapon)
+				{
+					EquippedWeapon = EquipWeapon;
+				}
+				else if (SpawnedItem->Defense > 0)
+				{
+					Attributes->SetDefense(Attributes->GetDefense() + SpawnedItem->Defense);
+				}
+			}
+		}
+
+
+	}
 }
 
 void ABaseCharacter::Tick(float DeltaTime)
@@ -425,6 +484,7 @@ void ABaseCharacter::CheckComboCount(const int32& MaxSectionIndex, bool IsHoldin
 
 void ABaseCharacter::SetWeaponCollisionEnabled(ECollisionEnabled::Type CollisionEnabled)
 {
+
 	if (EquippedWeapon && EquippedWeapon->GetWeaponBox())
 	{
 		EquippedWeapon->GetWeaponBox()->SetCollisionEnabled(CollisionEnabled);

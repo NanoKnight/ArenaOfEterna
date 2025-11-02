@@ -54,7 +54,6 @@ public:
 	void ClearShieldRegenerateTimer();
 	void StartShieldRegenerateTimer(float Time);
 	FORCEINLINE UAttributeComponent* GetAttributesComponent() const { return Attributes; }
-	FORCEINLINE UInventoryComponent* GetInventoryComponent() const { return InventoryComponent; }
 	void StaminaRegenerate(float DeltaTime);
 	/* </IHitInterface> */
 
@@ -344,6 +343,7 @@ private:
 	
 public:
 	virtual void Tick(float DeltaTime) override;
+	void CheckShieldRotation();
 	void ResetCameraPosition();
 	void ComboCountTimer(float DeltaTime);
 	void StaminaRegen();

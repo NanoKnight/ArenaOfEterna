@@ -12,10 +12,13 @@
 
 void UCharacterHUD::SetHealthBarPercent(float Percent)
 {
-	if (HealthBar)
+
+    if (HealthBar)
 	{
 		HealthBar->SetPercent(Percent);
 	}
+
+
 }
 
 void UCharacterHUD::SetStaminaBarPercent(float Percent)
@@ -75,7 +78,7 @@ void UCharacterHUD::SetLevelText(int32 Level)
 {
 	if (LevelText)
 	{
-		const FString String = FString::Printf(TEXT("%d"), Level);
+		const FString String = FString::Printf(TEXT(" LVL %d"), Level);
 		const FText Text = FText::FromString(String);
 		LevelText->SetText(Text);
 	}

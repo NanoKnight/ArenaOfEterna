@@ -60,6 +60,7 @@ AWarriorCharacter::AWarriorCharacter()
 	Sphere->OnComponentEndOverlap.AddDynamic(this, &AWarriorCharacter::SphereCollisionEndOverlap);
 
 
+
 }
 
 
@@ -357,7 +358,9 @@ void AWarriorCharacter::GetClosestEnemy()
 			USkeletalMeshComponent* EnemyMesh = CloseEnemy->EnemyOutlineMesh;
 			if (EnemyMesh)
 			{
-				EnemyMesh->SetMaterial(0, DefaultMat);
+				//EnemyMesh->SetMaterial(0, DefaultMat);
+				EnemyMesh->SetVisibility(false);
+				
 			}
 				
 		}
@@ -366,7 +369,9 @@ void AWarriorCharacter::GetClosestEnemy()
 			USkeletalMeshComponent* EnemyMesh = NewClosestEnemy->EnemyOutlineMesh;
 			if (EnemyMesh)
 			{
-				EnemyMesh->SetMaterial(0, OverlayMaterial);
+				//EnemyMesh->SetMaterial(0, OverlayMaterial);
+				EnemyMesh->SetVisibility(true);
+
 				
 
 			}
@@ -1066,43 +1071,6 @@ void AWarriorCharacter::SphereCollisionBeginOverlap(UPrimitiveComponent* Overlap
 				EnemiesInRange.Remove(Enemy);
 			}		
 		}
-
-		ABaseItem* ItemRef = Cast<ABaseItem>(OtherActor);
-		if (ItemRef)
-		{
-			ItemRef->SetInteractionVisibility(true);
-
-                ///      BU KISIM OPTÝMÝZE EDÝLMELÝ  
-			UWidgetComponent* WidgetComp = ItemRef->GetItemInteractionWidget();
-			if (WidgetComp)
-			{
-				UUserWidget* UserWidget = WidgetComp->GetUserWidgetObject();
-				if (UserWidget)
-				{
-					UItemInteractionWidget* ItemInteractWidget = Cast<UItemInteractionWidget>(UserWidget);
-					if (ItemInteractWidget)
-					{
-						if (ItemRef->ItemType == EItemTypes::Weapon)
-						{
-							ItemInteractWidget->SetInteractionValues(ItemRef->ItemName, ItemRef->Damage,ItemRef->ItemType);
-
-						}
-						else
-						{
-							ItemInteractWidget->SetInteractionValues(ItemRef->ItemName, ItemRef->Defense,ItemRef->ItemType);
-
-						}
-
-					}
-				}
-
-				
-			}
-
-			
-		}
-		
-		
 		
 	}	
 }
@@ -1247,8 +1215,15 @@ void AWarriorCharacter::Tick(float DeltaTime)
 	SetStaminaBar();
 	ResetCameraPosition();
 	CheckQuestProgress();
+	CheckShieldRotation();
 
 
+	
+
+
+}
+void AWarriorCharacter::CheckShieldRotation()
+{
 	if (BShieldOn)
 	{
 		if (CloseEnemy)
@@ -1262,11 +1237,6 @@ void AWarriorCharacter::Tick(float DeltaTime)
 			SetActorRotation(NewRot);
 		}
 	}
-
-
-	
-
-
 }
 void AWarriorCharacter::ResetCameraPosition()
 {

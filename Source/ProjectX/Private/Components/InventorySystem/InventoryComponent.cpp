@@ -30,6 +30,7 @@ void UInventoryComponent::BeginPlay()
 	Super::BeginPlay();
 	/******BUD DEÐÝÞKENNERÝ BÖYLE BEGÝNPLAYDE SETLEYÝP KULLANMAYI DENÝYCEÐÝZ BU SINIFIN H DOSYASINDAN BUNLARIN REFERANSLARINI AKTÝF ET KAPALILAR ÞUAN*******/
 	MainCharacter = Cast<AWarriorCharacter>(GetOwner());
+	ABaseCharacter* BaseCharacter = Cast<ABaseCharacter>(GetOwner());
 
 	/*if (MainCharacter)
 	{
@@ -49,48 +50,81 @@ void UInventoryComponent::BeginPlay()
 
 	}*/
 
-	InventoryItems.SetNum(20);
-
-
-	for (int32 i = 0; i < InventoryItems.Num(); i++)
+	
+	
+	if (!GetOwner()->ActorHasTag("Enemy"))
 	{
+    	InventoryItems.SetNum(20);
 
-		FInventoryStruct& Item = InventoryItems[i];
-
-		if (Item.ItemName.IsEmpty() && Item.ItemClass == nullptr)
-		{
-			Item.ItemName = FString("");
-			Item.ItemIcon = nullptr;
-			Item.ItemClass = nullptr;
-			Item.ItemStaticMesh = nullptr;
-			Item.ItemSocketName = NAME_None;
-			Item.ItemTypes = EItemTypes::None;
-			Item.EquipmentSlot = EEquipmentSlot::None;
-		}
-		
-		
-
-		if (Item.ItemName.IsEmpty() && Item.ItemClass != nullptr)
+		for (int32 i = 0; i < InventoryItems.Num(); i++)
 		{
 
-			if (TSubclassOf<ABaseItem> BaseItemClass = Item.ItemClass)
+			FInventoryStruct& Item = InventoryItems[i];
+
+			if (Item.ItemName.IsEmpty() && Item.ItemClass == nullptr)
 			{
-			 if(ABaseItem* BaseItem = BaseItemClass.GetDefaultObject())
-			 {
-				 Item.ItemName = BaseItem->ItemName;
-				 Item.ItemIcon = BaseItem->ItemIcon;
-				 Item.ItemStaticMesh = BaseItem->GetItemMesh()->GetStaticMesh();
-				 Item.ItemSocketName = BaseItem->ItemSocketName;
-				 Item.ItemTypes = BaseItem->ItemType;
-				 Item.EquipmentSlot = BaseItem->ItemEquipmentSlot;
-				 Item.Damage = BaseItem->Damage;
-				 Item.Defense = BaseItem->Defense;
+				Item.ItemName = FString("");
+				Item.ItemIcon = nullptr;
+				Item.ItemClass = nullptr;
+				Item.ItemStaticMesh = nullptr;
+				Item.ItemSocketName = NAME_None;
+				Item.ItemTypes = EItemTypes::None;
+				Item.EquipmentSlot = EEquipmentSlot::None;
+			}
 
-				 UE_LOG(LogTemp, Warning, TEXT("item adi bos ama class var "));
-			 }
+
+
+			if (Item.ItemName.IsEmpty() && Item.ItemClass != nullptr)
+			{
+
+				if (TSubclassOf<ABaseItem> BaseItemClass = Item.ItemClass)
+				{
+					if (ABaseItem* BaseItem = BaseItemClass.GetDefaultObject())
+					{
+						Item.ItemName = BaseItem->ItemName;
+						Item.ItemIcon = BaseItem->ItemIcon;
+						Item.ItemStaticMesh = BaseItem->GetItemMesh()->GetStaticMesh();
+						Item.ItemSocketName = BaseItem->ItemSocketName;
+						Item.ItemTypes = BaseItem->ItemType;
+						Item.EquipmentSlot = BaseItem->ItemEquipmentSlot;
+						Item.Damage = BaseItem->Damage;
+						Item.Defense = BaseItem->Defense;
+
+						UE_LOG(LogTemp, Warning, TEXT("item adi bos ama class var "));
+					}
+				}
 			}
 		}
 	}
+
+
+	/*if (BaseCharacter)
+	{
+		int32 EquipItemsCount = BaseCharacter->GetInventoryComponent()->EquippedItems.Num();
+		for (int32 i = 0; i < EquipItemsCount; i++)
+		{
+			FInventoryStruct& EquipItems = BaseCharacter->GetInventoryComponent()->EquippedItems[i];
+			BaseCharacter->GetInventoryComponent()->EquipItem(EquipItems);
+			UE_LOG(LogTemp, Warning, TEXT("asdasq3rsdxcf"));
+
+			UWorld* World = BaseCharacter->GetWorld();
+			if (World)
+			{
+				ABaseItem* SpawnedItem = GetWorld()->SpawnActor<ABaseItem>(EquipItems.ItemClass);
+				if (SpawnedItem)
+				{
+					SpawnedItem->GetItemMesh()->SetCollisionEnabled(ECollisionEnabled::NoCollision);
+					SpawnedItem->GetItemMesh()->SetSimulatePhysics(false);
+					SpawnedItem->Equip(BaseCharacter->GetMesh(), SpawnedItem->ItemSocketName, BaseCharacter, BaseCharacter);
+					
+				}
+			}
+		}
+	}*/
+	
+
+	
+	
 
 }
 
@@ -128,6 +162,7 @@ void UInventoryComponent::AddItem(const FInventoryStruct& NewItem)
 		}
 	}
 	
+	
 
 
 	AWarriorCharacter* Warrior = Cast<AWarriorCharacter>(GetOwner());
@@ -151,6 +186,13 @@ void UInventoryComponent::AddItem(const FInventoryStruct& NewItem)
 		}
 	}
 
+
+	if (InventoryWidget)
+	{
+		InventoryWidget->UpdateInventoryDisplay(InventoryItems);
+
+	}
+
 }
 
 void UInventoryComponent::AddItemWithIndex(const FInventoryStruct& NewItem, int32 Index)
@@ -171,39 +213,6 @@ void UInventoryComponent::AddItemWithIndex(const FInventoryStruct& NewItem, int3
 	}
 }
 
-void UInventoryComponent::RemoveItem(const FInventoryStruct& Item)
-{
-
-	for (int32 i = 0; i< InventoryItems.Num(); i++)
-	{
-		if (InventoryItems[i].ItemName.IsEmpty())
-		{
-			InventoryItems[i] = Item;
-			break;
-		}
-	}
-
-
-
-	/*AWarriorCharacter* Warrior = Cast<AWarriorCharacter>(GetOwner());
-	if (Warrior)
-	{
-		APlayerController* PlayerController = Cast<APlayerController>(Warrior->GetController());
-		if (PlayerController)
-		{
-			APlayerHUD* PlayerHud = Cast<APlayerHUD>(PlayerController->GetHUD());
-			if (PlayerHud)
-			{
-				UCharacterHUD* PlayerOverlay = PlayerHud->GetPlayerOverlay();
-				if (PlayerOverlay)
-				{
-
-				}
-			}
-		}
-	}*/
-
-}
 
 
 
@@ -255,9 +264,11 @@ void UInventoryComponent::EquipItem(const FInventoryStruct& ItemToEquip)
 		}
 		if (itemExists == false)
 		{
-			EquippedItems.Add(ItemToEquip);
+			//EquippedItems.Add(ItemToEquip);
 
 		}
+		EquippedItems.Add(ItemToEquip);
+
 
 		AWarriorCharacter* WarriorCharacter = Cast<AWarriorCharacter>(GetOwner());
 		if (WarriorCharacter)
@@ -426,7 +437,7 @@ void UInventoryComponent::UnEquipItem(FInventoryStruct& Item, ABaseItem* Equippe
 void UInventoryComponent::RemoveFormInventory(const FInventoryStruct& Item)
 {
 	
-	InventoryItems.Remove(Item);
+	InventoryItems.RemoveSingle(Item);
 	if (InventoryWidget)
 	{
 		InventoryWidget->UpdateInventoryDisplay(InventoryItems);

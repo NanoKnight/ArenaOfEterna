@@ -24,6 +24,8 @@ protected:
 	virtual void BeginPlay() override;
 	void InitializeEnemy();
 	virtual void Die() override;
+	void SpawnEquipedItemsToWorld();
+	void DestroyEquipItems();
 	void IncreaseQuestKillCount();
 	void SetEnemyDead();
 	void AddKilledEnemy();
@@ -121,6 +123,8 @@ private:
 
 	FTimerHandle PatrolTimer;
 
+	FTimerHandle SpawnExperienceTimer;
+
 	UPROPERTY(EditDefaultsOnly, Category = "AI Navigation")
 	float PatrolWaitTimeMin = 2.f;
 
@@ -136,7 +140,12 @@ private:
 	TArray <AActor*> PatrolTargets;
 	
 	UPROPERTY(EditAnywhere, Category = "Combat")
+	
 	float WalkSpeed = 125.f;
+
+	bool Ragdoll;
+	bool FrontAnim;
+
 	FTimerHandle AttackTimer;
 	FTimerHandle RagdollTimer;
 	FTimerHandle HideHealthBarTimer;

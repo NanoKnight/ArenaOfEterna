@@ -10,6 +10,7 @@
 #include "Kismet/KismetSystemLibrary.h"
 #include"Interfaces\HitInterface.h"
 #include"Components\WidgetComponent.h"
+#include"HUD\ItemInteractionWidget.h"
 #include"Components\InventorySystem\InventoryComponent.h"
 #include"GameMode\ArenaGameMode.h"
 
@@ -165,6 +166,28 @@ void ABaseItem::OnSphereOverlap(UPrimitiveComponent* OverlappedComponent, AActor
 	{
 		ItemActorInterface->SetOverlappingItem(this);
 	}
+
+	ItemInteraction->SetVisibility(true);
+
+	UUserWidget* UserWidget = ItemInteraction->GetUserWidgetObject();
+	if (UserWidget)
+	{
+		UItemInteractionWidget* ItemInteractWidget = Cast<UItemInteractionWidget>(UserWidget);
+		if (ItemInteractWidget)
+		{
+			if (ItemType == EItemTypes::Weapon)
+			{
+				ItemInteractWidget->SetInteractionValues(ItemName, Damage, ItemType);
+
+			}
+			else
+			{
+				ItemInteractWidget->SetInteractionValues(ItemName, Defense, ItemType);
+
+			}
+
+		}
+	}
 }
 
 void ABaseItem::OnSphereEndOverlap(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex)
@@ -175,6 +198,10 @@ void ABaseItem::OnSphereEndOverlap(UPrimitiveComponent* OverlappedComponent, AAc
 		ItemActorInterface->SetOverlappingItem(nullptr);
 
 	}
+	ItemInteraction->SetVisibility(false);
+
+
+
 
 }
 

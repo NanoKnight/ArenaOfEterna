@@ -48,9 +48,6 @@ public:
 	void AddItemWithIndex(const FInventoryStruct& NewItem, int32 Index);
 
 
-	UFUNCTION(BlueprintCallable, Category = "Inventory")
-	void RemoveItem(const FInventoryStruct& Item);
-
 	void PlayItemTextFadeOutAnim(UCharacterHUD* PlayerOverlay);
 
 	UFUNCTION(BlueprintCallable, Category = "Inventory")
