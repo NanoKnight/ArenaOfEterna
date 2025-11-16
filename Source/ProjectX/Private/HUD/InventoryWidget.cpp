@@ -102,7 +102,7 @@ void UInventoryWidget::UpdateInventoryDisplay(const TArray<FInventoryStruct>& In
     InventorySlots.Empty();
 
     // 3. 20 Slot için döngü (7 sütunlu grid varsayımı)
-    for (int32 i = 0; i < 20; ++i)
+    for (int32 i = 0; i < 30; ++i)
     {
         // 4. Yeni Slot Widget Oluştur (DEĞİŞKEN ADI: SlotWidget)
         UInventorySlotWidget* SlotWidget = CreateWidget<UInventorySlotWidget>(this, InventorySlotWidgetClass);
@@ -119,9 +119,9 @@ void UInventoryWidget::UpdateInventoryDisplay(const TArray<FInventoryStruct>& In
             }
 
             // 7. Grid'e Ekleme (7 sütunlu grid)
-            if (UGridSlot* GridSlot = InventoryList->AddChildToGrid(SlotWidget, i / 7, i % 7))
+            if (UGridSlot* GridSlot = InventoryList->AddChildToGrid(SlotWidget, i / 6, i % 6))
             {
-                GridSlot->SetPadding(FMargin(8.f));
+                GridSlot->SetPadding(FMargin(0.f,-30,0,-15)); 
                 GridSlot->SetHorizontalAlignment(HAlign_Fill);
                 GridSlot->SetVerticalAlignment(VAlign_Fill);
             }
@@ -129,7 +129,6 @@ void UInventoryWidget::UpdateInventoryDisplay(const TArray<FInventoryStruct>& In
             // 8. Slot'u Diziye Ekle
             
             InventorySlots.Add(SlotWidget);
-
             // Debug Log
             UE_LOG(LogTemp, Verbose, TEXT("Created slot %d with item: %s"),
                 i,

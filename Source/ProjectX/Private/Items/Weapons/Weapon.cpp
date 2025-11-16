@@ -164,8 +164,8 @@ void AWeapon::BoxTrace(FHitResult& BoxHit)
 		true
 
 	);
-	IgnoreActors.AddUnique(BoxHit.GetActor());
-
+	
+	IgnoreActors.AddUnique(BoxHit.GetActor());	
     }
 
 
