@@ -631,6 +631,7 @@ void AWarriorCharacter::OpenInventory()
 {
 	InventoryComponent->OpenInventory();
 
+
 }
 
 void AWarriorCharacter::EquipItem(const FInventoryStruct& Item)

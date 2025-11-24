@@ -5,12 +5,14 @@
 #include "CoreMinimal.h"
 #include "Components/ActorComponent.h"
 #include"../../Structs/InventoryStruct.h"
+#include"../../Characters/PreviewCharacter.h"
 #include "InventoryComponent.generated.h"
 
 class UInventoryWidget;
 class AWarriorCharacter;
 class APlayerHUD;
 class UCharacterHUD;
+class APreviewCharacter;
 
 UCLASS( ClassGroup=(Custom), meta=(BlueprintSpawnableComponent) )
 class PROJECTX_API UInventoryComponent : public UActorComponent
@@ -84,10 +86,13 @@ public:
 	UFUNCTION(BlueprintCallable)
 	void MoveItem(int32 FromIndex, int32 ToIndex);
 
-	UPROPERTY(EditDefaultsOnly)
+	UPROPERTY(EditAnywhere)
 	TSubclassOf<UInventoryWidget> InventoryWidgetClass;
 
 	UInventoryWidget* InventoryWidget;
+
+	UPROPERTY(EditAnywhere)
+	TSubclassOf<APreviewCharacter> PreviewClass;
 private:
 	void CreateInventoryWidget(APlayerController* Controller);
 
