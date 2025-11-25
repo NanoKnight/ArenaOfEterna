@@ -104,19 +104,14 @@ void UInventoryComponent::BeginPlay()
 	if (GetOwner()->ActorHasTag("WarriorCharacter"))
 	{
 		APreviewCharacter* FoundActor = Cast<APreviewCharacter>(UGameplayStatics::GetActorOfClass(GetWorld(), APreviewCharacter::StaticClass()));
-		if (FoundActor)
+		if (!FoundActor)
 		{
-			GEngine->AddOnScreenDebugMessage(-1, 2.f, FColor::Cyan, FString::Printf(TEXT("full")));
-
-		}
-		else
-		{
-
-			FVector SpawnLocation = GetOwner()->GetActorLocation();
+			FVector SpawnLocation = FVector(4460.000000, -22980.000000, -30.000000);
 			FRotator SpawnRotation = FRotator(0, 0, 0);
 			APreviewCharacter* NewActor = GetWorld()->SpawnActor<APreviewCharacter>(PreviewClass, SpawnLocation, SpawnRotation);
 			GEngine->AddOnScreenDebugMessage(-1, 2.f, FColor::Cyan, FString::Printf(TEXT("Empty")));
 		}
+		
 	}
 	
 
@@ -257,7 +252,6 @@ void UInventoryComponent::InventoryFullText()
 			}
 		}
 	}
-
 }
 
 
@@ -295,12 +289,16 @@ void UInventoryComponent::EquipItem(const FInventoryStruct& ItemToEquip)
 		if (WarriorCharacter)
 		{
 			UWorld* World = WarriorCharacter->GetWorld();
+			APreviewCharacter* PreviewCharacter = Cast<APreviewCharacter>(UGameplayStatics::GetActorOfClass(GetWorld(), APreviewCharacter::StaticClass()));
+
 			if (World)
 			{
 				if (ItemToEquip.ItemTypes == EItemTypes::Weapon)
 				{
 
 					ABaseItem* SpawnedItem = GetWorld()->SpawnActor<ABaseItem>(ItemToEquip.ItemClass);
+					ABaseItem* SpawnedPreview = GetWorld()->SpawnActor<ABaseItem>(ItemToEquip.ItemClass);
+
 					if (SpawnedItem)
 					{
 						SpawnedItem->GetItemMesh()->DetachFromComponent(FDetachmentTransformRules::KeepWorldTransform);
@@ -309,6 +307,8 @@ void UInventoryComponent::EquipItem(const FInventoryStruct& ItemToEquip)
 						AWeapon* WeaponRef = Cast<AWeapon>(SpawnedItem);
 						WarriorCharacter->EquipWeapon(WeaponRef);
 						SpawnedItem->Equip(WarriorCharacter->GetMesh(), ItemToEquip.ItemSocketName, WarriorCharacter, WarriorCharacter);
+						SpawnedPreview->Equip(PreviewCharacter->GetMesh(), ItemToEquip.ItemSocketName, PreviewCharacter, PreviewCharacter);
+						
 						SpawnedItem->GetItemMesh()->SetStaticMesh(ItemToEquip.ItemStaticMesh);
 						SpawnedItem->Damage = ItemToEquip.Damage;
 					}
@@ -317,9 +317,12 @@ void UInventoryComponent::EquipItem(const FInventoryStruct& ItemToEquip)
 				{
 
 					ABaseItem* SpawnedItem = World->SpawnActor<ABaseItem>(ItemToEquip.ItemClass);
+					ABaseItem* SpawnedPreview = GetWorld()->SpawnActor<ABaseItem>(ItemToEquip.ItemClass);
+
 					if (SpawnedItem)
 					{
 						SpawnedItem->Equip(WarriorCharacter->GetMesh(), ItemToEquip.ItemSocketName, WarriorCharacter, WarriorCharacter);
+						SpawnedPreview->Equip(PreviewCharacter->GetMesh(), ItemToEquip.ItemSocketName, PreviewCharacter, PreviewCharacter);
 						SpawnedItem->GetItemMesh()->SetStaticMesh(ItemToEquip.ItemStaticMesh);
 						SpawnedItem->Defense = ItemToEquip.Defense;
 						WarriorCharacter->ItemsToEquip.Add(SpawnedItem);
@@ -372,8 +375,7 @@ void UInventoryComponent::DropItem(const FInventoryStruct& ItemToDrop)
 					RemoveFormInventory(ItemToDrop);
 				}
 
-			   
-
+			
 			}
 		}
 	}
@@ -431,6 +433,8 @@ void UInventoryComponent::UnEquipItem(FInventoryStruct& Item, ABaseItem* Equippe
 					{
 						WarriorCharacter->SetCharacterStates(ECharacterStates::ECS_UnEquipped);
 						WarriorCharacter->EquippedWeapon->Destroy();
+						
+
 					
 
 					}
@@ -485,9 +489,8 @@ void UInventoryComponent::SetDefaultInventoryValues(FInventoryStruct& Item, int3
 		InventoryItems[Index].EquipmentSlot = EEquipmentSlot::None;
 		GEngine->AddOnScreenDebugMessage(-1, 2.f, FColor::Cyan, FString::Printf(TEXT("Default values set for item at index %d"), Index));
 
-	}
+	};
 
-;
 }
 
 void UInventoryComponent::OpenInventory()
