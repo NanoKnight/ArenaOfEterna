@@ -58,6 +58,8 @@ AWarriorCharacter::AWarriorCharacter()
 	Sphere->SetupAttachment(GetRootComponent());
 	Sphere->OnComponentBeginOverlap.AddDynamic(this, &AWarriorCharacter::SphereCollisionBeginOverlap);
 	Sphere->OnComponentEndOverlap.AddDynamic(this, &AWarriorCharacter::SphereCollisionEndOverlap);
+	Tags.Add("WarriorCharacter");
+
 
 
 
@@ -67,7 +69,6 @@ AWarriorCharacter::AWarriorCharacter()
 void AWarriorCharacter::BeginPlay()
 {
 	Super::BeginPlay();
-	Tags.Add("WarriorCharacter");
 	SpawnDefaultShield();
 	SpawnDefaultWeapon();
 	InitializePlayerOverlay();
@@ -630,6 +631,7 @@ void AWarriorCharacter::Interact()
 void AWarriorCharacter::OpenInventory()
 {
 	InventoryComponent->OpenInventory();
+
 
 }
 

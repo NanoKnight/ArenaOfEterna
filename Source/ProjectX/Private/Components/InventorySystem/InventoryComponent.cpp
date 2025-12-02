@@ -12,6 +12,9 @@
 #include"HUD/CharacterHUD.h"
 #include"HUD\PlayerHUD.h"
 #include "TimerManager.h"
+#include"Characters\PreviewCharacter.h"
+
+#include "Kismet/GameplayStatics.h"
 #include "./Items/Weapons/Weapon.h"
 
 
@@ -95,8 +98,27 @@ void UInventoryComponent::BeginPlay()
 				}
 			}
 		}
-	}
 
+
+	}
+	if (GetOwner()->ActorHasTag("WarriorCharacter"))
+	{
+		APreviewCharacter* FoundActor = Cast<APreviewCharacter>(UGameplayStatics::GetActorOfClass(GetWorld(), APreviewCharacter::StaticClass()));
+		if (FoundActor)
+		{
+			GEngine->AddOnScreenDebugMessage(-1, 2.f, FColor::Cyan, FString::Printf(TEXT("full")));
+
+		}
+		else
+		{
+
+			FVector SpawnLocation = GetOwner()->GetActorLocation();
+			FRotator SpawnRotation = FRotator(0, 0, 0);
+			APreviewCharacter* NewActor = GetWorld()->SpawnActor<APreviewCharacter>(PreviewClass, SpawnLocation, SpawnRotation);
+			GEngine->AddOnScreenDebugMessage(-1, 2.f, FColor::Cyan, FString::Printf(TEXT("Empty")));
+		}
+	}
+	
 
 	/*if (BaseCharacter)
 	{
@@ -123,7 +145,6 @@ void UInventoryComponent::BeginPlay()
 	}*/
 	
 
-	
 	
 
 }
@@ -303,10 +324,10 @@ void UInventoryComponent::EquipItem(const FInventoryStruct& ItemToEquip)
 						SpawnedItem->Defense = ItemToEquip.Defense;
 						WarriorCharacter->ItemsToEquip.Add(SpawnedItem);
 
-						
 
 					}
 
+				
 
 					if (SpawnedItem->Defense > 0 )
 					{
@@ -472,7 +493,7 @@ void UInventoryComponent::SetDefaultInventoryValues(FInventoryStruct& Item, int3
 void UInventoryComponent::OpenInventory()
 {
 	
-	UWorld* World = GetWorld();
+	UWorld* World = GetOwner()->GetWorld();
 	if (World)
 	{
 		APlayerController* Controller = World->GetFirstPlayerController();
@@ -482,6 +503,8 @@ void UInventoryComponent::OpenInventory()
 			CreateInventoryWidget(Controller);
 			ToggleInventory(Controller);
 			SetDefensePoint();
+			GEngine->AddOnScreenDebugMessage(-1, 2.f, FColor::Cyan, FString::Printf(TEXT("InventoryCalled From component")));
+
 
 		}
 	}

@@ -31,7 +31,6 @@ ABaseCharacter::ABaseCharacter()
 void ABaseCharacter::BeginPlay()
 {
 	Super::BeginPlay();
-	
 	InitializeEquipItems();
 }
 
