@@ -416,6 +416,8 @@ void UInventoryComponent::UnEquipItem(FInventoryStruct& Item, ABaseItem* Equippe
 		GEngine->AddOnScreenDebugMessage(-1, 2.f, FColor::Cyan, FString(TEXT("Deleted")));
 
 		AWarriorCharacter* WarriorCharacter = Cast<AWarriorCharacter>(GetOwner());
+
+
 		if (WarriorCharacter)
 		{
 			
@@ -433,10 +435,8 @@ void UInventoryComponent::UnEquipItem(FInventoryStruct& Item, ABaseItem* Equippe
 					{
 						WarriorCharacter->SetCharacterStates(ECharacterStates::ECS_UnEquipped);
 						WarriorCharacter->EquippedWeapon->Destroy();
-						
 
 					
-
 					}
 				
 					for (int32 i = WarriorCharacter->ItemsToEquip.Num() - 1; i >= 0; i--)
@@ -506,9 +506,8 @@ void UInventoryComponent::OpenInventory()
 			CreateInventoryWidget(Controller);
 			ToggleInventory(Controller);
 			SetDefensePoint();
-			GEngine->AddOnScreenDebugMessage(-1, 2.f, FColor::Cyan, FString::Printf(TEXT("InventoryCalled From component")));
 
-
+			
 		}
 	}
 }
@@ -516,19 +515,48 @@ void UInventoryComponent::ToggleInventory(APlayerController* Controller)
 {
 	if (InventoryWidget)
 	{
+
+		AWarriorCharacter* WarriorCharacter = Cast<AWarriorCharacter>(GetOwner());
+		FVector CharacterLoc;
+		FRotator CharacterRot;
+		
+		if (WarriorCharacter)
+		{
+			CharacterLoc = WarriorCharacter->GetActorLocation();
+			CharacterRot = WarriorCharacter->GetActorRotation();
+			GEngine->AddOnScreenDebugMessage(0, 2.f, FColor::Cyan, FString::Printf(TEXT("chraqe2")));
+
+
+		}
+	
+	
 		if (InventoryWidget->GetVisibility() == ESlateVisibility::Visible)
 		{
 			// KAPATIRKEN verileri kaydet
+			
 			InventoryWidget->SaveSlotIndices();
 			SavedSlotIndices = InventoryWidget->StoredSlotIndices;
 			InventoryWidget->SetVisibility(ESlateVisibility::Hidden);
 			Controller->bShowMouseCursor = false;
 			FInputModeGameOnly InputMode;
+			
 			Controller->SetInputMode(InputMode);
+			if (WarriorCharacter)
+			{
+				WarriorCharacter->SetActorLocation(CharacterLoc);
+				GEngine->AddOnScreenDebugMessage(0, 2.f, FColor::Cyan, FString::Printf(TEXT("chraqe")));
+
+			}
 		}
 		else
 		{
 			// AÇARKEN kayýtlý verileri yükle
+		
+
+			if (GetOwner()->ActorHasTag("WarriorCharacter"))
+			{
+				GetOwner()->SetActorLocation(FVector(3370.000000, -2370.000000, 1138.000000));
+			}
 			InventoryWidget->StoredSlotIndices = SavedSlotIndices;
 			InventoryWidget->UpdateInventoryDisplay(InventoryItems);
 
