@@ -7,6 +7,8 @@
 #include "PreviewCharacter.generated.h"
 
 class USceneCaptureComponent2D;
+class AWeapon;
+class ABaseItem;
 
 UCLASS()
 class PROJECTX_API APreviewCharacter : public ACharacter
@@ -24,11 +26,20 @@ protected:
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Camera")
 	USceneCaptureComponent2D* SceneCaptureComponent;
 
+
 public:	
 	// Called every frame
 	virtual void Tick(float DeltaTime) override;
 
 	// Called to bind functionality to input
 	virtual void SetupPlayerInputComponent(class UInputComponent* PlayerInputComponent) override;
+
+
+
+	UPROPERTY(VisibleAnywhere)
+	AWeapon* EquippedWeapon;
+
+	UPROPERTY(VisibleAnywhere)
+	TArray<ABaseItem*>ItemsToEquip;
 
 };

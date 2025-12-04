@@ -3,7 +3,8 @@
 
 #include "Characters/PreviewCharacter.h"
 #include "Components/SceneCaptureComponent2D.h"
-
+#include"Items\BaseItem.h"
+#include"Items\Weapons\Weapon.h"
 
 // Sets default values
 APreviewCharacter::APreviewCharacter()
@@ -39,4 +40,7 @@ void APreviewCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputCo
 	Super::SetupPlayerInputComponent(PlayerInputComponent);
 
 }
+
+
+
 
