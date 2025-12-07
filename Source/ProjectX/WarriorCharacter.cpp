@@ -58,7 +58,6 @@ AWarriorCharacter::AWarriorCharacter()
 	Sphere->SetupAttachment(GetRootComponent());
 	Sphere->OnComponentBeginOverlap.AddDynamic(this, &AWarriorCharacter::SphereCollisionBeginOverlap);
 	Sphere->OnComponentEndOverlap.AddDynamic(this, &AWarriorCharacter::SphereCollisionEndOverlap);
-	Tags.Add("WarriorCharacter");
 
 
 
@@ -72,7 +71,7 @@ void AWarriorCharacter::BeginPlay()
 	SpawnDefaultShield();
 	SpawnDefaultWeapon();
 	InitializePlayerOverlay();
-
+	Tags.Add("WarriorCharacter");
 	defaultCameraLoc = ViewCamera->GetRelativeLocation();
 
 

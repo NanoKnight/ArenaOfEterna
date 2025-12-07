@@ -29,7 +29,7 @@ public:
   FORCEINLINE UInventoryComponent* GetInventoryComponent() const { return InventoryComponent; }
   FORCEINLINE TEnumAsByte<EDeadPose> GetDeathPose() const { return DeadPose; }
  
-  UPROPERTY(VisibleAnywhere, Category = Weapon)
+  UPROPERTY(VisibleAnywhere,Category = Weapon)
   AWeapon* EquippedWeapon;
 
   UPROPERTY(EditAnywhere)
