@@ -29,6 +29,9 @@ protected:
 
 	void SetDefensePoint();
 
+	UPROPERTY(VisibleAnywhere);
+	FVector CharacterLoc;
+
 public:	
 	// Called every frame
 	virtual void TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction) override;

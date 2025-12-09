@@ -34,7 +34,6 @@ AEnemy::AEnemy()
 	HealthBarWidget = CreateDefaultSubobject<UHealthBarComponent>(TEXT("Healthbar"));
 	PawnSensing = CreateDefaultSubobject<UPawnSensingComponent>(TEXT("AISenseComponent"));
 	HealthBarWidget->SetupAttachment(GetRootComponent());
-	EEnemyState::EES_Patrolling;
 	PawnSensing->SightRadius = 400.f;
 	PawnSensing->SetPeripheralVisionAngle(45.f);
 	GetCharacterMovement()->bOrientRotationToMovement = true;

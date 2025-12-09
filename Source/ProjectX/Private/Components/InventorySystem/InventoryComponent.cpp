@@ -35,29 +35,13 @@ void UInventoryComponent::BeginPlay()
 	MainCharacter = Cast<AWarriorCharacter>(GetOwner());
 	ABaseCharacter* BaseCharacter = Cast<ABaseCharacter>(GetOwner());
 
-	/*if (MainCharacter)
-	{
-		PlayerController = Cast<APlayerController>(MainCharacter->GetController());
-		if (PlayerController)
-		{
-			PlayerHUD = Cast<APlayerHUD>(PlayerController->GetHUD());
-			if (PlayerHUD)
-			{
-				 PlayerOverlay = PlayerHUD->GetPlayerOverlay();
-
-
-			}
-
-
-		}
-
-	}*/
 
 	
 	
 	if (!GetOwner()->ActorHasTag("Enemy"))
 	{
     	InventoryItems.SetNum(20);
+
 
 		for (int32 i = 0; i < InventoryItems.Num(); i++)
 		{
@@ -84,6 +68,7 @@ void UInventoryComponent::BeginPlay()
 				{
 					if (ABaseItem* BaseItem = BaseItemClass.GetDefaultObject())
 					{
+
 						Item.ItemName = BaseItem->ItemName;
 						Item.ItemIcon = BaseItem->ItemIcon;
 						Item.ItemStaticMesh = BaseItem->GetItemMesh()->GetStaticMesh();
@@ -91,9 +76,8 @@ void UInventoryComponent::BeginPlay()
 						Item.ItemTypes = BaseItem->ItemType;
 						Item.EquipmentSlot = BaseItem->ItemEquipmentSlot;
 						Item.Damage = BaseItem->Damage;
-						Item.Defense = BaseItem->Defense;
-
-						UE_LOG(LogTemp, Warning, TEXT("item adi bos ama class var "));
+						Item.Defense = BaseItem->Defense;						
+						
 					}
 				}
 			}
@@ -101,44 +85,6 @@ void UInventoryComponent::BeginPlay()
 
 
 	}
-	if (GetOwner()->ActorHasTag("WarriorCharacter"))
-	{
-		APreviewCharacter* FoundActor = Cast<APreviewCharacter>(UGameplayStatics::GetActorOfClass(GetWorld(), APreviewCharacter::StaticClass()));
-		if (!FoundActor)
-		{
-			FVector SpawnLocation = FVector(4460.000000, -22980.000000, -30.000000);
-			FRotator SpawnRotation = FRotator(0, 0, 0);
-			APreviewCharacter* NewActor = GetWorld()->SpawnActor<APreviewCharacter>(PreviewClass, SpawnLocation, SpawnRotation);
-			GEngine->AddOnScreenDebugMessage(-1, 2.f, FColor::Cyan, FString::Printf(TEXT("Empty")));
-		}
-		
-	}
-	
-
-	/*if (BaseCharacter)
-	{
-		int32 EquipItemsCount = BaseCharacter->GetInventoryComponent()->EquippedItems.Num();
-		for (int32 i = 0; i < EquipItemsCount; i++)
-		{
-			FInventoryStruct& EquipItems = BaseCharacter->GetInventoryComponent()->EquippedItems[i];
-			BaseCharacter->GetInventoryComponent()->EquipItem(EquipItems);
-			UE_LOG(LogTemp, Warning, TEXT("asdasq3rsdxcf"));
-
-			UWorld* World = BaseCharacter->GetWorld();
-			if (World)
-			{
-				ABaseItem* SpawnedItem = GetWorld()->SpawnActor<ABaseItem>(EquipItems.ItemClass);
-				if (SpawnedItem)
-				{
-					SpawnedItem->GetItemMesh()->SetCollisionEnabled(ECollisionEnabled::NoCollision);
-					SpawnedItem->GetItemMesh()->SetSimulatePhysics(false);
-					SpawnedItem->Equip(BaseCharacter->GetMesh(), SpawnedItem->ItemSocketName, BaseCharacter, BaseCharacter);
-					
-				}
-			}
-		}
-	}*/
-	
 
 	
 
@@ -289,7 +235,6 @@ void UInventoryComponent::EquipItem(const FInventoryStruct& ItemToEquip)
 		if (WarriorCharacter)
 		{
 			UWorld* World = WarriorCharacter->GetWorld();
-			APreviewCharacter* PreviewCharacter = Cast<APreviewCharacter>(UGameplayStatics::GetActorOfClass(GetWorld(), APreviewCharacter::StaticClass()));
 
 			if (World)
 			{
@@ -298,7 +243,6 @@ void UInventoryComponent::EquipItem(const FInventoryStruct& ItemToEquip)
 
 					ABaseItem* SpawnedItem = GetWorld()->SpawnActor<ABaseItem>(ItemToEquip.ItemClass);
 				
-					if (PreviewCharacter) EquipPreviewWeaponPreviewCharacter(ItemToEquip, PreviewCharacter);
 					
 
 					if (SpawnedItem)
@@ -320,10 +264,7 @@ void UInventoryComponent::EquipItem(const FInventoryStruct& ItemToEquip)
 				}
 				else
 				{
-					if (PreviewCharacter)
-					{
-						EquipPreviewItemPreviewCharacter(ItemToEquip, PreviewCharacter);
-					}
+					
 
 					ABaseItem* SpawnedItem = World->SpawnActor<ABaseItem>(ItemToEquip.ItemClass);
 
@@ -352,28 +293,8 @@ void UInventoryComponent::EquipItem(const FInventoryStruct& ItemToEquip)
 	
 }
 
-void UInventoryComponent::EquipPreviewItemPreviewCharacter(const FInventoryStruct& ItemToEquip, APreviewCharacter* PreviewCharacter)
-{
-	ABaseItem* SpawnedPreview = GetWorld()->SpawnActor<ABaseItem>(ItemToEquip.ItemClass);
-	if (SpawnedPreview)
-	{
-		SpawnedPreview->Equip(PreviewCharacter->GetMesh(), ItemToEquip.ItemSocketName, PreviewCharacter, PreviewCharacter);
-		PreviewCharacter->ItemsToEquip.Add(SpawnedPreview);
 
-	}
-}
 
-void UInventoryComponent::EquipPreviewWeaponPreviewCharacter(const FInventoryStruct& ItemToEquip, APreviewCharacter* PreviewCharacter)
-{
-	ABaseItem* SpawnedPreview = GetWorld()->SpawnActor<ABaseItem>(ItemToEquip.ItemClass);
-	if (SpawnedPreview)
-	{
-		AWeapon* WeaponRefPreview = Cast<AWeapon>(SpawnedPreview);
-		PreviewCharacter->EquippedWeapon = WeaponRefPreview;
-		SpawnedPreview->Equip(PreviewCharacter->GetMesh(), ItemToEquip.ItemSocketName, PreviewCharacter, PreviewCharacter);
-
-	}
-}
 
 void UInventoryComponent::DropItem(const FInventoryStruct& ItemToDrop)
 {
@@ -446,7 +367,6 @@ void UInventoryComponent::UnEquipItem(FInventoryStruct& Item, ABaseItem* Equippe
 		GEngine->AddOnScreenDebugMessage(-1, 2.f, FColor::Cyan, FString(TEXT("Deleted")));
 
 		AWarriorCharacter* WarriorCharacter = Cast<AWarriorCharacter>(GetOwner());
-		APreviewCharacter* PreviewCharacter = Cast<APreviewCharacter>(UGameplayStatics::GetActorOfClass(GetWorld(), APreviewCharacter::StaticClass()));
 
 
 
@@ -467,9 +387,6 @@ void UInventoryComponent::UnEquipItem(FInventoryStruct& Item, ABaseItem* Equippe
 					{
 
 						WarriorCharacter->SetCharacterStates(ECharacterStates::ECS_UnEquipped);
-						
-						UnequipPreviewCharacterWeapon(PreviewCharacter);
-
 						WarriorCharacter->EquippedWeapon->Destroy();
 					
 					
@@ -487,7 +404,6 @@ void UInventoryComponent::UnEquipItem(FInventoryStruct& Item, ABaseItem* Equippe
 						}
 					}
 
-					UnequipItemPreviewCharacter(PreviewCharacter, Item);
 				
 			}
 		
@@ -496,28 +412,7 @@ void UInventoryComponent::UnEquipItem(FInventoryStruct& Item, ABaseItem* Equippe
 	}
 }
 
-void UInventoryComponent::UnequipItemPreviewCharacter(APreviewCharacter* PreviewCharacter, FInventoryStruct& Item)
-{
-	for (int32 i = PreviewCharacter->ItemsToEquip.Num() - 1; i >= 0; i--)
-	{
-		if (PreviewCharacter->ItemsToEquip[i] && PreviewCharacter->ItemsToEquip[i]->ItemType == Item.ItemTypes)
-		{
 
-			PreviewCharacter->ItemsToEquip[i]->DetachFromActor(FDetachmentTransformRules::KeepWorldTransform);
-			PreviewCharacter->ItemsToEquip[i]->Destroy();
-			PreviewCharacter->ItemsToEquip.RemoveAt(i);
-		}
-	}
-}
-
-void UInventoryComponent::UnequipPreviewCharacterWeapon(APreviewCharacter* PreviewCharacter)
-{
-	if (PreviewCharacter)
-	{
-		PreviewCharacter->EquippedWeapon->Destroy();
-
-	}
-}
 
 void UInventoryComponent::RemoveFormInventory(const FInventoryStruct& Item)
 {
@@ -555,13 +450,22 @@ void UInventoryComponent::SetDefaultInventoryValues(FInventoryStruct& Item, int3
 
 void UInventoryComponent::OpenInventory()
 {
-	
+	if (GetOwner()->ActorHasTag("WarriorCharacter")) 
+	{
+	  CharacterLoc = GetOwner()->GetActorLocation();
+	}
+
+
 	UWorld* World = GetOwner()->GetWorld();
 	if (World)
 	{
+		
+			
+		
 		APlayerController* Controller = World->GetFirstPlayerController();
 		if (InventoryWidgetClass && Controller)
 		{
+			
 			//Controller->Pause();
 			CreateInventoryWidget(Controller);
 			ToggleInventory(Controller);
@@ -577,9 +481,7 @@ void UInventoryComponent::ToggleInventory(APlayerController* Controller)
 	{
 
 		AWarriorCharacter* WarriorCharacter = Cast<AWarriorCharacter>(GetOwner());
-	
-	
-	
+
 		if (InventoryWidget->GetVisibility() == ESlateVisibility::Visible)
 		{
 			// KAPATIRKEN verileri kaydet
@@ -589,7 +491,7 @@ void UInventoryComponent::ToggleInventory(APlayerController* Controller)
 			InventoryWidget->SetVisibility(ESlateVisibility::Hidden);
 			Controller->bShowMouseCursor = false;
 			FInputModeGameOnly InputMode;
-			
+			WarriorCharacter->SetActorLocation(CharacterLoc);
 			Controller->SetInputMode(InputMode);
 		
 		}
@@ -598,7 +500,13 @@ void UInventoryComponent::ToggleInventory(APlayerController* Controller)
 			// AÇARKEN kayýtlý verileri yükle
 		
 
-			
+			if (GetOwner()->ActorHasTag("WarriorCharacter"))
+			{
+				GetOwner()->SetActorLocation(FVector(11500.000000,-2200.000000, 1160.000000));
+				GetOwner()->SetActorRotation(FRotator(0, 90, 0));
+
+				
+			}
 			InventoryWidget->StoredSlotIndices = SavedSlotIndices;
 			InventoryWidget->UpdateInventoryDisplay(InventoryItems);
 

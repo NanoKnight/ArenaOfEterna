@@ -140,6 +140,7 @@ protected:
 	* Combat
 	*/
 
+
 	virtual void Attack() override;
 	void AttackReleassed();
 	virtual void AttackEnd() override;
@@ -321,7 +322,7 @@ private:
 	float CharacterWalkSpeed = 250.f;
 	void GetClosestEnemy();
 	void SpawnDefaultShield();
-	UPROPERTY(BlueprintReadWrite, meta = (AllowPrivateAccess = "true"))
+	UPROPERTY(meta = (AllowPrivateAccess = "true"))
 	ECharacterStates CharacterStates = ECharacterStates::ECS_UnEquipped;
 
 	UPROPERTY(BlueprintReadWrite, meta = (AllowPrivateAccess = "true"))
@@ -342,7 +343,8 @@ private:
 	
 	
 public:
-	virtual void Tick(float DeltaTime) override;
+
+	virtual void Tick(float DeltaTime) override;	
 	void CheckShieldRotation();
 	void ResetCameraPosition();
 	void ComboCountTimer(float DeltaTime);
@@ -357,7 +359,6 @@ public:
 	FORCEINLINE ECharacterStates GetCharacterStates() const { return CharacterStates; }
 	FORCEINLINE EActionState GetActionState() const { return ActionState; }
 	FORCEINLINE EMovementState GetMovementState() const { return MovementState; }
-
 	FORCEINLINE void SetCharacterStates(ECharacterStates NewStates) { CharacterStates = NewStates; }
 
 
