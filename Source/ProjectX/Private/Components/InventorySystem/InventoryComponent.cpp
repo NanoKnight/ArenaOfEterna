@@ -453,8 +453,8 @@ void UInventoryComponent::OpenInventory()
 	if (GetOwner()->ActorHasTag("WarriorCharacter")) 
 	{
 	  CharacterLoc = GetOwner()->GetActorLocation();
+	  CharacterRot = GetOwner()->GetActorRotation();
 	}
-
 
 	UWorld* World = GetOwner()->GetWorld();
 	if (World)
@@ -492,6 +492,7 @@ void UInventoryComponent::ToggleInventory(APlayerController* Controller)
 			Controller->bShowMouseCursor = false;
 			FInputModeGameOnly InputMode;
 			WarriorCharacter->SetActorLocation(CharacterLoc);
+			WarriorCharacter->SetActorRotation(CharacterRot);
 			Controller->SetInputMode(InputMode);
 		
 		}
