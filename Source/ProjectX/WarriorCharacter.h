@@ -344,6 +344,7 @@ private:
 	
 public:
 
+
 	virtual void Tick(float DeltaTime) override;	
 	void CheckShieldRotation();
 	void ResetCameraPosition();

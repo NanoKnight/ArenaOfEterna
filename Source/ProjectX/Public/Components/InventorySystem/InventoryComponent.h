@@ -29,8 +29,11 @@ protected:
 
 	void SetDefensePoint();
 
-	UPROPERTY(VisibleAnywhere);
+	UPROPERTY();
 	FVector CharacterLoc;
+
+	UPROPERTY();
+	FRotator CharacterRot;
 
 public:	
 	// Called every frame
