@@ -64,3 +64,13 @@ enum class EMovementState : uint8
 	EMS_Run UMETA(DisplayName = "Run")
 
 };
+
+UENUM(BlueprintType)
+enum class ECharacterSide : uint8
+{
+	EMS_Forward UMETA(DisplayName = "Forward"),
+	EMS_Backward UMETA(DisplayName = "Backward"),
+	EMS_LeftSide UMETA(DisplayName = "LeftSide"),
+	EMS_RightSide UMETA(DisplayName = "RightSide")
+
+};

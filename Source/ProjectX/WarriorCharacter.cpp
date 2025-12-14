@@ -524,21 +524,21 @@ void AWarriorCharacter::MoveForward(float value)
 		const FRotator ControlRotation = GetControlRotation();
 		const FRotator YawRotation(0.f, ControlRotation.Yaw, 0.f);
 		const FVector Direction = FRotationMatrix(YawRotation).GetUnitAxis(EAxis::X);
-		
 		AddMovementInput(Direction, value);
-		bForward = true;
-		if (bForward == true)
+		MovementState = EMovementState::EMS_Run;
+		if (value == 1)
 		{
-			MovementState = EMovementState::EMS_Run;
+			CharacterSide = ECharacterSide::EMS_Forward;
+		}
+		else if(value == -1)
+		{
+			CharacterSide = ECharacterSide::EMS_Backward;
 
 		}
-		
 	}
-
 	else
 	{
 		MovementState = EMovementState::EMS_Idle;
-		bForward = false;
 	}
 }
 
@@ -553,16 +553,20 @@ void AWarriorCharacter::MoveRight(float value)
 		const FRotator YawRotation(0.f, ControlRotation.Yaw, 0.f);
 		const FVector Direction = FRotationMatrix(YawRotation).GetUnitAxis(EAxis::Y);
 		AddMovementInput(Direction, value);
-	   MovementState = EMovementState::EMS_Run;
-	}
-	else
-	{
-		if (bForward == false)
+		MovementState = EMovementState::EMS_Run;
+
+		if (value == 1)
 		{
-			MovementState = EMovementState::EMS_Idle;
+			CharacterSide = ECharacterSide::EMS_RightSide;
+		}
+		else if (value == -1)
+		{
+			CharacterSide = ECharacterSide::EMS_LeftSide;
 
 		}
+
 	}
+	
 
 }
 
