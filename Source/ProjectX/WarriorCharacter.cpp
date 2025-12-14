@@ -206,6 +206,28 @@ void AWarriorCharacter::Dodge()
 	
 
 	if (ActionState != EActionState::EAS_Unoccupied || !HasEnoughStamina()) return;
+
+	if (CharacterSide ==  ECharacterSide::EMS_Forward)
+	{
+		SetActorRotation(FRotator(0,180,0));
+	}
+	else if(CharacterSide == ECharacterSide::EMS_Backward)
+	{
+		SetActorRotation(FRotator(0, 0, 0));
+
+	}
+	else if(CharacterSide == ECharacterSide::EMS_LeftSide)
+	{
+		SetActorRotation(FRotator(0, 90, 0));
+
+	}
+	else if (CharacterSide == ECharacterSide::EMS_RightSide)
+	{
+		SetActorRotation(FRotator(0, -90, 0));
+
+	}
+
+
 		PlayDodgeMontage();
 		ActionState = EActionState::EAS_Dodge;
 		if (Attributes && PlayerOverlay)
