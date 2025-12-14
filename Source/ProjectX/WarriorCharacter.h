@@ -302,7 +302,6 @@ private:
 	bool bAttackTimerOpen = false;
 	bool bDidHoldingAttack;
 	///////////////////////////
-	UPROPERTY(BlueprintCallable)
 	bool bForward = false;
 
 	float StaminaResetTimerCount = 3.f;
@@ -334,6 +333,10 @@ private:
 	EActionState ActionState = EActionState::EAS_Unoccupied;
 	UPROPERTY(BlueprintReadWrite, meta = (AllowPrivateAccess = "true"))
 	EMovementState MovementState = EMovementState::EMS_Idle;
+
+	UPROPERTY(BlueprintReadWrite, meta = (AllowPrivateAccess = "true"))
+	ECharacterSide CharacterSide;
+
 	UPROPERTY()
 	UCharacterHUD* PlayerOverlay;
 	void ExecuteGetHit(FHitResult& BoxHit);
@@ -345,8 +348,6 @@ private:
 	
 	
 public:
-
-
 	virtual void Tick(float DeltaTime) override;	
 	void CheckShieldRotation();
 	void ResetCameraPosition();
@@ -363,6 +364,5 @@ public:
 	FORCEINLINE EActionState GetActionState() const { return ActionState; }
 	FORCEINLINE EMovementState GetMovementState() const { return MovementState; }
 	FORCEINLINE void SetCharacterStates(ECharacterStates NewStates) { CharacterStates = NewStates; }
-
 
 };
