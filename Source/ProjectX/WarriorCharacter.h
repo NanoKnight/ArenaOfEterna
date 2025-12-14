@@ -302,7 +302,9 @@ private:
 	bool bAttackTimerOpen = false;
 	bool bDidHoldingAttack;
 	///////////////////////////
+	UPROPERTY(BlueprintCallable)
 	bool bForward = false;
+
 	float StaminaResetTimerCount = 3.f;
 	float StaminaTimeElapsed = 0.f;
 	UPROPERTY(EditAnywhere)

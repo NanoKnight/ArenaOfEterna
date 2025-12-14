@@ -524,6 +524,7 @@ void AWarriorCharacter::MoveForward(float value)
 		const FRotator ControlRotation = GetControlRotation();
 		const FRotator YawRotation(0.f, ControlRotation.Yaw, 0.f);
 		const FVector Direction = FRotationMatrix(YawRotation).GetUnitAxis(EAxis::X);
+		
 		AddMovementInput(Direction, value);
 		bForward = true;
 		if (bForward == true)
@@ -1115,7 +1116,7 @@ void AWarriorCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputCo
 	PlayerInputComponent->BindAxis(FName("CameraRight"), this, &AWarriorCharacter::CameraRight);
 	PlayerInputComponent->BindAction(FName("MoveCamera"), IE_Pressed, this, &AWarriorCharacter::MoveCamera);
 	PlayerInputComponent->BindAction(FName("MoveCamera"), IE_Released, this, &AWarriorCharacter::MoveCameraReleased);
-	PlayerInputComponent->BindAction(FName("Jump"), IE_Pressed, this, &ACharacter::Jump);
+	//PlayerInputComponent->BindAction(FName("Jump"), IE_Pressed, this, &ACharacter::Jump);
 	PlayerInputComponent->BindAction(FName("Use"), IE_Pressed, this, &AWarriorCharacter::Interact);
 	PlayerInputComponent->BindAction(FName("Inventory"), IE_Pressed, this, &AWarriorCharacter::OpenInventory);
 	PlayerInputComponent->BindAction(FName("Attack"), IE_Pressed, this, &AWarriorCharacter::Attack);
