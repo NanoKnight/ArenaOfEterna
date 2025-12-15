@@ -128,6 +128,13 @@ private:
 	UPROPERTY(EditDefaultsOnly, Category = "AI Navigation")
 	float PatrolWaitTimeMin = 2.f;
 
+	UPROPERTY()
+	int32 ItemSpawnRate = 5;
+	
+	UPROPERTY(EditAnywhere)
+	bool SpecialCharacter;
+
+
 	UPROPERTY(EditDefaultsOnly, Category = "AI Navigation")
 	float PatrolWaitTimeMax = 5.f;
 	UPROPERTY()

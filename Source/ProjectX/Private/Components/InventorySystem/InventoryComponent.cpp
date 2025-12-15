@@ -40,7 +40,7 @@ void UInventoryComponent::BeginPlay()
 	
 	if (!GetOwner()->ActorHasTag("Enemy"))
 	{
-    	InventoryItems.SetNum(20);
+    	InventoryItems.SetNum(40);
 
 
 		for (int32 i = 0; i < InventoryItems.Num(); i++)
@@ -545,6 +545,7 @@ void UInventoryComponent::SwapInventoryItems(int32 FromIndex, int32 ToIndex)
 void UInventoryComponent::MoveItem(int32 FromIndex, int32 ToIndex)
 {
 
+
 	if (!InventoryItems.IsValidIndex(FromIndex))
 	{
 		UE_LOG(LogTemp, Error, TEXT("Invalid FromIndex: %d"), FromIndex);
@@ -554,7 +555,7 @@ void UInventoryComponent::MoveItem(int32 FromIndex, int32 ToIndex)
 	// Eðer hedef slot yoksa, yeni slot aç
 	if (!InventoryItems.IsValidIndex(ToIndex))
 	{
-
+		return;
 	}
 
 	if (InventoryItems[ToIndex].ItemName.IsEmpty()) // Eðer hedef boþsa direkt taþý
@@ -569,7 +570,7 @@ void UInventoryComponent::MoveItem(int32 FromIndex, int32 ToIndex)
 		InventoryItems[FromIndex].ItemIcon = nullptr;
 
 	}
-	else // Dolularýn yerini deðiþtir
+	else
 	{
 		InventoryItems.Swap(FromIndex, ToIndex);
 	}
