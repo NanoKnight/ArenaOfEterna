@@ -120,18 +120,24 @@ void AEnemy::Die()
 void AEnemy::SpawnEquipedItemsToWorld()
 {
 	int32 EquippedItemCount = InventoryComponent->EquippedItems.Num();
+
 	for (int32 i = 0; i < EquippedItemCount; i++)
 
 	{
-		FInventoryStruct& EquipItems = InventoryComponent->EquippedItems[i];
-		//GetInventoryComponent()->EquipItem(EquipItems);
-		ABaseItem* SpawnedItem = GetWorld()->SpawnActor<ABaseItem>(EquipItems.ItemClass);
-		if (SpawnedItem)
+
+		int32 RandomNumber = FMath::RandRange(1, ItemSpawnRate);
+		if (RandomNumber == 1 || SpecialCharacter == true)
 		{
-			FVector SpawnLocation = GetActorLocation() + FVector(i * 100, 0, 0);
-			SpawnedItem->SetActorLocation(SpawnLocation);
-			SpawnedItem->GetItemMesh()->SetSimulatePhysics(true);
+			FInventoryStruct& EquipItems = InventoryComponent->EquippedItems[i];
+			ABaseItem* SpawnedItem = GetWorld()->SpawnActor<ABaseItem>(EquipItems.ItemClass);
+			if (SpawnedItem)
+			{
+				FVector SpawnLocation = GetActorLocation() + FVector(i * 100, 0, 0);
+				SpawnedItem->SetActorLocation(SpawnLocation);
+				SpawnedItem->GetItemMesh()->SetSimulatePhysics(true);
+			}
 		}
+		
 
 	}
 }
