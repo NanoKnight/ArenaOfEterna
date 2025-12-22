@@ -23,6 +23,7 @@ public:
 	// Sets default values for this component's properties
 	UInventoryComponent();
 
+
 protected:
 	// Called when the game starts
 	virtual void BeginPlay() override;
@@ -61,9 +62,7 @@ public:
 	UFUNCTION(BlueprintCallable, Category = "Inventory")
 	void EquipItem(const FInventoryStruct& ItemToEquip);
 
-	void EquipPreviewItemPreviewCharacter(const FInventoryStruct& ItemToEquip, APreviewCharacter* PreviewCharacter);
 
-	void EquipPreviewWeaponPreviewCharacter(const FInventoryStruct& ItemToEquip, APreviewCharacter* PreviewCharacter);
 
 	UFUNCTION(BlueprintCallable,Category = "Inventory")
 	void DropItem(const FInventoryStruct& ItemToDrop);
@@ -74,10 +73,6 @@ public:
 
 	UFUNCTION(BlueprintCallable, Category = "Inventory")
 	void UnEquipItem(FInventoryStruct& Item , ABaseItem* EquippedItem);
-
-	void UnequipItemPreviewCharacter(APreviewCharacter* PreviewCharacter, FInventoryStruct& Item);
-
-	void UnequipPreviewCharacterWeapon(APreviewCharacter* PreviewCharacter);
 
 	UFUNCTION(BlueprintCallable,Category="Inventory")
 	void RemoveFormInventory(const FInventoryStruct& Item);

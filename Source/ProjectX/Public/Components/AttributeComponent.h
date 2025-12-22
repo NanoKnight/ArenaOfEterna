@@ -80,6 +80,7 @@ public:
 	void RegenerateStamina();
 	void ShieldRegenerateTimer();
 	void StaminaTimer();  
+	void SetHealthBarPercent();
 	void AddExperience(float NumberOfExperience);
 	void AddGold(int32 GoldAmmount);
 	void AddHealth(float HealthAmmount);

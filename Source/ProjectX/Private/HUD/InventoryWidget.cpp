@@ -12,11 +12,9 @@
 #include "HUD/InventorySlotWidget.h"
 
 
-
 void UInventoryWidget::NativeConstruct()
 {
 }
-
 
 
 void UInventoryWidget::SetDefenseText(int32 DefensePoint)
@@ -122,8 +120,8 @@ void UInventoryWidget::UpdateInventoryDisplay(const TArray<FInventoryStruct>& In
             if (UGridSlot* GridSlot = InventoryList->AddChildToGrid(SlotWidget, i / 6, i % 6))
             {
                 GridSlot->SetPadding(FMargin(0.f,-30,0,-15)); 
-                GridSlot->SetHorizontalAlignment(HAlign_Fill);
-                GridSlot->SetVerticalAlignment(VAlign_Fill);
+                //GridSlot->SetHorizontalAlignment(HAlign_Fill);
+                //GridSlot->SetVerticalAlignment(VAlign_Fill);
             }
 
             // 8. Slot'u Diziye Ekle
@@ -157,3 +155,4 @@ FReply UInventoryWidget::NativeOnKeyDown(const FGeometry& InGeometry, const FKey
 	return FReply::Unhandled();
 
 }
+

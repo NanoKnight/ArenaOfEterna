@@ -37,6 +37,8 @@ void UAttributeComponent::StaminaTimer()
 
 }
 
+
+
 void UAttributeComponent::AddExperience(float NumberOfExperience)
 {
 	ExperiencePoint += NumberOfExperience;
@@ -50,7 +52,15 @@ void UAttributeComponent::AddGold(int32 GoldAmmount)
 
 void UAttributeComponent::AddHealth(float HealthAmmount)
 {
-	Health += HealthAmmount;
+	if (Health >= MaxHealth)
+	{
+		Health = MaxHealth;
+	}
+	else
+	{
+		Health += HealthAmmount;
+
+	}
 }
 
 

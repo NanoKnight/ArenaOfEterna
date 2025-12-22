@@ -13,7 +13,6 @@
 #include"HUD\PlayerHUD.h"
 #include "TimerManager.h"
 #include"Characters\PreviewCharacter.h"
-
 #include "Kismet/GameplayStatics.h"
 #include "./Items/Weapons/Weapon.h"
 
@@ -76,7 +75,8 @@ void UInventoryComponent::BeginPlay()
 						Item.ItemTypes = BaseItem->ItemType;
 						Item.EquipmentSlot = BaseItem->ItemEquipmentSlot;
 						Item.Damage = BaseItem->Damage;
-						Item.Defense = BaseItem->Defense;						
+						Item.Defense = BaseItem->Defense;	
+						Item.HealthValue = BaseItem->HealthValue;
 						
 					}
 				}

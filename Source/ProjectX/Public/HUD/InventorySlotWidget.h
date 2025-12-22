@@ -5,6 +5,7 @@
 #include "CoreMinimal.h"
 #include "Blueprint/UserWidget.h"
 #include "../Structs/InventoryStruct.h"
+#include "Framework/Application/SlateApplication.h"
 #include "InventorySlotWidget.generated.h"
 
 class UButton;
@@ -30,6 +31,9 @@ public:
 	UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = "Inventory")
 	int32 ItemIndex;
 
+	UPROPERTY(meta = (BindWidget))
+	UButton* UseBtn;
+
 	UPROPERTY(EditAnywhere)
 	TObjectPtr<UTexture2D> ImageIconAsset;
 
@@ -41,11 +45,16 @@ public:
 	int32 SlotIndex;
 
 	void SetUp(const FInventoryStruct& NewItem);
+
 	UFUNCTION()
 	void SetSlotIndex(int32 NewIndex);
-	UFUNCTION()
-	void OnItemClicked();
 
+	UFUNCTION()
+	void OnEquipClicked();
+
+
+
+	
 
 	virtual FReply NativeOnMouseButtonDown(const FGeometry& InGeometry, const FPointerEvent& InMouseEvent)override;
 	virtual void NativeOnDragDetected(const FGeometry& InGeometry, const FPointerEvent& InMouseEvent , UDragDropOperation*& OutOperation)override;
@@ -56,7 +65,12 @@ public:
 
 	bool IfInventorySlotItemIsValid();
 
+protected:
+	virtual void NativeConstruct() override;
 
 private:
+	bool bIsDraging = false;
+	float DragStartTime = 0;
+	const float DragThreshold = 0.2f;
 	
 };

@@ -120,6 +120,13 @@ public:
 
 	UInventoryWidget* InventoryWidget;
 
+
+
+
+
+	void InitializePlayerOverlay();
+
+
 protected:
 	virtual void BeginPlay() override;
 	void MoveForward(float value);
@@ -244,7 +251,6 @@ private:
 	void FirstSkill();
 	void SecondSkill();
 	void PlayShieldReactMontage();
-	void InitializePlayerOverlay();
 	void SetHealthBar();
 	void SetStaminaBar();
 	void SetLevelBar();
