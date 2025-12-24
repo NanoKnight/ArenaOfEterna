@@ -28,6 +28,9 @@ public:
 	UPROPERTY(meta = (BindWidget))
 	UTextBlock* ItemName;
 
+	UPROPERTY(meta = (BindWidget ,EditCondition = "ItemTypes == EItemTypes::Pot", EditConditionHides))
+	UTextBlock* StackNumber;
+
 	UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = "Inventory")
 	int32 ItemIndex;
 
@@ -51,6 +54,8 @@ public:
 
 	UFUNCTION()
 	void OnEquipClicked();
+
+
 
 
 

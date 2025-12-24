@@ -30,10 +30,6 @@ bool UEqiupmentSlotWidget::NativeOnDrop(const FGeometry& InGeometry, const FDrag
 
 
 					Warrior->GetInventoryComponent()->UnEquipItem(EquippedItem, DraggedITem->EquippedItemActor);
-
-
-					
-
 					Warrior->GetInventoryComponent()->EquipItem(TempItem);
 					DraggedITem->ItemIcon->SetBrushFromSoftTexture(TempEqItem.ItemIcon);
 					DraggedITem->ItemName->SetText(FText::FromString(TempEqItem.ItemName));

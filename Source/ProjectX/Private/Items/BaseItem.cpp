@@ -103,15 +103,25 @@ void ABaseItem::SetInteractionVisibility(bool visiblity)
 void ABaseItem::PickUp(AWarriorCharacter* WarriorCharacter)
 {	
 	
-	for (const FInventoryStruct& Item: WarriorCharacter->GetInventoryComponent()->InventoryItems)
+	if (!WarriorCharacter && !WarriorCharacter->GetInventoryComponent()) return;
+
+	for ( FInventoryStruct& Item: WarriorCharacter->GetInventoryComponent()->InventoryItems)
 	{
+
+		if (Item.ItemTypes == EItemTypes::Pot)
+		{
+			Item.StackCounter += 1;
+			this->Destroy();
+			if (Item.ItemTypes == EItemTypes::Pot) return;
+		
+		}
 		if (Item.ItemName.IsEmpty()) 
 		{
-			if (WarriorCharacter && WarriorCharacter->GetInventoryComponent())
-			{
+			
+
 				AGameModeBase* GameMode = GetWorld()->GetAuthGameMode();
 				AArenaGameMode* ArenaGameMode = Cast<AArenaGameMode>(GameMode);
-				if (ArenaGameMode)
+				if (ArenaGameMode && Item.ItemTypes != EItemTypes::Pot)
 				{
 					ArenaGameMode->AddedItems.Add(ItemID);
 				}
@@ -129,14 +139,16 @@ void ABaseItem::PickUp(AWarriorCharacter* WarriorCharacter)
 				NewItem.Damage = Damage;
 				NewItem.HealthValue = HealthValue;
 				
+				
 				WarriorCharacter->GetInventoryComponent()->AddItem(NewItem);
 				this->Destroy();
 				break;
 
 
 			
-			}
+			
 		}
+
 		else 
 		{
 

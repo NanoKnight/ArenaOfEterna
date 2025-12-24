@@ -24,6 +24,10 @@ void UInventorySlotWidget::NativeConstruct()
 	}
 
 	UseBtn->SetVisibility(ESlateVisibility::Collapsed);
+	if (Item.ItemTypes == EItemTypes::Pot)
+	{
+		StackNumber->SetVisibility(ESlateVisibility::Visible);
+	}
 }
 
 
@@ -51,6 +55,15 @@ void UInventorySlotWidget::SetUp(const FInventoryStruct& NewItem)
 	if (ItemName)
 	{
 		ItemName->SetText(FText::FromString(Item.ItemName));
+
+	}
+
+	if (StackNumber)
+	{
+		if (Item.ItemTypes == EItemTypes::Pot)
+		{
+			StackNumber->SetText(FText::FromString(FString::Printf(TEXT("%d"), Item.StackCounter)));
+		}
 	}
 }
 
@@ -62,20 +75,37 @@ void UInventorySlotWidget::SetSlotIndex(int32 NewIndex)
 void UInventorySlotWidget::OnEquipClicked()
 {
 	AWarriorCharacter* Warrior = Cast<AWarriorCharacter>(GetWorld()->GetFirstPlayerController()->GetPawn());
-	if (Warrior)
-	{
+	if (Warrior && Warrior->GetInventoryComponent() && Item.ItemTypes != EItemTypes::Pot)return;
 
-		if (Warrior && Item.ItemTypes == EItemTypes::Pot)
+	for (FInventoryStruct& WItem : Warrior->GetInventoryComponent()->InventoryItems)
+	{
+		if (WItem.StackCounter > 0)
 		{
+			WItem.StackCounter -= 1;
+			if (StackNumber && WItem.ItemTypes == EItemTypes::Pot)
+			{
+				StackNumber->SetText(FText::FromString(FString::Printf(TEXT("%d"), WItem.StackCounter)));
+
+			}
 			Warrior->GetAttributesComponent()->AddHealth(Item.HealthValue);
 			Warrior->InitializePlayerOverlay();
-			
+		
 
+		}
+		if(WItem.StackCounter <= 0 && WItem.ItemTypes == EItemTypes::Pot)
+		{
+			Warrior->GetInventoryComponent()->RemoveFormInventory(WItem);
+			ItemIcon->SetBrushFromSoftTexture(ImageIconAsset);
+			Item = FInventoryStruct();
+			ItemName->SetText(FText::GetEmpty());
 		}
 	}
 	
-
+		
 }
+	
+
+
 
 
 
