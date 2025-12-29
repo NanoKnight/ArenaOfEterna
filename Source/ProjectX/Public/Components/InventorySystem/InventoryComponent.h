@@ -78,7 +78,10 @@ public:
 	void RemoveFormInventory(const FInventoryStruct& Item);
 
 	UFUNCTION(BlueprintCallable, Category = "Inventory")
-	void SetDefaultInventoryValues(FInventoryStruct& Item , int32 Index);
+	void SetDefaultItemValueWithIndex(FInventoryStruct& Item , int32 Index);
+
+	UFUNCTION(BlueprintCallable, Category = "Inventory")
+	void SetDefaultItemValue(FInventoryStruct& Item);
 
 	UFUNCTION(BlueprintCallable, Category = "Inventory")
 	void OpenInventory();

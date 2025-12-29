@@ -69,9 +69,6 @@ public:
 	float Defense;
 
 	UPROPERTY(EditAnywhere, meta = (EditCondition = "ItemTypes == EItemTypes::Pot", EditConditionHides))
-	float HealthValue;
-
-	UPROPERTY(EditAnywhere, meta = (EditCondition = "ItemTypes == EItemTypes::Pot", EditConditionHides))
 	int32 StackCounter = 1;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)

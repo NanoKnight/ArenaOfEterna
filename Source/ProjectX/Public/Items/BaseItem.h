@@ -109,8 +109,8 @@ public:
 	UPROPERTY(EditAnywhere, meta = (EditCondition = "ItemType == EItemTypes::Pot", EditConditionHides))
 	float HealthValue;
 
-	UPROPERTY(EditAnywhere, meta = (EditCondition = "ItemType == EItemTypes::Pot", EditConditionHides))
-	int32 StackCounter = 0;
+	//UPROPERTY(EditAnywhere, meta = (EditCondition = "ItemType == EItemTypes::Pot", EditConditionHides))
+	//int32 StackCounter = 0;
 
 	UPROPERTY(EditAnywhere)
 	FString ItemName;

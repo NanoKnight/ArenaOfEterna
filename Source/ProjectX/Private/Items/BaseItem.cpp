@@ -137,16 +137,9 @@ void ABaseItem::PickUp(AWarriorCharacter* WarriorCharacter)
 				NewItem.EquipmentSlot = ItemEquipmentSlot;
 				NewItem.Defense = Defense;
 				NewItem.Damage = Damage;
-				NewItem.HealthValue = HealthValue;
-				
-				
 				WarriorCharacter->GetInventoryComponent()->AddItem(NewItem);
 				this->Destroy();
-				break;
-
-
-			
-			
+				break;			
 		}
 
 		else 

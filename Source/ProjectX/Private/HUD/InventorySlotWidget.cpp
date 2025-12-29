@@ -5,6 +5,7 @@
 #include "Components/Image.h"
 #include"../WarriorCharacter.h"
 #include"Components\Button.h"
+#include"Components\Border.h"
 #include "Blueprint/WidgetBlueprintLibrary.h"
 #include "Blueprint/DragDropOperation.h"
 #include"HUD\EqiupmentSlotWidget.h"
@@ -22,6 +23,8 @@ void UInventorySlotWidget::NativeConstruct()
 	{
 		UseBtn->OnClicked.AddDynamic(this, &UInventorySlotWidget::OnEquipClicked);
 	}
+	
+	
 
 	UseBtn->SetVisibility(ESlateVisibility::Collapsed);
 	if (Item.ItemTypes == EItemTypes::Pot)
@@ -81,20 +84,23 @@ void UInventorySlotWidget::OnEquipClicked()
 	{
 		if (WItem.StackCounter > 0)
 		{
-			WItem.StackCounter -= 1;
 			if (StackNumber && WItem.ItemTypes == EItemTypes::Pot)
 			{
-				StackNumber->SetText(FText::FromString(FString::Printf(TEXT("%d"), WItem.StackCounter)));
-
+				WItem.StackCounter -= 1;
+				
+				StackNumber->SetText(FText::FromString(FString::Printf(TEXT("%d"),WItem.StackCounter)));
+				Warrior->GetAttributesComponent()->AddHealth(Warrior->GetAttributesComponent()->GetPotHealth());
+				Warrior->InitializePlayerOverlay();
 			}
-			Warrior->GetAttributesComponent()->AddHealth(Item.HealthValue);
-			Warrior->InitializePlayerOverlay();
 		
 
 		}
 		if(WItem.StackCounter <= 0 && WItem.ItemTypes == EItemTypes::Pot)
 		{
-			Warrior->GetInventoryComponent()->RemoveFormInventory(WItem);
+			//Warrior->GetInventoryComponent()->RemoveFormInventory(WItem);
+			UseBtn->SetVisibility(ESlateVisibility::Collapsed);
+			StackNumber->SetVisibility(ESlateVisibility::Collapsed);
+			Warrior->GetInventoryComponent()->SetDefaultItemValue(WItem);
 			ItemIcon->SetBrushFromSoftTexture(ImageIconAsset);
 			Item = FInventoryStruct();
 			ItemName->SetText(FText::GetEmpty());
@@ -103,11 +109,6 @@ void UInventorySlotWidget::OnEquipClicked()
 	
 		
 }
-	
-
-
-
-
 
 
 
@@ -234,6 +235,14 @@ bool UInventorySlotWidget::NativeOnDrop(const FGeometry& Geometry, const FDragDr
 	//return false;
 	
 
+}
+
+void UInventorySlotWidget::NativeOnMouseLeave(const FPointerEvent& InMouseEvent)
+{
+	if (UseBtn)
+	{
+		UseBtn->SetVisibility(ESlateVisibility::Collapsed);
+	}
 }
 
 bool UInventorySlotWidget::IfInventorySlotItemIsValid()

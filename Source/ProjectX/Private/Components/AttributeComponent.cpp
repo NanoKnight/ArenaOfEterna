@@ -56,6 +56,10 @@ void UAttributeComponent::AddHealth(float HealthAmmount)
 	{
 		Health = MaxHealth;
 	}
+	else if (Health + HealthAmmount >= MaxHealth)
+	{
+		Health = MaxHealth;
+	}
 	else
 	{
 		Health += HealthAmmount;

@@ -76,7 +76,6 @@ void UInventoryComponent::BeginPlay()
 						Item.EquipmentSlot = BaseItem->ItemEquipmentSlot;
 						Item.Damage = BaseItem->Damage;
 						Item.Defense = BaseItem->Defense;	
-						Item.HealthValue = BaseItem->HealthValue;
 						
 					}
 				}
@@ -427,7 +426,7 @@ void UInventoryComponent::RemoveFormInventory(const FInventoryStruct& Item)
 
 }
 
-void UInventoryComponent::SetDefaultInventoryValues(FInventoryStruct& Item, int32 Index)
+void UInventoryComponent::SetDefaultItemValueWithIndex(FInventoryStruct& Item, int32 Index)
 {
 
 	if (InventoryItems.IsValidIndex(Index))
@@ -442,12 +441,28 @@ void UInventoryComponent::SetDefaultInventoryValues(FInventoryStruct& Item, int3
 		InventoryItems[Index].Defense = 31;
 		InventoryItems[Index].ItemStaticMesh = nullptr;
 		InventoryItems[Index].EquipmentSlot = EEquipmentSlot::None;
-		GEngine->AddOnScreenDebugMessage(-1, 2.f, FColor::Cyan, FString::Printf(TEXT("Default values set for item at index %d"), Index));
-
 	};
 
 }
 
+
+void UInventoryComponent::SetDefaultItemValue(FInventoryStruct& Item)
+{
+
+	if (!Item.ItemName.IsEmpty())
+	{
+		Item = FInventoryStruct();
+		Item.ItemIcon = nullptr;
+		Item.ItemName = FString("");
+		Item.ItemClass = nullptr;
+		Item.Damage = 0;
+		Item.ItemSocketName = FName("");
+		Item.ItemTypes = EItemTypes::None;
+		Item.Defense = 0;
+		Item.ItemStaticMesh = nullptr;
+		Item.EquipmentSlot = EEquipmentSlot::None;
+	};
+}
 void UInventoryComponent::OpenInventory()
 {
 	if (GetOwner()->ActorHasTag("WarriorCharacter")) 
