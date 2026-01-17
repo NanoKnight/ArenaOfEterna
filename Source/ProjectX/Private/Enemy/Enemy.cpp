@@ -18,6 +18,7 @@
 #include "Kismet/GameplayStatics.h"
 #include"Items\EnemySpawner.h"
 #include "AIController.h"
+#include"NavigationSystem.h"
 #include "Items\SpawnManager.h"
 #include"Items\ExperiencePoint.h"
 
@@ -49,7 +50,13 @@ void AEnemy::BeginPlay()
 	Super::BeginPlay();
 	Tags.Add("Enemy");
 	EnemyName = GetName();
-	if (PawnSensing) PawnSensing->OnSeePawn.AddDynamic(this, &AEnemy::PawnSeen);
+	if (PawnSensing)
+	{
+		PawnSensing->OnSeePawn.AddDynamic(this, &AEnemy::PawnSeen);
+		PawnSensing->OnHearNoise.AddDynamic(this, &AEnemy::PawnHeard);
+
+	}
+		
 	InitializeEnemy();
 	AGameModeBase* GameMode = GetWorld()->GetAuthGameMode();
 	AArenaGameMode* ArenaGameMode = Cast<AArenaGameMode>(GameMode);
@@ -283,12 +290,28 @@ void AEnemy::Tick(float DeltaTime)
 		if (Bhit)
 		{
 			FrontAnim = true;
+			
 		}
 	}
+	if (GetCharacterMovement()->Velocity.Size() == 0.f && EnemyState == EEnemyState::EES_Chasing)
+	{
+
+		IdleTime += DeltaTime;
+
+		if (IdleTime >= 2.f)
+		{
+			GEngine->AddOnScreenDebugMessage(-1, 3.f, FColor::Cyan, FString::Printf(TEXT("patrolmod")));
 
 
-	
+			BackPatrol();
+
+		}
+		
+
+	}
 }
+	
+
 
 float AEnemy::TakeDamage(float DamageAmount, FDamageEvent const & DamageEvent, AController* EventInstigator, AActor* DamageCauser)
 {
@@ -301,8 +324,7 @@ float AEnemy::TakeDamage(float DamageAmount, FDamageEvent const & DamageEvent, A
 		
 		if (IsInsideAttackRadius() && EnemyState != EEnemyState::EAS_Stun)
 		{
-			
-			EnemyState = EEnemyState::EES_Attacking;
+			ResetEnemyState();
 		}
 		else if (IsOutsideAttackRadius())
 		{
@@ -398,6 +420,13 @@ void AEnemy::ResetRagdoll()
 
 }
 
+void AEnemy::BackPatrol()
+{
+	MoveToTarget(PatrolTarget);
+	CombatTarget = nullptr;
+	IdleTime = 0;
+}
+
 
 void AEnemy::ResetEnemyState()
 {
@@ -430,7 +459,12 @@ void AEnemy::SkillHit(const FVector& ImpactPoint, AActor* Hitter)
 	SetWeaponCollisionEnabled(ECollisionEnabled::NoCollision);
 	PlayHitSound(ImpactPoint);
 	StopAttackMontage();
-	EnemyState = EEnemyState::EAS_Stun;
+	GEngine->AddOnScreenDebugMessage(-1, 3.f, FColor::Cyan, FString::Printf(TEXT("skill hit")));
+	
+	if (EnemyType == EEnemyType::EET_Boss)	DirectionalHit(Hitter->GetActorLocation());	
+	if (EnemyType == EEnemyType::EET_Enemy) EnemyState = EEnemyState::EAS_Stun;
+
+	
 	if (Attributes->HealthPercent() <= 0)
 	{
 		SetEnemyDead();
@@ -539,12 +573,13 @@ void AEnemy::StartPatrolling()
 void AEnemy::ChaseTarget()
 {	
 	if (EnemyState == EEnemyState::EAS_Stun) return;
+
+
 	if (CombatTarget && CombatTarget->ActorHasTag(FName("Dead"))) {
 		CombatTarget = nullptr;
 		MoveToTarget(PatrolTarget);
 
 	}
-
 
 	EnemyState = EEnemyState::EES_Chasing;
 	GetCharacterMovement()->MaxWalkSpeed = RunSpeed;
@@ -660,8 +695,6 @@ AActor* AEnemy::ChoosePatrolTarget()
 
 void AEnemy::PawnSeen(APawn* SeenPawn)
 {
-
-
 	const bool bShouldChaseTarget =
 		EnemyState != EEnemyState::EES_Dead &&
 		EnemyState != EEnemyState::EES_Chasing &&
@@ -676,6 +709,24 @@ void AEnemy::PawnSeen(APawn* SeenPawn)
 
 	}
 	
+}
+
+void AEnemy::PawnHeard(APawn* SeenPawn,const FVector& Location, float Volume)
+{
+
+	const bool bShouldChaseTarget =
+		EnemyState != EEnemyState::EES_Dead &&
+		EnemyState != EEnemyState::EES_Chasing &&
+		EnemyState < EEnemyState::EES_Attacking &&
+		SeenPawn->ActorHasTag(FName("WarriorCharacter"));
+
+	if (bShouldChaseTarget)
+	{
+		CombatTarget = SeenPawn;
+		ClearPatrolTimer();
+		ChaseTarget();
+
+	}
 }
 
 

@@ -2,6 +2,7 @@
 
 
 #include "Components/AttributeComponent.h"
+#include"Interfaces\CombatStateInterFace.h"
 
 // Sets default values for this component's properties
 UAttributeComponent::UAttributeComponent()
@@ -186,15 +187,21 @@ void UAttributeComponent::RegenerateShield()
 
 void UAttributeComponent::RegenerateStamina()
 {
-	if (Stamina < MaxShield)
+	if (Stamina < MaxStamina)
 	{
 
 		Stamina += StaminaRegenRate;
-		Stamina = FMath::Clamp(Stamina, 0.f, MaxShield);
+		Stamina = FMath::Clamp(Stamina, 0.f, MaxStamina);
 		StaminaTimer();
 		if (Stamina >= MaxStamina)
 		{
+
 			GetWorld()->GetTimerManager().ClearTimer(StaminaTimers);
+			AActor* OwnerActor = GetOwner();
+			if (OwnerActor && OwnerActor->Implements<UCombatStateInterFace>())
+			{
+				ICombatStateInterFace::Execute_SetEnemyState(OwnerActor, EEnemyState::EES_NoState);
+			}
 		}
 
 

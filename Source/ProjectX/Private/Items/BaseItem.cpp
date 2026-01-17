@@ -111,12 +111,14 @@ void ABaseItem::PickUp(AWarriorCharacter* WarriorCharacter)
 		if (Item.ItemTypes == EItemTypes::Pot)
 		{
 			Item.StackCounter += 1;
+			WarriorCharacter->PlayItemPickupNameAnim(ItemName);
 			this->Destroy();
-			if (Item.ItemTypes == EItemTypes::Pot) return;
+			if (ItemType == EItemTypes::Pot) return;
 		
 		}
-		if (Item.ItemName.IsEmpty()) 
-		{
+
+		else if (Item.ItemName.IsEmpty()) 
+		     {
 			
 
 				AGameModeBase* GameMode = GetWorld()->GetAuthGameMode();
@@ -142,7 +144,7 @@ void ABaseItem::PickUp(AWarriorCharacter* WarriorCharacter)
 				break;			
 		}
 
-		else 
+		else if(Item.ItemTypes != EItemTypes::Pot && ItemType != EItemTypes::Pot)
 		{
 
 			WarriorCharacter->GetInventoryComponent()->InventoryFullText();

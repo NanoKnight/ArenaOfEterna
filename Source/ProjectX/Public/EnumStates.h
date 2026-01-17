@@ -49,6 +49,15 @@ enum class EEnemyState : uint8
 	EES_Dead UMETA(DisplayName = "Dead")		
 };
 
+UENUM(BlueprintType)
+enum class EEnemyType : uint8
+{
+	EET_Enemy UMETA(DisplayName = "Enemy"),
+	EET_MiniBoss UMETA(DisplayName = "MiniBoss"),
+	EET_Boss UMETA(DisplayName = "Boss")
+
+};
+
 UENUM(BluePrintType)
 enum class EAttackButtonState : uint8
 {

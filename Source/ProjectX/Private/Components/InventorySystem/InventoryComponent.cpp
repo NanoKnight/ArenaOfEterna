@@ -110,9 +110,6 @@ void UInventoryComponent::TickComponent(float DeltaTime, ELevelTick TickType, FA
 
 void UInventoryComponent::AddItem(const FInventoryStruct& NewItem)
 {
-	//InventoryItems.Add(NewItem);
-
-
 	for (int32 i =0 ; i< InventoryItems.Num(); i++)
 	{
 		if (InventoryItems[i].ItemName.IsEmpty())
@@ -123,28 +120,12 @@ void UInventoryComponent::AddItem(const FInventoryStruct& NewItem)
 		}
 	}
 	
-	
-
-
 	AWarriorCharacter* Warrior = Cast<AWarriorCharacter>(GetOwner());
 	if (Warrior)
 	{
-		APlayerController* PlayerController = Cast<APlayerController>(Warrior->GetController());
-		if (PlayerController)
-		{
-			APlayerHUD* HUDRef = Cast<APlayerHUD>(PlayerController->GetHUD());
-			if (HUDRef)
-			{
-				UCharacterHUD* PlayerOverlay = HUDRef->GetPlayerOverlay();
-				if (PlayerOverlay)
-				{
-					PlayerOverlay->SetReceivedItemText(NewItem.ItemName);
-					PlayerOverlay->PlayItemReceivedTextAnimationFadeIn();
-					GetOwner()->GetWorld()->GetTimerManager().SetTimer(ItemTextAnimTimer, FTimerDelegate::CreateUObject(this, &UInventoryComponent::PlayItemTextFadeOutAnim, PlayerOverlay), 1.f, false);
-				}
-			}
-					
-		}
+		
+		Warrior->PlayItemPickupNameAnim(NewItem.ItemName);
+		
 	}
 
 

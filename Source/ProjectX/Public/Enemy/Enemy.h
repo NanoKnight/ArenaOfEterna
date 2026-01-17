@@ -37,6 +37,10 @@ protected:
 	virtual bool CanAttack() override;
 	virtual void HandleDamage(float DamageAmount) override;
 	virtual void PlayHitSound(const FVector& ImpactPoint) ;
+	virtual void MoveToTarget(AActor* Target);
+
+
+
 
 
 
@@ -63,8 +67,11 @@ public:
 
 
 
-	UPROPERTY(BlueprintReadOnly)
+	UPROPERTY(EditAnywhere)
 	EEnemyState EnemyState;
+
+	UPROPERTY(EditAnywhere,BlueprintReadonly)
+	EEnemyType EnemyType = EEnemyType::EET_Enemy;
 
 
 
@@ -83,6 +90,7 @@ private:
 	void StartPatrolling();
 	void ChaseTarget();
 	void ResetRagdoll();
+	void BackPatrol();
 	bool IsOutsideCombatRadius();
 	bool IsOutsideAttackRadius();
 	bool IsInsideAttackRadius();
@@ -94,11 +102,13 @@ private:
 	void StartAttackTimer();
 	void ClearAttackTimer();
 	bool InTargetRange(AActor* Target, double Radius);
-	void MoveToTarget(AActor* Target);
 	AActor* ChoosePatrolTarget();
 
 	UFUNCTION()
 	void PawnSeen(APawn* SeenPawn);
+
+	UFUNCTION()
+	void PawnHeard(APawn* SeenPawn,const FVector& Location, float Volume);
 
 	UPROPERTY(VisibleAnywhere)
 	UHealthBarComponent* HealthBarWidget;
@@ -169,7 +179,8 @@ private:
 	
 	UPROPERTY(EditAnywhere, Category = Combat)
 	float DeathLifeSpan = 3.f;
-
+	UPROPERTY(EditAnywhere)
+	float IdleTime = 0;
 
 	UPROPERTY(EditAnywhere, Category = "Combat");
 	int32 ExperiencePoint;

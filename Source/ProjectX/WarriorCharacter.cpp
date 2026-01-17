@@ -7,6 +7,7 @@
 #include "Kismet/GameplayStatics.h"
 #include "GameFramework/CharacterMovementComponent.h"
 #include "Components\SphereComponent.h"
+#include "Components/PawnNoiseEmitterComponent.h"
 #include "Items\BaseItem.h"
 #include "./HUD/ItemInteractionWidget.h"
 #include"Items\Weapons\Weapon.h"
@@ -55,6 +56,7 @@ AWarriorCharacter::AWarriorCharacter()
 	ViewCamera = CreateDefaultSubobject<UCameraComponent>(TEXT("ViewCamera"));
 	ViewCamera->SetupAttachment(CameraBoom);
 	Sphere = CreateDefaultSubobject<USphereComponent>(TEXT("Sphere"));
+	NoiseEmitter = CreateDefaultSubobject<UPawnNoiseEmitterComponent>(TEXT("NoiseEmitter"));
 	Sphere->SetupAttachment(GetRootComponent());
 	Sphere->OnComponentBeginOverlap.AddDynamic(this, &AWarriorCharacter::SphereCollisionBeginOverlap);
 	Sphere->OnComponentEndOverlap.AddDynamic(this, &AWarriorCharacter::SphereCollisionEndOverlap);
@@ -117,6 +119,7 @@ void AWarriorCharacter::BeginPlay()
 				CurrentQuest = ActiveQuests[0];
 			}
 		}
+         
 
 		if (ActiveQuests.IsValidIndex(0) && PlayerOverlay->GetQuestOverlay())
 		{
@@ -379,13 +382,6 @@ void AWarriorCharacter::StartShieldRegenerateTimer(float Time)
 
 }
 
-void AWarriorCharacter::StaminaRegenerate(float DeltaTime)
-{
-	if (Attributes && PlayerOverlay)
-	{
-		Attributes->RegenStamina(DeltaTime);
-	}
-}
 
 void AWarriorCharacter::GetClosestEnemy()
 {
@@ -411,7 +407,6 @@ void AWarriorCharacter::GetClosestEnemy()
 				EnemyMesh->SetVisibility(false);
 				
 			}
-				
 		}
 		if (NewClosestEnemy && NewClosestEnemy->EnemyState != EEnemyState::EAS_Stun)
 		{
@@ -420,9 +415,6 @@ void AWarriorCharacter::GetClosestEnemy()
 			{
 				//EnemyMesh->SetMaterial(0, OverlayMaterial);
 				EnemyMesh->SetVisibility(true);
-
-				
-
 			}
 		}
 	}
@@ -496,13 +488,21 @@ void AWarriorCharacter::PrintQuest()
 bool AWarriorCharacter::IsEnemyBehindCharacter()
 {
 
-   FVector WarriorCharacterLocation = GetActorLocation();
-   FVector EnemyLocation = CloseEnemy->GetActorLocation();
-   FVector WarriorForwardVector = GetActorForwardVector();
-   FVector DirectionToEnemy = EnemyLocation - WarriorCharacterLocation;
-   DirectionToEnemy.Normalize();
-   float DotProduct = FVector::DotProduct(WarriorForwardVector, DirectionToEnemy);
-   return DotProduct < 0;
+   if (CloseEnemy)
+   {
+	   FVector WarriorCharacterLocation = GetActorLocation();
+	   FVector EnemyLocation = CloseEnemy->GetActorLocation();
+	   FVector WarriorForwardVector = GetActorForwardVector();
+	   FVector DirectionToEnemy = EnemyLocation - WarriorCharacterLocation;
+	   DirectionToEnemy.Normalize();
+	   float DotProduct = FVector::DotProduct(WarriorForwardVector, DirectionToEnemy);
+	   return DotProduct < 0;
+   }
+   else
+   {
+	   return false;
+   }
+ 
 	
 }
 
@@ -562,6 +562,22 @@ void AWarriorCharacter::InitializePlayerOverlay()
 		}
 	}
 }
+
+void AWarriorCharacter::PlayItemPickupNameAnim(FString ItemName)
+{
+
+	APlayerController* PlayerController = Cast<APlayerController>(this->GetController());
+	if (PlayerController)
+	{
+			if (PlayerOverlay)
+			{
+				PlayerOverlay->SetReceivedItemText(ItemName);
+				PlayerOverlay->PlayItemReceivedTextAnimationFadeIn();
+				//GetOwner()->GetWorld()->GetTimerManager().SetTimer(ItemTextAnimTimer, FTimerDelegate::CreateUObject(this, &UInventoryComponent::PlayItemTextFadeOutAnim, PlayerOverlay), 1.f, false);
+			}
+	}
+}
+
 
 
 void AWarriorCharacter::MoveForward(float value)
@@ -887,7 +903,9 @@ void AWarriorCharacter::SkillCanDamageF(float SphereRadiusFloat, float SkillDama
 					AEnemy* Enemy = Cast<AEnemy>(hit.GetActor());
 					if (!Enemy->IsDead())
 					{
-						Enemy->SetRagdoll();
+						if (Enemy->EnemyType == EEnemyType::EET_Enemy) Enemy->SetRagdoll();
+						if (Enemy->EnemyType == EEnemyType::EET_Boss) SkillDamage /= 3;
+										        
 						UGameplayStatics::ApplyDamage(HitActor, SkillDamage, GetInstigator()->GetController(), this, UDamageType::StaticClass());
 						GetSkillHit(hit);
 					}
@@ -1086,7 +1104,7 @@ void AWarriorCharacter::PlayHoldingAttackAnim()
 
 void AWarriorCharacter::StaminaRegenerateTime()
 {
-	GetWorld()->GetTimerManager().SetTimer(StaminaRegenerateTimer, this, &AWarriorCharacter::StaminaRegen, 0.6, false);
+	GetWorld()->GetTimerManager().SetTimer(StaminaRegenerateTimer, this, &AWarriorCharacter::StaminaRegen, 3, false);
 	
 }
 
@@ -1233,15 +1251,21 @@ void AWarriorCharacter::AddHealth(AHealthPoint* Health)
 		Attributes->AddHealth(Health->GetHealth());
 		SetHealthBar();
 	}
+}
+
+void AWarriorCharacter::Noise()
+{
+	NoiseEmitter->MakeNoise(this, 0.5f, GetActorLocation());
 
 }
+
 void AWarriorCharacter::ExecuteGetHit(FHitResult& BoxHit)
 {
 	IHitInterface* HitInterface = Cast<IHitInterface>(BoxHit.GetActor());
 
 	if (HitInterface)
 	{
-
+		
 		HitInterface->Execute_GetHit(BoxHit.GetActor(), BoxHit.ImpactPoint, GetOwner());
 		
 
@@ -1269,6 +1293,8 @@ void AWarriorCharacter::Tick(float DeltaTime)
 	ResetCameraPosition();
 	CheckQuestProgress();
 	CheckShieldRotation();
+
+
 
 
 	
