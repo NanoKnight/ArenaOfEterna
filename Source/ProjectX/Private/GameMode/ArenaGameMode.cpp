@@ -132,14 +132,6 @@ void AArenaGameMode::LoadGame()
 
 		}
 
-			
-		
-
-
-
-
-
-
 		TArray<FString> LoadedEnemies = SaveGameObject->KilledEnemiesName;
 		KilledEnemiesNames = LoadedEnemies;
 

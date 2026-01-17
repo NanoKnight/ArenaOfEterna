@@ -33,6 +33,7 @@ class AArenaGameMode;
 class ASpawnManager;
 class AQuestActor;
 class UInventoryWidget;
+class UPawnNoiseEmitterComponent;
 
 
 
@@ -125,6 +126,7 @@ public:
 
 
 	void InitializePlayerOverlay();
+	void PlayItemPickupNameAnim(FString ItemName);
 
 
 protected:
@@ -170,6 +172,10 @@ protected:
 	FTimerHandle AttackTypeCheckTimer;
 	FTimerHandle AttackHoldingTimer;
 	FTimerHandle QuestCompleteUITimer;
+	FTimerHandle ItemTextAnimTimer;
+
+	bool FadeoutTimer = false;
+	float FadeoutSeconds = 0;
 	
 
 	void DefaultVar();
@@ -200,6 +206,8 @@ protected:
 	UFUNCTION(BlueprintCallable)
 	void SkillEnd();
 
+	UFUNCTION(BlueprintCallable)
+	void Noise();
 
 	UFUNCTION(BlueprintCallable)
 	void SkillCanDamageF(float SphereRadiusFloat, float  SkillDamageFloat, float  TraceEnd );
@@ -273,7 +281,13 @@ private:
 
 	UPROPERTY(VisibleAnywhere)
 	UCameraComponent* ViewCamera;
-	
+
+	UPROPERTY(EditDefaultsOnly)
+	USphereComponent* Sphere;
+
+	UPROPERTY(EditAnywhere)
+	UPawnNoiseEmitterComponent* NoiseEmitter;
+
 	UPROPERTY(VisibleInstanceOnly)
 	ABaseItem* OverlappingItem;
 
@@ -322,8 +336,7 @@ private:
 	bool bCanMoveCamera = false;
 	double CombatTargetRadius = 500.f;
 
-	UPROPERTY(EditDefaultsOnly)
-	USphereComponent* Sphere;
+
 
 	UPROPERTY(EditAnywhere)
 	float CharacterRunSpeed = 600.f;

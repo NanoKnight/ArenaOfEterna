@@ -41,6 +41,7 @@ public:
 
 
 
+
 protected:
 	virtual void BeginPlay() override;
 	void InitializeEquipItems();
@@ -70,6 +71,7 @@ protected:
 	FVector GetRotationWarpTarget(AActor* Target);
 	UFUNCTION(BlueprintCallable)
 	void SetWeaponCollisionEnabled(ECollisionEnabled::Type CollisionEnabled);
+
 	UFUNCTION(BlueprintCallable)
 	virtual void AttackEnd();
 	virtual void DodgeEnd();
@@ -79,13 +81,13 @@ protected:
 	
 	bool RageMode = false;
    
-	UPROPERTY(EditAnywhere, Category = Combat)
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Combat)
 	UAttributeComponent* Attributes;
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Inventory")
 	UInventoryComponent* InventoryComponent;
 	
-	UPROPERTY(BlueprintReadOnly, Category = Combat)
+	UPROPERTY(EditAnywhere,BlueprintReadOnly, Category = Combat)
 	AActor* CombatTarget;
 
 	UPROPERTY(EditAnywhere,Category = Combat)

@@ -100,7 +100,8 @@ void AWeapon::OnBoxOverlap(UPrimitiveComponent* OverlappedComponent, AActor* Oth
 	FHitResult BoxHit;
 	BoxTrace(BoxHit);
 	
-	if (BoxHit.GetActor()) {
+	if (BoxHit.GetActor()) 
+	{
 		if (ActorIsSampleType(BoxHit.GetActor()))
 		{
 			return;

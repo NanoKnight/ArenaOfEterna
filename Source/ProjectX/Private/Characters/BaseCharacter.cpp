@@ -170,6 +170,7 @@ FVector ABaseCharacter::GetRotationWarpTarget(AActor* Target)
 
 void ABaseCharacter::AttackEnd()
 {
+
 }
 
 void ABaseCharacter::DodgeEnd()

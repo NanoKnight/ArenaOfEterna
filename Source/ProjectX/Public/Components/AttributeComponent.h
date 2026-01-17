@@ -96,7 +96,11 @@ public:
 	FORCEINLINE float GetExperience() const { return ExperiencePoint; }
 	FORCEINLINE float GetMaxExperience() const {return MaxExperiencePoint;}
 	FORCEINLINE float GetStaminaCost() const { return StaminaCost;}
+	UFUNCTION(BlueprintCallable)
 	FORCEINLINE float GetStamina() const { return Stamina;}
+	FORCEINLINE float GetMaxStamina() const { return MaxStamina; }
+
+
 	FORCEINLINE int32 GetGold() const { return Gold; }
 	FORCEINLINE int32 GetLevel() const { return Level; }
 
