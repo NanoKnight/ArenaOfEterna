@@ -28,6 +28,7 @@ UENUM(BlueprintType)
 enum class EItemTypes : uint8
 {
 	None UMETA(DisplayName = "None"),
+	Pot UMETA(DisplayName = "Pot"),
 	Head UMETA(DisplayName = "Head"),
 	Chest UMETA(DisplayName = "Chest"),
 	Feet UMETA(DisplayName = "Feet"),
@@ -52,21 +53,23 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	UTexture2D* ItemIcon;
 	
-	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	UPROPERTY(EditAnywhere, meta = (EditCondition = "ItemTypes != EItemTypes::Pot", EditConditionHides))
 	EEquipmentSlot EquipmentSlot;
 
-	UPROPERTY(EditAnywhere,BlueprintReadwrite)
+	UPROPERTY(EditAnywhere, meta = (EditCondition = "ItemTypes != EItemTypes::Pot", EditConditionHides))
 	FName ItemSocketName;
 
 	UPROPERTY(EditAnywhere)
 	EItemTypes ItemTypes;
 
-	UPROPERTY(EditAnywhere, BlueprintReadwrite, meta = (EditCondition = "ItemTypes == EItemTypes::Weapon", EditConditionHides))
+	UPROPERTY(EditAnywhere, meta = (EditCondition = "ItemTypes == EItemTypes::Weapon", EditConditionHides))
 	float Damage;
 
-	UPROPERTY(EditAnywhere, BlueprintReadwrite,meta = (EditCondition = "ItemTypes != EItemTypes::Weapon",EditConditionHides))
+	UPROPERTY(EditAnywhere, meta = (EditCondition = "ItemTypes != EItemTypes::Weapon && ItemType != EItemTypes::Pot", EditConditionHides))
 	float Defense;
 
+	UPROPERTY(EditAnywhere, meta = (EditCondition = "ItemTypes == EItemTypes::Pot", EditConditionHides))
+	int32 StackCounter = 1;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	TSubclassOf<ABaseItem>ItemClass;

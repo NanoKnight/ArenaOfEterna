@@ -63,7 +63,34 @@ AWarriorCharacter::AWarriorCharacter()
 
 
 }
+void AWarriorCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputComponent)
+{
+	Super::SetupPlayerInputComponent(PlayerInputComponent);
 
+	PlayerInputComponent->BindAxis(FName("MoveForward"), this, &AWarriorCharacter::MoveForward);
+	PlayerInputComponent->BindAxis(FName("MoveRight"), this, &AWarriorCharacter::MoveRight);
+	//PlayerInputComponent->BindAxis(FName("Turn"), this, & AWarriorCharacter::Turn);
+	//PlayerInputComponent->BindAxis(FName("LookUp"), this, &AWarriorCharacter::LookUp);
+	PlayerInputComponent->BindAxis(FName("CameraForward"), this, &AWarriorCharacter::CameraForward);
+	PlayerInputComponent->BindAxis(FName("CameraRight"), this, &AWarriorCharacter::CameraRight);
+	PlayerInputComponent->BindAction(FName("MoveCamera"), IE_Pressed, this, &AWarriorCharacter::MoveCamera);
+	PlayerInputComponent->BindAction(FName("MoveCamera"), IE_Released, this, &AWarriorCharacter::MoveCameraReleased);
+	//PlayerInputComponent->BindAction(FName("Jump"), IE_Pressed, this, &ACharacter::Jump);
+	PlayerInputComponent->BindAction(FName("Use"), IE_Pressed, this, &AWarriorCharacter::Interact);
+	PlayerInputComponent->BindAction(FName("Inventory"), IE_Pressed, this, &AWarriorCharacter::OpenInventory);
+	PlayerInputComponent->BindAction(FName("Attack"), IE_Pressed, this, &AWarriorCharacter::Attack);
+	PlayerInputComponent->BindAction(FName("Attack"), IE_Released, this, &AWarriorCharacter::AttackReleassed);
+	PlayerInputComponent->BindAction(FName("Shield"), IE_Pressed, this, &AWarriorCharacter::Shield);
+	PlayerInputComponent->BindAction(FName("Shield"), IE_Released, this, &AWarriorCharacter::ShieldRealesed);
+	PlayerInputComponent->BindAction(FName("Dodge"), IE_Pressed, this, &AWarriorCharacter::Dodge);
+	PlayerInputComponent->BindAction(FName("SaveGame"), IE_Pressed, this, &AWarriorCharacter::Save);
+	PlayerInputComponent->BindAction(FName("FirstSkill"), IE_Pressed, this, &AWarriorCharacter::FirstSkill);
+	PlayerInputComponent->BindAction(FName("SecondSkill"), IE_Pressed, this, &AWarriorCharacter::SecondSkill);
+	PlayerInputComponent->BindAction(FName("CompleteQuest"), IE_Pressed, this, &AWarriorCharacter::CompleteCurrentQuest);
+	PlayerInputComponent->BindAction(FName("UsePot"), IE_Pressed, this, &AWarriorCharacter::UsetPot);
+
+
+}
 
 void AWarriorCharacter::BeginPlay()
 {
@@ -911,6 +938,30 @@ void AWarriorCharacter::CompleteCurrentQuest()
 	}
 
 }
+
+void AWarriorCharacter::UsetPot()
+{
+
+	for (FInventoryStruct& ItemL : InventoryComponent->InventoryItems)
+	{
+	    
+		if (ItemL.ItemTypes == EItemTypes::Pot && ItemL.StackCounter > 0)
+		{
+			ItemL.StackCounter -= 1;
+			GetAttributesComponent()->AddHealth(Attributes->GetPotHealth());
+			InitializePlayerOverlay();
+
+		}
+		if (ItemL.ItemTypes == EItemTypes::Pot && ItemL.StackCounter <= 0)
+		{
+			InventoryComponent->SetDefaultItemValue(ItemL);
+		}
+	}
+
+
+
+
+}
 	
 void AWarriorCharacter::SkillEnd()
 {
@@ -1130,33 +1181,7 @@ void AWarriorCharacter::SphereCollisionEndOverlap(UPrimitiveComponent* Overlappe
 
 }
 
-void AWarriorCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputComponent)
-{
-	Super::SetupPlayerInputComponent(PlayerInputComponent);
 
-	PlayerInputComponent->BindAxis(FName("MoveForward"), this, &AWarriorCharacter::MoveForward);
-	PlayerInputComponent->BindAxis(FName("MoveRight"), this, &AWarriorCharacter::MoveRight);
-	//PlayerInputComponent->BindAxis(FName("Turn"), this, & AWarriorCharacter::Turn);
-    //PlayerInputComponent->BindAxis(FName("LookUp"), this, &AWarriorCharacter::LookUp);
-	PlayerInputComponent->BindAxis(FName("CameraForward"), this, &AWarriorCharacter::CameraForward);
-	PlayerInputComponent->BindAxis(FName("CameraRight"), this, &AWarriorCharacter::CameraRight);
-	PlayerInputComponent->BindAction(FName("MoveCamera"), IE_Pressed, this, &AWarriorCharacter::MoveCamera);
-	PlayerInputComponent->BindAction(FName("MoveCamera"), IE_Released, this, &AWarriorCharacter::MoveCameraReleased);
-	//PlayerInputComponent->BindAction(FName("Jump"), IE_Pressed, this, &ACharacter::Jump);
-	PlayerInputComponent->BindAction(FName("Use"), IE_Pressed, this, &AWarriorCharacter::Interact);
-	PlayerInputComponent->BindAction(FName("Inventory"), IE_Pressed, this, &AWarriorCharacter::OpenInventory);
-	PlayerInputComponent->BindAction(FName("Attack"), IE_Pressed, this, &AWarriorCharacter::Attack);
-	PlayerInputComponent->BindAction(FName("Attack"), IE_Released, this, &AWarriorCharacter::AttackReleassed);
-	PlayerInputComponent->BindAction(FName("Shield"), IE_Pressed, this, &AWarriorCharacter::Shield);
-	PlayerInputComponent->BindAction(FName("Shield"), IE_Released, this, &AWarriorCharacter::ShieldRealesed);
-	PlayerInputComponent->BindAction(FName("Dodge"), IE_Pressed, this, &AWarriorCharacter::Dodge);
-	PlayerInputComponent->BindAction(FName("SaveGame"), IE_Pressed, this, &AWarriorCharacter::Save);
-	PlayerInputComponent->BindAction(FName("FirstSkill"), IE_Pressed, this, &AWarriorCharacter::FirstSkill);
-	PlayerInputComponent->BindAction(FName("SecondSkill"), IE_Pressed, this, &AWarriorCharacter::SecondSkill);
-	PlayerInputComponent->BindAction(FName("CompleteQuest"), IE_Pressed, this, &AWarriorCharacter::CompleteCurrentQuest);
-
-
-}
 
 
 void AWarriorCharacter::SetOverlappingItem(ABaseItem* Item)

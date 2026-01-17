@@ -5,13 +5,34 @@
 #include "Components/Image.h"
 #include"../WarriorCharacter.h"
 #include"Components\Button.h"
+#include"Components\Border.h"
 #include "Blueprint/WidgetBlueprintLibrary.h"
 #include "Blueprint/DragDropOperation.h"
 #include"HUD\EqiupmentSlotWidget.h"
 #include"Items\BaseItem.h"
 #include"HUD\InventoryWidget.h"
+#include"Components\AttributeComponent.h"
 #include"Components\InventorySystem\InventoryComponent.h"
 #include "Components/TextBlock.h"
+
+void UInventorySlotWidget::NativeConstruct()
+{
+
+
+	if (UseBtn)
+	{
+		UseBtn->OnClicked.AddDynamic(this, &UInventorySlotWidget::OnEquipClicked);
+	}
+	
+	
+
+	UseBtn->SetVisibility(ESlateVisibility::Collapsed);
+	if (Item.ItemTypes == EItemTypes::Pot)
+	{
+		StackNumber->SetVisibility(ESlateVisibility::Visible);
+	}
+}
+
 
 void UInventorySlotWidget::SetUp(const FInventoryStruct& NewItem)
 {
@@ -31,12 +52,21 @@ void UInventorySlotWidget::SetUp(const FInventoryStruct& NewItem)
 			ItemIcon->SetBrushFromTexture(Item.ItemIcon);
 
 		}
-		
+	
 	}
 
 	if (ItemName)
 	{
 		ItemName->SetText(FText::FromString(Item.ItemName));
+
+	}
+
+	if (StackNumber)
+	{
+		if (Item.ItemTypes == EItemTypes::Pot)
+		{
+			StackNumber->SetText(FText::FromString(FString::Printf(TEXT("%d"), Item.StackCounter)));
+		}
 	}
 }
 
@@ -45,16 +75,39 @@ void UInventorySlotWidget::SetSlotIndex(int32 NewIndex)
 	SlotIndex = NewIndex;
 }
 
-void UInventorySlotWidget::OnItemClicked()
+void UInventorySlotWidget::OnEquipClicked()
 {
 	AWarriorCharacter* Warrior = Cast<AWarriorCharacter>(GetWorld()->GetFirstPlayerController()->GetPawn());
-	
-	if (Warrior)
-	{	
-			Warrior->EquipItem(Item);
-			
-	}
+	if (Warrior && Warrior->GetInventoryComponent() && Item.ItemTypes != EItemTypes::Pot)return;
 
+	for (FInventoryStruct& WItem : Warrior->GetInventoryComponent()->InventoryItems)
+	{
+		if (WItem.StackCounter > 0)
+		{
+			if (StackNumber && WItem.ItemTypes == EItemTypes::Pot)
+			{
+				WItem.StackCounter -= 1;
+				
+				StackNumber->SetText(FText::FromString(FString::Printf(TEXT("%d"),WItem.StackCounter)));
+				Warrior->GetAttributesComponent()->AddHealth(Warrior->GetAttributesComponent()->GetPotHealth());
+				Warrior->InitializePlayerOverlay();
+			}
+		
+
+		}
+		if(WItem.StackCounter <= 0 && WItem.ItemTypes == EItemTypes::Pot)
+		{
+			//Warrior->GetInventoryComponent()->RemoveFormInventory(WItem);
+			UseBtn->SetVisibility(ESlateVisibility::Collapsed);
+			StackNumber->SetVisibility(ESlateVisibility::Collapsed);
+			Warrior->GetInventoryComponent()->SetDefaultItemValue(WItem);
+			ItemIcon->SetBrushFromSoftTexture(ImageIconAsset);
+			Item = FInventoryStruct();
+			ItemName->SetText(FText::GetEmpty());
+		}
+	}
+	
+		
 }
 
 
@@ -66,9 +119,12 @@ FReply UInventorySlotWidget::NativeOnMouseButtonDown(const FGeometry& InGeometry
 
 	if (InMouseEvent.IsMouseButtonDown(EKeys::LeftMouseButton))
 	{
+        
+		if (Item.ItemTypes == EItemTypes::Pot)
+		{
+			UseBtn->SetVisibility(ESlateVisibility::Visible);
+		}
 		return UWidgetBlueprintLibrary::DetectDragIfPressed(InMouseEvent, this, EKeys::LeftMouseButton).NativeReply;
-			
-
 	}
 
 	return FReply::Unhandled();
@@ -79,22 +135,19 @@ void UInventorySlotWidget::NativeOnDragDetected(const FGeometry& InGeometry, con
 
 	Super::NativeOnDragDetected(InGeometry, InMouseEvent, OutOperation);
 	if (Item.ItemName.IsEmpty())
-	{
-		
+	{		
 		return;	
-
 	}
 
 	UDragDropOperation* DragDropOp = UWidgetBlueprintLibrary::CreateDragDropOperation(UDragDropOperation::StaticClass());
 	if (DragDropOp)
 	{
+
+		UseBtn->SetVisibility(ESlateVisibility::Collapsed);
 		DragDropOp->Payload = this;
 		DragDropOp->DefaultDragVisual = this;
 		DragDropOp->Pivot = EDragPivot::TopLeft;
 		OutOperation = DragDropOp;
-
-
-
 	}
 }
 
@@ -165,8 +218,7 @@ bool UInventorySlotWidget::NativeOnDrop(const FGeometry& Geometry, const FDragDr
 
 
 	}
-	
-    
+
 	// 1. Sürüklenen slotu al
 	UInventorySlotWidget* DraggedSlot = Cast<UInventorySlotWidget>(InOperation->Payload);
 	if (!DraggedSlot || DraggedSlot == this) return false;
@@ -185,7 +237,16 @@ bool UInventorySlotWidget::NativeOnDrop(const FGeometry& Geometry, const FDragDr
 
 }
 
+void UInventorySlotWidget::NativeOnMouseLeave(const FPointerEvent& InMouseEvent)
+{
+	if (UseBtn)
+	{
+		UseBtn->SetVisibility(ESlateVisibility::Collapsed);
+	}
+}
+
 bool UInventorySlotWidget::IfInventorySlotItemIsValid()
 {
 	return !Item.ItemName.IsEmpty();
 }
+

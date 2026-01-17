@@ -120,6 +120,13 @@ public:
 
 	UInventoryWidget* InventoryWidget;
 
+
+
+
+
+	void InitializePlayerOverlay();
+
+
 protected:
 	virtual void BeginPlay() override;
 	void MoveForward(float value);
@@ -201,6 +208,9 @@ protected:
 	void CompleteCurrentQuest();
 
 	UFUNCTION()
+	void UsetPot();
+
+	UFUNCTION()
 	void SphereCollisionBeginOverlap(UPrimitiveComponent* OverlappedComponent, AActor*OtherActor, UPrimitiveComponent*OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult);
 	
 	UFUNCTION()
@@ -244,7 +254,6 @@ private:
 	void FirstSkill();
 	void SecondSkill();
 	void PlayShieldReactMontage();
-	void InitializePlayerOverlay();
 	void SetHealthBar();
 	void SetStaminaBar();
 	void SetLevelBar();

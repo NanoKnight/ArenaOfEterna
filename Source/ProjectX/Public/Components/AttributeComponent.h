@@ -39,6 +39,9 @@ private:
 	UPROPERTY(EditAnywhere, category = "Actor Attributes")
 	float MaxHealth;
 
+	UPROPERTY(EditAnywhere, category = "Actor Attributes")
+	float PotHealthValue;
+
 	UPROPERTY(EditAnywhere, Category = "Actor Attributes")
 	float Defense;
 
@@ -80,6 +83,7 @@ public:
 	void RegenerateStamina();
 	void ShieldRegenerateTimer();
 	void StaminaTimer();  
+	void SetHealthBarPercent();
 	void AddExperience(float NumberOfExperience);
 	void AddGold(int32 GoldAmmount);
 	void AddHealth(float HealthAmmount);
@@ -87,6 +91,7 @@ public:
 
 	/*   GETTER    */
 	FORCEINLINE float GetHealth() const { return Health; }
+	FORCEINLINE float GetPotHealth() const { return PotHealthValue; }
 	FORCEINLINE float GetDefense() const { return Defense;}
 	FORCEINLINE float GetExperience() const { return ExperiencePoint; }
 	FORCEINLINE float GetMaxExperience() const {return MaxExperiencePoint;}

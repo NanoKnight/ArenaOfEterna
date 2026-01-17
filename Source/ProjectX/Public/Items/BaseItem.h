@@ -97,14 +97,20 @@ public:
 	UPROPERTY(EditAnywhere)
 	EItemTypes ItemType;
 
-	UPROPERTY(EditAnywhere)
+	UPROPERTY(EditAnywhere, meta = (EditCondition = "ItemType != EItemTypes::Pot", EditConditionHides))
 	EEquipmentSlot ItemEquipmentSlot;
 
 	UPROPERTY(EditAnywhere,meta = (EditCondition = "ItemType == EItemTypes::Weapon", EditConditionHides))
 	float Damage = 20.f;
-	UPROPERTY(EditAnywhere, meta = (EditCondition = "ItemType != EItemTypes::Weapon", EditConditionHides))
+	
+	UPROPERTY(EditAnywhere, meta = (EditCondition = "ItemType != EItemTypes::Weapon && ItemTypes != EItemTypes::Pot", EditConditionHides))
 	float Defense;
 
+	UPROPERTY(EditAnywhere, meta = (EditCondition = "ItemType == EItemTypes::Pot", EditConditionHides))
+	float HealthValue;
+
+	//UPROPERTY(EditAnywhere, meta = (EditCondition = "ItemType == EItemTypes::Pot", EditConditionHides))
+	//int32 StackCounter = 0;
 
 	UPROPERTY(EditAnywhere)
 	FString ItemName;
@@ -112,7 +118,7 @@ public:
 	UPROPERTY(EditAnywhere)
 	UTexture2D* ItemIcon;
 
-	UPROPERTY(EditAnywhere)
+	UPROPERTY(EditAnywhere, meta = (EditCondition = "ItemType != EItemTypes::Pot", EditConditionHides))
 	FName ItemSocketName;
 
 	void SetInteractionVisibility(bool visiblity);
