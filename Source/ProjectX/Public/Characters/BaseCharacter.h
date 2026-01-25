@@ -36,21 +36,16 @@ public:
   TArray<ABaseItem*> ItemsToEquip;
 
 
-  UPROPERTY(EditDefaultsOnly)
-  USkeletalMeshComponent* EnemyOutlineMesh;
-
-
-
-
 protected:
 	virtual void BeginPlay() override;
-	void InitializeEquipItems();
+	virtual void InitializeEquipItems();
     virtual void Attack();
 	virtual void GetHit_Implementation(const FVector& ImpactPoint,AActor* Hitter) override;
 	void DirectionalHit(const FVector& ImpactPoint);
 	virtual void HandleDamage(float DamageAmount);
 	void PlayHitSound(const FVector& ImpactPoint);
 	void PLayShieldHitSound(const FVector& ImpactPoint);
+	void PlayShieldBreakSound(const FVector& ImpactPoint);
 	void SpawnHitParticles(const FVector& ImpactPoint);
 	void SpawnShieldHitParticles(const FVector& ImpactPoint);
 	virtual void Die();
@@ -101,16 +96,22 @@ protected:
 
 	UPROPERTY(BlueprintReadOnly)
 	TEnumAsByte<EDeadPose>DeadPose;
+
+	
 private:
 
 	virtual int32 PlayWarriorCountMontageSection(UAnimMontage* Montage,bool IsHolding,const TArray<FName>& SectionNames);
 	void CheckComboCount(const int32& MaxSectionIndex, bool IsHolding);
 	int32 PlayRandomMontageSection(UAnimMontage* Montage, const TArray<FName>& SectionNames);
+
 	UPROPERTY(EditAnywhere, Category = Sounds)
 	USoundBase* HitSound;
+
 	UPROPERTY(EditAnywhere, Category = Sounds)
 	USoundBase* ShieldHitSound;
 
+	UPROPERTY(EditAnywhere, Category = Sounds)
+	USoundBase* ShieldBreakSound;
 
 	UPROPERTY(EditAnywhere, Category = VFX)
 	UParticleSystem* HitParticles;
@@ -118,10 +119,8 @@ private:
 	UPROPERTY(EditAnywhere, Category = VFX)
 	UNiagaraSystem* HitNiagaraSystem;
 
-
 	UPROPERTY(EditAnywhere, Category = VFX)
 	UParticleSystem* ShieldParticles;
-	
 
 	UPROPERTY(EditDefaultsOnly, Category = Montages)
 	UAnimMontage* AttackMontage;

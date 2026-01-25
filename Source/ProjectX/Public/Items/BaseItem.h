@@ -56,7 +56,8 @@ protected:
 	UFUNCTION()
 	virtual void OnSphereEndOverlap(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex);
 
-	
+	UPROPERTY(EditAnyWhere)
+	bool QuestItem;
 
 	/* Itemi sahnede deðiþtirdiðinde kuþandýlan iteme etki etmiyor bunun için kuþanýrken yerden adlýðým itemlerin deðerlerini gircen*/
 

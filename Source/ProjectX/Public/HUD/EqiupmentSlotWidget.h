@@ -15,6 +15,8 @@ class UTextBlock;
 UCLASS()
 class PROJECTX_API UEqiupmentSlotWidget : public UUserWidget
 {
+
+	
 	GENERATED_BODY()
 
 public:

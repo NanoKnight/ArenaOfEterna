@@ -54,7 +54,10 @@ private:
 	UPROPERTY(EditAnywhere, Category = "Actor Attributes")
 	float MaxShield;
 
+	UPROPERTY(EditDefaultsOnly, Category = "Actor Attributes")
 	float ShieldRegenRate = 5.f;
+
+	UPROPERTY(EditDefaultsOnly, Category = "Actor Attributes")
 	float StaminaRegenRate = 5.f;
 
 	UPROPERTY(VisibleAnywhere, Category = "Actor Attributes")

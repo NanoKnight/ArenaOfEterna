@@ -39,9 +39,12 @@ class UPawnNoiseEmitterComponent;
 
 
 UCLASS()
-class PROJECTX_API AWarriorCharacter : public ABaseCharacter, public IPickUpInterface
+class PROJECTX_API AWarriorCharacter : public ABaseCharacter, public IPickUpInterface 
 {
 	GENERATED_BODY()
+
+	friend class ABaseItem;
+	friend class UEqiupmentSlotWidget;
 
 public:
 
@@ -60,11 +63,6 @@ public:
 
 	void EquipWeapon(AWeapon* Weapon);
 	
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Materials")
-	UMaterialInterface* OverlayMaterial;
-
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Materials")
-	UMaterialInterface* DefaultMat;
 
 	virtual float TakeDamage(float DamageAmount, struct FDamageEvent const& DamageEvent, class AController* EventInstigator, AActor* DamageCauser) override;
 	bool IsEnemyBehindCharacter();
@@ -95,8 +93,10 @@ public:
 	TSubclassOf<class AQuestActor> QuestActorClass;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "UI")
+
 	TSubclassOf<UUserWidget> DeathWidgetClass;
 	UUserWidget* DeathWidgetInstance;
+
 
 	UPROPERTY(EditAnywhere,BlueprintReadWrite , Category= "Quests")
 	UDataTable* QuestDataTable;
@@ -130,6 +130,8 @@ public:
 
 
 protected:
+
+
 	virtual void BeginPlay() override;
 	void MoveForward(float value);
 	void MoveRight(float value);
@@ -140,7 +142,6 @@ protected:
 	void EKeyPressed();
 	void Interact();
 	void OpenInventory();
-
 
 
 	void MoveCamera();
@@ -182,6 +183,7 @@ protected:
 	void ChangeAttackType();
 	void PlayHoldingAttackAnim();
 
+	void PlayShieldBreakMontage();
 	void StaminaRegenerateTime();
 	void StaminaClearTime();
 
@@ -228,6 +230,9 @@ protected:
 
 	UPROPERTY(BlueprintReadOnly)
 	TArray<AEnemy*> EnemiesInRange;
+
+	UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = "Materials")
+	UMaterialInterface* EnemyOutlineMaterial;
 	
 	UPROPERTY(BlueprintReadOnly)
 	AEnemy* CloseEnemy;
@@ -303,6 +308,9 @@ private:
 	UPROPERTY(EditDefaultsOnly, Category = Montages)
 	UAnimMontage* ShieldReactMontage;
 
+	UPROPERTY(EditDefaultsOnly, Category = Montages)
+	UAnimMontage* ShieldBreakMontage;
+
 	UPROPERTY(EditDefaultsOnly,Category = Montages)
 	UAnimMontage* FirstSkillMontage;
 
@@ -374,6 +382,7 @@ public:
 	void CheckShieldRotation();
 	void ResetCameraPosition();
 	void ComboCountTimer(float DeltaTime);
+
 	void StaminaRegen();
 	virtual void SetupPlayerInputComponent(class UInputComponent* PlayerInputComponent) override;
 	virtual void SetOverlappingItem(ABaseItem* Item) override;

@@ -5,8 +5,70 @@
 #include"Components\AttributeComponent.h"
 #include"Components\SphereComponent.h"
 #include "Kismet/GameplayStatics.h"
+#include"GameFramework/CharacterMovementComponent.h"
 #include "Kismet/KismetSystemLibrary.h"
+#include"HUD\CurrentBossOverlayWidget.h"
 
+
+void ABoss::ChaseTarget()
+{
+	Super::ChaseTarget();
+
+
+	if (BossOverlayClass && OverlayWidgetCreated == false)
+	{
+		OverlayWidgetCreated = true;
+		BossOverlay = CreateWidget<UCurrentBossOverlayWidget>(GetWorld(), BossOverlayClass);
+		if (BossOverlay)
+		{
+			BossOverlay->AddToViewport();
+			SetBossHealthBar();
+			if (!BossName.IsEmpty()) BossOverlay->SetCurrentBossName(BossName);
+		}
+
+	}
+
+}
+
+float ABoss::TakeDamage(float DamageAmount, FDamageEvent const& DamageEvent, AController* EventInstigator, AActor* DamageCauser)
+{
+	if (EnemyState == EEnemyState::EAS_Stun)
+	{
+		Super::TakeDamage(DamageAmount, DamageEvent, EventInstigator, DamageCauser);
+		SetBossHealthBar();
+
+	}
+	else
+	{
+		Super::TakeDamage(DamageAmount / 3, DamageEvent, EventInstigator, DamageCauser);
+
+		SetBossHealthBar();
+	}
+
+		return DamageAmount;
+	
+	
+}
+
+void ABoss::Die()
+{
+	Super::Die();
+	if (BossOverlay)
+	{
+		BossOverlay->RemoveFromParent();
+		BossOverlay = nullptr;
+	}
+
+}
+
+void ABoss::SetBossHealthBar()
+{
+	if (BossOverlay)
+	{
+		BossOverlay->SetCurrentBossHealthBar(Attributes->HealthPercent());
+
+	}
+}
 
 ABoss::ABoss()
 {
@@ -19,6 +81,14 @@ ABoss::ABoss()
 
 	DamageSphere3 = CreateDefaultSubobject<USphereComponent>("Damage Sphere 3");
 	DamageSphere3->SetupAttachment(GetMesh());
+	SetNoCollisionDamageForSpheres();
+
+
+
+}
+
+void ABoss::SetNoCollisionDamageForSpheres()
+{
 
 	DamageSphere1->SetCollisionEnabled(ECollisionEnabled::NoCollision);
 	DamageSphere1->SetCollisionResponseToAllChannels(ECR_Overlap);
@@ -32,9 +102,6 @@ ABoss::ABoss()
 	DamageSphere3->SetCollisionEnabled(ECollisionEnabled::NoCollision);
 	DamageSphere3->SetCollisionResponseToAllChannels(ECR_Overlap);
 	DamageSphere3->SetCollisionResponseToChannel(ECC_Pawn, ECR_Ignore);
-
-
-
 }
 
 void ABoss::BeginPlay()
@@ -44,39 +111,64 @@ void ABoss::BeginPlay()
 	DamageSphere2->AttachToComponent(GetMesh(), FAttachmentTransformRules::SnapToTargetNotIncludingScale, FName("RightDamage"));
 
 
+
+
 	DamageSphere1->OnComponentBeginOverlap.AddDynamic(this, &ABoss::OnDamageSphereOneOverlap);
 	DamageSphere2->OnComponentBeginOverlap.AddDynamic(this, &ABoss::OnDamageSphereTwoOverlap);
+
+
+
 }
 
 void ABoss::Attack()
 {
-	IgnoreActors.Empty();
-
 	if (Attributes->GetStamina() >= 10)
 	{
 		Super::Attack();
-		Attributes->ReciveStamina(10);
+
 
 	}
-	else if (Attributes->GetStamina() <= 0)
+
+
+
+}
+
+
+void ABoss::AttackEnd()
+{
+	Super::AttackEnd();
+
+	Attributes->ReciveStamina(Attributes->GetStaminaCost());
+	SetNoCollisionDamageForSpheres();
+
+	if (Attributes->GetStamina() <= 0)
 	{
 		EnemyState = EEnemyState::EAS_Stun;
 		StartStaminaRegenerateTimer();
+		SetNoCollisionDamageForSpheres();
+		GetCharacterMovement()->StopMovementImmediately();
 
 	}
- 
-	
-
-
-
 }
 
 void ABoss::SetEnableDamageCollision(USphereComponent* SphereRef, ECollisionEnabled::Type CollisionEnabled)
 {
-	SphereRef->SetCollisionEnabled(ECollisionEnabled::QueryAndPhysics);
-	IgnoreActors.Empty();
+	if (SphereRef)
+	{
+		if (CollisionEnabled == ECollisionEnabled::NoCollision)
+		{
+
+			IgnoreActors.Empty();
+
+
+		}
+		SphereRef->SetCollisionEnabled(CollisionEnabled);
+	}
+
+
 
 }
+
 
 
 
@@ -109,7 +201,8 @@ void ABoss::CallDamageInterface(USphereComponent* SphereRef)
 
 	if (SphereHit.GetActor())
 	{
-		UGameplayStatics::ApplyDamage(SphereHit.GetActor(), 20, GetInstigator()->GetController(), this, UDamageType::StaticClass());
+		UE_LOG(LogTemp, Warning, TEXT("%s"), *SphereHit.GetActor()->GetName());
+		UGameplayStatics::ApplyDamage(SphereHit.GetActor(), 20.f, GetInstigator()->GetController(), this, UDamageType::StaticClass());
 		ExecuteGetHit(SphereHit);
 	}
 }
@@ -120,6 +213,7 @@ void ABoss::CallDamageInterface(USphereComponent* SphereRef)
 
 void ABoss::SphereTrace(USphereComponent* SphereRef,FHitResult& TraceHit)
 {
+	if (!SphereRef) return;
 	const FVector Start = SphereRef->GetComponentLocation();
 	const FVector End = SphereRef->GetComponentLocation();
 
@@ -161,19 +255,24 @@ void ABoss::SphereTrace(USphereComponent* SphereRef,FHitResult& TraceHit)
 
 void ABoss::StartStaminaRegenerateTimer()
 {
-	GetWorld()->GetTimerManager().SetTimer(StaminaRegenerateTimer, this, &ABoss::StaminaRegenerate, 5, false);
+	if (StaminaTimerStarted == false)
+	{
+		StaminaTimerStarted = true;
+		GetWorld()->GetTimerManager().SetTimer(StaminaRegenerateTimer, this, &ABoss::StaminaRegenerate, 5, false);
+	}
+
 
 }
 
 void ABoss::StaminaRegenerate()
 {
 	Attributes->RegenerateStamina();
+
 }
 
 void ABoss::ExecuteGetHit(FHitResult& BoxHit)
 {
 	IHitInterface* HitInterface = Cast<IHitInterface>(BoxHit.GetActor());
-
 	if (HitInterface)
 	{
 
@@ -189,11 +288,17 @@ void ABoss::ExecuteGetHit(FHitResult& BoxHit)
 void ABoss::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
+
+	
+
+
 }
 
 void ABoss::SetEnemyState_Implementation(EEnemyState NewState)
 {
 	EnemyState = NewState;
+	StaminaTimerStarted = false;
+	ChaseTarget();
 
 
 }

@@ -36,8 +36,9 @@ public:
 
 
 	//****///
-
+	UPROPERTY(EditAnywhere)
 	TArray <AActor*> IgnoreActors;
+
 
 	UWorld* World = GetWorld();
 	AActor* TraceActor = GetOwner();
@@ -61,6 +62,7 @@ protected:
 	//For Edit From BP
 	UFUNCTION(BlueprintImplementableEvent)
 	void CreateFields(const FVector& FieldLocation);
+
 
 
 private:

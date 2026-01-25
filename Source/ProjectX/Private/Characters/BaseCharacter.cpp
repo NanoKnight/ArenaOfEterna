@@ -21,8 +21,6 @@
 ABaseCharacter::ABaseCharacter()
 {
 	PrimaryActorTick.bCanEverTick = true;
-	EnemyOutlineMesh = CreateDefaultSubobject<USkeletalMeshComponent>(TEXT("OutlineMesh"));
-	EnemyOutlineMesh->SetupAttachment(GetMesh());
 	Attributes = CreateDefaultSubobject<UAttributeComponent>(TEXT("EnemyAttributes"));
 	GetCapsuleComponent()->SetCollisionResponseToChannel(ECollisionChannel::ECC_Camera, ECollisionResponse::ECR_Ignore);
 	InventoryComponent = CreateDefaultSubobject<UInventoryComponent>(TEXT("InventoryComponent"));
@@ -31,7 +29,7 @@ ABaseCharacter::ABaseCharacter()
 void ABaseCharacter::BeginPlay()
 {
 	Super::BeginPlay();
-	InitializeEquipItems();
+	
 }
 
 void ABaseCharacter::InitializeEquipItems()
@@ -122,8 +120,9 @@ void ABaseCharacter::GetHit_Implementation(const FVector& ImpactPoint,AActor* Hi
 		Die();
 
 	}
-	PlayHitSound(ImpactPoint);
-	SpawnHitParticles(ImpactPoint);
+	
+		PlayHitSound(ImpactPoint);
+		SpawnHitParticles(ImpactPoint);
 }
 
 
@@ -261,11 +260,6 @@ void ABaseCharacter::PlayHitReactMontage(const FName& SectionName)
 		AnimInstance->Montage_Play(HitReactMontage);
 		AnimInstance->Montage_JumpToSection(SectionName, HitReactMontage);
 
-		if (ActorHasTag(TEXT("Enemy")))
-		{
-			EnemyOutlineMesh->GetAnimInstance()->Montage_Play(HitReactMontage);
-			EnemyOutlineMesh->GetAnimInstance()->Montage_JumpToSection(SectionName, HitReactMontage);
-		}
 	}
 }
 
@@ -336,6 +330,19 @@ void ABaseCharacter::PLayShieldHitSound(const FVector& ImpactPoint)
 			ShieldHitSound,
 			ImpactPoint
 		);
+		UE_LOG(LogTemp, Warning, TEXT("sound played"));
+	}
+}
+
+void ABaseCharacter::PlayShieldBreakSound(const FVector& ImpactPoint)
+{
+	if (ShieldBreakSound)
+	{
+		UGameplayStatics::PlaySoundAtLocation(
+			this,
+			ShieldBreakSound,
+			ImpactPoint
+		);
 	}
 }
 
@@ -399,11 +406,7 @@ void ABaseCharacter::PlayMontageSection(UAnimMontage* Montage, const FName& Sect
 		{
 			AnimInstance->Montage_Play(Montage);
 			AnimInstance->Montage_JumpToSection(SectionName, Montage);
-			if (ActorHasTag(TEXT("Enemy")))
-			{
-				EnemyOutlineMesh->GetAnimInstance()->Montage_Play(Montage);
-				EnemyOutlineMesh->GetAnimInstance()->Montage_JumpToSection(SectionName, Montage);
-			}
+			
 		}	
 }
 
@@ -485,10 +488,14 @@ void ABaseCharacter::CheckComboCount(const int32& MaxSectionIndex, bool IsHoldin
 void ABaseCharacter::SetWeaponCollisionEnabled(ECollisionEnabled::Type CollisionEnabled)
 {
 
-	if (EquippedWeapon && EquippedWeapon->GetWeaponBox())
+	if (EquippedWeapon)
 	{
 		EquippedWeapon->GetWeaponBox()->SetCollisionEnabled(CollisionEnabled);
-		EquippedWeapon->IgnoreActors.Empty();
+		if (CollisionEnabled == ECollisionEnabled::NoCollision )
+		{
+			EquippedWeapon->IgnoreActors.Empty();
+
+		}
 	}
 }
 

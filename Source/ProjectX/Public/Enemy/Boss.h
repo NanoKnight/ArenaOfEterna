@@ -13,6 +13,7 @@
  */
 
 class USphereComponent;
+class UCurrentBossOverlayWidget;
 
 UCLASS()
 class PROJECTX_API ABoss : public AEnemy , public ICombatStateInterFace 
@@ -23,8 +24,12 @@ class PROJECTX_API ABoss : public AEnemy , public ICombatStateInterFace
 		virtual void BeginPlay() override;
 		virtual void Attack() override;
 
+		virtual void AttackEnd() override;
+
+
 		UFUNCTION(BlueprintCallable) 
 		void SetEnableDamageCollision(USphereComponent* SphereRef,ECollisionEnabled::Type CollisionEnabled);
+	
 
 
 		UFUNCTION()
@@ -59,10 +64,18 @@ class PROJECTX_API ABoss : public AEnemy , public ICombatStateInterFace
 		UPROPERTY(EditDefaultsOnly, BlueprintReadonly)
 		USphereComponent* DamageSphere3;
 
+		virtual  void ChaseTarget() override;
+		virtual float TakeDamage(float DamageAmount, struct FDamageEvent const& DamageEvent, class AController* EventInstigator, AActor* DamageCauser) override;
+		virtual void Die()override;
+		void SetBossHealthBar();
+
+		UPROPERTY(EditDefaultsOnly)
+		FString BossName;
 
 
 	public:
 	     ABoss();
+		 void SetNoCollisionDamageForSpheres();
 		virtual void Tick(float DeltaTime) override;
 		virtual void SetEnemyState_Implementation(EEnemyState NewState) override;
 
@@ -72,9 +85,15 @@ class PROJECTX_API ABoss : public AEnemy , public ICombatStateInterFace
 
 	private:
 	   void	SphereTrace(USphereComponent* SphereRef,FHitResult& TraceHit);
-	
 
 
+	   UPROPERTY(EditAnywhere)
+	   TSubclassOf<UCurrentBossOverlayWidget> BossOverlayClass;
+
+	   UCurrentBossOverlayWidget* BossOverlay;
+
+	   bool OverlayWidgetCreated = false;
+	   bool StaminaTimerStarted = false;
 
 		TArray <AActor*> IgnoreActors;
 

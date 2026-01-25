@@ -24,6 +24,7 @@ protected:
 	virtual void BeginPlay() override;
 	void InitializeEnemy();
 	virtual void Die() override;
+	virtual void InitializeEquipItems() override;
 	void SpawnEquipedItemsToWorld();
 	void DestroyEquipItems();
 	void IncreaseQuestKillCount();
@@ -35,6 +36,7 @@ protected:
 	virtual void Attack() override;
 	virtual void AttackEnd() override;
 	virtual bool CanAttack() override;
+	virtual void ChaseTarget();
 	virtual void HandleDamage(float DamageAmount) override;
 	virtual void PlayHitSound(const FVector& ImpactPoint) ;
 	virtual void MoveToTarget(AActor* Target);
@@ -65,8 +67,6 @@ public:
 	UFUNCTION(BlueprintCallable)
 	void ResetEnemyState();
 
-
-
 	UPROPERTY(EditAnywhere)
 	EEnemyState EnemyState;
 
@@ -88,7 +88,7 @@ private:
 	void ShowHealthBar();
 	void LoseInterest();
 	void StartPatrolling();
-	void ChaseTarget();
+
 	void ResetRagdoll();
 	void BackPatrol();
 	bool IsOutsideCombatRadius();

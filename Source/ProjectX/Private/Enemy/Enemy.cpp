@@ -49,6 +49,7 @@ void AEnemy::BeginPlay()
 {
 	Super::BeginPlay();
 	Tags.Add("Enemy");
+	InitializeEquipItems();
 	EnemyName = GetName();
 	if (PawnSensing)
 	{
@@ -100,7 +101,8 @@ void AEnemy::Die()
 	DestroyEquipItems();
 	SpawnEquipedItemsToWorld();
 	GetWorld()->GetTimerManager().SetTimer(SpawnExperienceTimer, this, &AEnemy::SpawnExperience, 2.f);
-	
+	GetMesh()->SetCollisionEnabled(ECollisionEnabled::NoCollision);
+
 	
 	
 	
@@ -122,6 +124,11 @@ void AEnemy::Die()
 	
 
 
+}
+
+void AEnemy::InitializeEquipItems()
+{
+	Super::InitializeEquipItems();
 }
 
 void AEnemy::SpawnEquipedItemsToWorld()
@@ -226,6 +233,7 @@ void AEnemy::AttackEnd()
 {
 	EnemyState = EEnemyState::EES_NoState;
 	CheckCombatTarget();
+
 }
 
 bool AEnemy::CanAttack()
@@ -293,6 +301,7 @@ void AEnemy::Tick(float DeltaTime)
 			
 		}
 	}
+	
 	if (GetCharacterMovement()->Velocity.Size() == 0.f && EnemyState == EEnemyState::EES_Chasing)
 	{
 
@@ -325,6 +334,7 @@ float AEnemy::TakeDamage(float DamageAmount, FDamageEvent const & DamageEvent, A
 		if (IsInsideAttackRadius() && EnemyState != EEnemyState::EAS_Stun)
 		{
 			ResetEnemyState();
+			UE_LOG(LogTemp, Warning, TEXT("Attack"));
 		}
 		else if (IsOutsideAttackRadius())
 		{
@@ -354,11 +364,8 @@ void AEnemy::Destroyed()
 void AEnemy::SetRagdoll()
 {
 	Ragdoll = true;
-	EnemyOutlineMesh->SetVisibility(false);
 	GetMesh()->SetSimulatePhysics(true);
 	CombatTarget = nullptr;
-	EnemyOutlineMesh->SetSimulatePhysics(true);
-	EnemyOutlineMesh->SetVisibility(false);
 	GetCapsuleComponent()->SetCollisionEnabled(ECollisionEnabled::NoCollision);
 	EnemyState = EEnemyState::EAS_Stun;
 	GetWorld()->GetTimerManager().SetTimer(HideHealthBarTimer, this, &AEnemy::HideHealthBar, 1.f);
@@ -371,52 +378,33 @@ void AEnemy::ResetRagdoll()
 {
 	if (IsDead())return;
 	GetMesh()->SetSimulatePhysics(false);
-	EnemyOutlineMesh->SetSimulatePhysics(false);
 	UCapsuleComponent* CapsuleComp = GetCapsuleComponent();
 	GetMesh()->AttachToComponent(CapsuleComp, FAttachmentTransformRules::SnapToTargetIncludingScale);
-	EnemyOutlineMesh->AttachToComponent(CapsuleComp, FAttachmentTransformRules::SnapToTargetIncludingScale);
 	GetCapsuleComponent()->SetCollisionEnabled(ECollisionEnabled::QueryAndPhysics);
-	UAnimInstance* AnimInstance1 = GetMesh()->GetAnimInstance();
-	UAnimInstance* AnimInstance2 = EnemyOutlineMesh->GetAnimInstance();
+	UAnimInstance* AnimInstance = GetMesh()->GetAnimInstance();
 	
 	
-	if (AnimInstance1)
+	if (AnimInstance)
 	{
-		AnimInstance1->Montage_Play(SkillDamageMontage);
+		AnimInstance->Montage_Play(SkillDamageMontage);
 
 		if (FrontAnim)
 		{
-			AnimInstance1->Montage_JumpToSection("Front",SkillDamageMontage);
+			AnimInstance->Montage_JumpToSection("Front",SkillDamageMontage);
 		}
 
 		else
 		{
-			AnimInstance1->Montage_JumpToSection("Back",SkillDamageMontage);
+			AnimInstance->Montage_JumpToSection("Back",SkillDamageMontage);
 
 		}
 	  
 	}
-	if (AnimInstance2)
-	{
-		AnimInstance2->Montage_Play(SkillDamageMontage);
-		if (FrontAnim)
-		{
-			AnimInstance2->Montage_JumpToSection("Front", SkillDamageMontage);
-		}
-		else
-		{
-			AnimInstance2->Montage_JumpToSection("Back", SkillDamageMontage);
-
-		}
-		//AnimInstance2->Montage_Play(SkillDamageMontage);
-	}
 	
 	Ragdoll = false;
-
 	FRotator MeshRot(0,-90,0);
 	FVector MeshLoc(0, 0, -90);
 	GetMesh()->SetRelativeLocationAndRotation(MeshLoc, MeshRot);
-	EnemyOutlineMesh->SetRelativeLocationAndRotation(MeshLoc, MeshRot);
 
 }
 
@@ -431,11 +419,12 @@ void AEnemy::BackPatrol()
 void AEnemy::ResetEnemyState()
 {
 	EnemyState = EEnemyState::EES_Patrolling;
-	EnemyOutlineMesh->SetVisibility(true);
 	if (CombatTarget)
 	{
 		ChaseTarget();
 	}
+
+
 }
 
 
@@ -513,10 +502,8 @@ void AEnemy::CheckPatrolTarget()
 void AEnemy::CheckCombatTarget()
 {
 	if (IsDead()) return;
-	if (EnemyState == EEnemyState::EAS_Stun)
-	{
-		return;
-	}
+	if (EnemyState == EEnemyState::EAS_Stun) return;
+	
 
 	if (IsOutsideCombatRadius())
 	{
@@ -572,6 +559,7 @@ void AEnemy::StartPatrolling()
 
 void AEnemy::ChaseTarget()
 {	
+    if (Attributes->GetStamina() <= 0 && EnemyType == EEnemyType::EET_Boss ) EnemyState = EEnemyState::EAS_Stun;
 	if (EnemyState == EEnemyState::EAS_Stun) return;
 
 
@@ -581,6 +569,7 @@ void AEnemy::ChaseTarget()
 
 	}
 
+	
 	EnemyState = EEnemyState::EES_Chasing;
 	GetCharacterMovement()->MaxWalkSpeed = RunSpeed;
 	MoveToTarget(CombatTarget);
@@ -659,7 +648,7 @@ bool AEnemy::InTargetRange(AActor* Target, double Radius)
 
 void AEnemy::MoveToTarget(AActor* Target)
 {
-	
+	if (EnemyState == EEnemyState::EAS_Stun) return;
 	
 	if (EnemyController == nullptr || Target == nullptr)return;
 	FAIMoveRequest MoveRequest;

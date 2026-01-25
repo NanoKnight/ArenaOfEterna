@@ -41,6 +41,7 @@ void UCharacterHUD::SetLevelBarPercent(float Percent)
 
 
 
+
 void UCharacterHUD::SetGoldText(int32 Gold)
 {
 	if (GoldText)

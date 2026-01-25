@@ -97,6 +97,10 @@ void AWarriorCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputCo
 void AWarriorCharacter::BeginPlay()
 {
 	Super::BeginPlay();
+
+	
+
+
 	SpawnDefaultShield();
 	SpawnDefaultWeapon();
 	InitializePlayerOverlay();
@@ -104,7 +108,7 @@ void AWarriorCharacter::BeginPlay()
 	defaultCameraLoc = ViewCamera->GetRelativeLocation();
 
 
-	FString Path = TEXT("/Script/Engine.DataTable'/Game/Blueprints/Data/DT_QuestDataTable.DT_QuestDataTable'");
+	FString Path = TEXT("/Script/Engine.DataTable'/Game/Blueprints/Data/Quest.Quest'");
 	QuestDataTable = LoadObject<UDataTable>(nullptr, *Path);
 
 	if (QuestDataTable)
@@ -123,8 +127,8 @@ void AWarriorCharacter::BeginPlay()
 
 		if (ActiveQuests.IsValidIndex(0) && PlayerOverlay->GetQuestOverlay())
 		{
-			CurrentQuestIndex = 0;
-			PlayerOverlay->GetQuestOverlay()->SetQuestText(
+			  CurrentQuestIndex = 0;
+			  PlayerOverlay->GetQuestOverlay()->SetQuestText(
 				ActiveQuests[0].QuestName,
 				ActiveQuests[0].QuestDescription);
 		}
@@ -191,7 +195,7 @@ void AWarriorCharacter::GetHit_Implementation(const FVector& ImpactPoint, AActor
 		}
 
 	}
-	else if (CheckShieldOpen())
+	else if (CheckShieldOpen() && ShieldAlive())
 	{
 		SpawnShieldHitParticles(ImpactPoint);
 		PLayShieldHitSound(ImpactPoint);
@@ -200,18 +204,24 @@ void AWarriorCharacter::GetHit_Implementation(const FVector& ImpactPoint, AActor
 		ClearShieldRegenerateTimer();
 
 	}
-	if (!ShieldAlive())
-	{
-		Super::GetHit_Implementation(ImpactPoint, Hitter);
+	 if (!ShieldAlive())
+	 {
+		 if (BShieldOn == true)
+		 {
+			 PlayShieldBreakMontage();
+			 PlayShieldBreakSound(ImpactPoint);
+			 SpawnShieldHitParticles(ImpactPoint);
+		 }
+		BShieldOn = false;
 		CharacterStates = ECharacterStates::ECS_EquippedOnehand;
 		SetWeaponCollisionEnabled(ECollisionEnabled::NoCollision);
 		GetCharacterMovement()->MaxWalkSpeed = CharacterRunSpeed;
 		ComboCountReset();
-		StartShieldRegenerateTimer(2);
+		StartShieldRegenerateTimer(4);
 		ClearShieldRegenerateTimer();
+	  
+	 }
 
-
-	}
 }
 
 
@@ -358,7 +368,7 @@ bool AWarriorCharacter::HasEnoughStamina()
 
 bool AWarriorCharacter::CheckShieldClose()
 {
-	return !BShieldOn || IsEnemyBehindCharacter();
+	return !BShieldOn;
 }
 
 bool AWarriorCharacter::CheckShieldOpen()
@@ -379,7 +389,6 @@ void AWarriorCharacter::ClearShieldRegenerateTimer()
 void AWarriorCharacter::StartShieldRegenerateTimer(float Time)
 {
 	GetWorld()->GetTimerManager().SetTimer(shieldRegenerateTime, this, &AWarriorCharacter::RegenerateShield, Time, false);
-
 }
 
 
@@ -400,21 +409,20 @@ void AWarriorCharacter::GetClosestEnemy()
 	{
 		if (CloseEnemy) {
 
-			USkeletalMeshComponent* EnemyMesh = CloseEnemy->EnemyOutlineMesh;
+			USkeletalMeshComponent* EnemyMesh = CloseEnemy->GetMesh();
 			if (EnemyMesh)
 			{
-				//EnemyMesh->SetMaterial(0, DefaultMat);
-				EnemyMesh->SetVisibility(false);
+				;
+				EnemyMesh->SetOverlayMaterial(nullptr);
 				
 			}
 		}
 		if (NewClosestEnemy && NewClosestEnemy->EnemyState != EEnemyState::EAS_Stun)
 		{
-			USkeletalMeshComponent* EnemyMesh = NewClosestEnemy->EnemyOutlineMesh;
+			USkeletalMeshComponent* EnemyMesh = NewClosestEnemy->GetMesh();
 			if (EnemyMesh)
 			{
-				//EnemyMesh->SetMaterial(0, OverlayMaterial);
-				EnemyMesh->SetVisibility(true);
+				EnemyMesh->SetOverlayMaterial(EnemyOutlineMaterial);
 			}
 		}
 	}
@@ -442,6 +450,7 @@ float AWarriorCharacter::TakeDamage(float DamageAmount, FDamageEvent const& Dama
 		{
 			
 			HandleDamage(DamageAmount);
+
 		}
 	}
 
@@ -460,6 +469,8 @@ void AWarriorCharacter::SetHealthBar()
 		PlayerOverlay->SetHealthBarPercent(Attributes->HealthPercent());
 	}
 }
+
+
 
 void AWarriorCharacter::SetStaminaBar()
 {
@@ -703,6 +714,8 @@ void AWarriorCharacter::OpenInventory()
 
 
 }
+
+
 
 void AWarriorCharacter::EquipItem(const FInventoryStruct& Item)
 {
@@ -1102,6 +1115,15 @@ void AWarriorCharacter::PlayHoldingAttackAnim()
 	}	
 }
 
+void AWarriorCharacter::PlayShieldBreakMontage()
+{
+	UAnimInstance* AnimInstance = GetMesh()->GetAnimInstance();
+	if (AnimInstance && ShieldBreakMontage)
+	{
+		AnimInstance->Montage_Play(ShieldBreakMontage);
+	}
+}
+
 void AWarriorCharacter::StaminaRegenerateTime()
 {
 	GetWorld()->GetTimerManager().SetTimer(StaminaRegenerateTimer, this, &AWarriorCharacter::StaminaRegen, 3, false);
@@ -1252,6 +1274,7 @@ void AWarriorCharacter::AddHealth(AHealthPoint* Health)
 		SetHealthBar();
 	}
 }
+
 
 void AWarriorCharacter::Noise()
 {

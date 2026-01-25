@@ -124,11 +124,30 @@ void AArenaGameMode::LoadGame()
 			NextWaveEnemyCount = SaveGameObject->EnemyNextWaveCount;
 		}
 
+		
 		int32 EquipItemsCount = WarriorCharacter->GetInventoryComponent()->EquippedItems.Num();
 		for (int32 i = 0; i < EquipItemsCount; i ++)
 		{
 			FInventoryStruct& EquipItems = WarriorCharacter->GetInventoryComponent()->EquippedItems[i];
-			WarriorCharacter->GetInventoryComponent()->EquipItem(EquipItems);
+			ABaseItem* SpawnedItem = GetWorld()->SpawnActor<ABaseItem>(EquipItems.ItemClass);
+			if (SpawnedItem)
+			{
+
+				SpawnedItem->Equip(WarriorCharacter->GetMesh(), SpawnedItem->ItemSocketName, this, WarriorCharacter);
+				if (SpawnedItem->ItemType == EItemTypes::Weapon)
+				{
+					AWeapon* BaseWeapon = Cast<AWeapon>(SpawnedItem);
+					WarriorCharacter->EquippedWeapon = BaseWeapon;
+					WarriorCharacter->SetCharacterStates(ECharacterStates::ECS_EquippedOnehand);
+					BaseWeapon->Owner = WarriorCharacter;
+
+				}
+
+				else if (SpawnedItem->Defense > 0)
+				{
+					Attributes->SetDefense(Attributes->GetDefense() + SpawnedItem->Defense);
+				}
+			}
 
 		}
 

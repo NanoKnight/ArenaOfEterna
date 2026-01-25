@@ -14,7 +14,8 @@ UENUM(BlueprintType)
 enum class EQuestType : uint8
 {
 	GoToLocation UMETA(DisplayName = "Go to Location"),
-	KillEnemies UMETA(DisplayName = "Kill Enemies")
+	KillEnemies UMETA(DisplayName = "Kill Enemies"),
+	PickupItem UMETA(DisplayName = "PickUpItem")
 
 
 };
@@ -36,6 +37,9 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Quests")
 	FString QuestDescription;
 
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	FString QuestItemName;
+
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Quests")
 	bool bIsQuestCompleted = false;
 
@@ -53,6 +57,7 @@ public:
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	int32 CurrentKillCount;
+
 
 
 	FQuestStruct();
