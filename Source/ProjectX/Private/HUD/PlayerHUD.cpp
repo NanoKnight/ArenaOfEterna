@@ -9,6 +9,7 @@
 void APlayerHUD::BeginPlay()
 {
 	Super::BeginPlay();
+	if (!CharacterHUDClass) return;
 	UWorld* World = GetWorld();
 	if (World)
 	{

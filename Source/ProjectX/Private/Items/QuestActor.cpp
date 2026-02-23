@@ -37,7 +37,7 @@ void AQuestActor::Tick(float DeltaTime)
 void AQuestActor::HiddenQuestTracker(bool TrackerState)
 {
 	
-		QuestTracker->SetVisibility(TrackerState);
+		//QuestTracker->SetVisibility(TrackerState);
 	
 }
 

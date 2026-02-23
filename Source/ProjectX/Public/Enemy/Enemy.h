@@ -20,6 +20,8 @@ class PROJECTX_API AEnemy : public ABaseCharacter, public ISkillHitInterface
 
 protected:
 
+
+	bool Chased;
 	// Called when the game starts or when spawned
 	virtual void BeginPlay() override;
 	void InitializeEnemy();
@@ -41,8 +43,9 @@ protected:
 	virtual void PlayHitSound(const FVector& ImpactPoint) ;
 	virtual void MoveToTarget(AActor* Target);
 
+	void MoveToRandomLocation();
 
-
+	FTimerHandle RandomMoveTimer;
 
 
 
@@ -73,7 +76,8 @@ public:
 	UPROPERTY(EditAnywhere,BlueprintReadonly)
 	EEnemyType EnemyType = EEnemyType::EET_Enemy;
 
-
+	UPROPERTY(Editanywhere)
+	bool IgnoreEnemyCount;
 
 
 
@@ -83,6 +87,7 @@ private:
 	void SpawnDefaultWeapon();
 	void CheckPatrolTarget();
 	void CheckCombatTarget();
+	void CheckCombatMusic();
 	void PatrolTimerFinished();
 	void HideHealthBar();
 	void ShowHealthBar();
@@ -116,6 +121,7 @@ private:
 	UPROPERTY(VisibleAnywhere)
 	UPawnSensingComponent* PawnSensing;
 
+	APawn* SeenPawnRef;
 	UPROPERTY(EditAnywhere)
 	TSubclassOf<class AWeapon> WeaponClass;
 

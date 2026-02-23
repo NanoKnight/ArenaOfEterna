@@ -40,6 +40,18 @@ public:
 	UFUNCTION()
 	void NotifyAnimationFinished();
 
+	UPROPERTY(meta = (BindWidgetAnim),Transient)
+	UWidgetAnimation* FirstSkillAnim;
+
+	UPROPERTY(meta = (BindWidgetAnim),Transient)
+	UWidgetAnimation* SecondSkillAnim;
+
+	UPROPERTY(meta = (BindWidgetAnim),Transient)
+	UWidgetAnimation* HoldingAttackAnim;
+
+	UPROPERTY(meta = (BindWidgetAnim),Transient)
+	UWidgetAnimation* NormalAttackAnim;
+
 	UPROPERTY(meta = (BindWidgetAnim), Transient)
 	UWidgetAnimation* QuestCompleteFadeIn;
 

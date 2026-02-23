@@ -42,8 +42,10 @@ public:
 	UPROPERTY(EditAnywhere)
 	TObjectPtr<UTexture2D> ImageIconAsset;
 
+	UPROPERTY(EditAnywhere,BlueprintReadWrite)
 	FInventoryStruct Item;
 
+	UPROPERTY()
 	ABaseItem* EquippedItemActor;
 
 	UPROPERTY()

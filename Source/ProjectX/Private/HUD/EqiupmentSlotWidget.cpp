@@ -30,6 +30,7 @@ bool UEqiupmentSlotWidget::NativeOnDrop(const FGeometry& InGeometry, const FDrag
 
 
 					Warrior->GetInventoryComponent()->UnEquipItem(EquippedItem, DraggedITem->EquippedItemActor);
+					
 					Warrior->GetInventoryComponent()->EquipItem(TempItem);
 					DraggedITem->ItemIcon->SetBrushFromSoftTexture(TempEqItem.ItemIcon);
 					DraggedITem->ItemName->SetText(FText::FromString(TempEqItem.ItemName));
@@ -62,12 +63,6 @@ bool UEqiupmentSlotWidget::NativeOnDrop(const FGeometry& InGeometry, const FDrag
 				{
 
 					Warrior->EquipItem(DraggedITem->Item);
-					if (Warrior->GetCurrentQuest().QuestItemName == DraggedITem->Item.ItemName)
-					{
-						Warrior->CompleteCurrentQuest();
-						UE_LOG(LogTemp,Warning,TEXT("quest completed"));
-
-					}
 					EquippedItem = DraggedITem->Item;
 					EquippedItemActor = DraggedITem->EquippedItemActor;
 					EquipmentIcon->SetBrushFromSoftTexture(DraggedITem->Item.ItemIcon);

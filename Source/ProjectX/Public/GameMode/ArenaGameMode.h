@@ -26,6 +26,8 @@ public:
 	AArenaGameMode();
 	void SaveGame();
 	void LoadGame();
+	void PlayCombatSound();
+	void StopCombatSound();
 	void RemoveEnemyFromWorld();
 	void RemoveItemFormWorld();
 	void IncrementEnemyAlive();
@@ -37,10 +39,15 @@ public:
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Category = "SaveGame")
 	TArray<FString> AddedItems;
+
+	UPROPERTY()
 	UAttributeComponent* Attributes;
 
 	UPROPERTY(VisibleAnywhere)
 	int32 EnemyAlive;
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadWrite)
+	int32 ChasedEnemies;
 
 	UPROPERTY(VisibleAnywhere)
      int32 NextWaveEnemyCount;
@@ -57,6 +64,13 @@ protected:
 	virtual void BeginPlay()override;
 	virtual void RespawnEnemyStart_Implementation() override;
 
+	UPROPERTY(EditAnywhere)
+	USoundBase* CombatSound;
+
+	UPROPERTY()
+	UAudioComponent* CombatAudioComponent;
+
+	bool IsCombatSoundPlaying;
 
 	class AEnemySpawner* EnemySpawner;
 

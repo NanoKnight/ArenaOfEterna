@@ -13,6 +13,7 @@
 #include"Items\Weapons\Weapon.h"
 #include"Items\Weapons\Shield.h"
 #include"Enemy\Enemy.h"
+#include "Enemy\Boss.h"
 #include"Components/AttributeComponent.h"
 #include "Animation/AnimMontage.h"
 #include"Interfaces\HitInterface.h"
@@ -60,10 +61,9 @@ AWarriorCharacter::AWarriorCharacter()
 	Sphere->SetupAttachment(GetRootComponent());
 	Sphere->OnComponentBeginOverlap.AddDynamic(this, &AWarriorCharacter::SphereCollisionBeginOverlap);
 	Sphere->OnComponentEndOverlap.AddDynamic(this, &AWarriorCharacter::SphereCollisionEndOverlap);
-
-
-
-
+	CombatAudioComponent = CreateDefaultSubobject<UAudioComponent>(TEXT("CombatAudio"));
+	CombatAudioComponent->bAutoActivate = false;
+	CombatAudioComponent->bAutoDestroy = false;
 }
 void AWarriorCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputComponent)
 {
@@ -99,7 +99,8 @@ void AWarriorCharacter::BeginPlay()
 	Super::BeginPlay();
 
 	
-
+	
+	
 
 	SpawnDefaultShield();
 	SpawnDefaultWeapon();
@@ -114,23 +115,25 @@ void AWarriorCharacter::BeginPlay()
 	if (QuestDataTable)
 	{
 		TArray<FName> RowNames = QuestDataTable->GetRowNames();
-		for (const FName& RowName : RowNames)
+		for (int32 i = CurrentQuestIndex; i < RowNames.Num(); i++)
 		{
-			FQuestStruct* Quest = QuestDataTable->FindRow<FQuestStruct>(RowName, "");
+			FQuestStruct* Quest = QuestDataTable->FindRow<FQuestStruct>(RowNames[i], "");
 			if (Quest)
 			{
 				ActiveQuests.Add(*Quest);
 				CurrentQuest = ActiveQuests[0];
+
 			}
 		}
          
 
-		if (ActiveQuests.IsValidIndex(0) && PlayerOverlay->GetQuestOverlay())
+		if (ActiveQuests.IsValidIndex(0) && PlayerOverlay &&PlayerOverlay->GetQuestOverlay())
 		{
-			  CurrentQuestIndex = 0;
-			  PlayerOverlay->GetQuestOverlay()->SetQuestText(
-				ActiveQuests[0].QuestName,
-				ActiveQuests[0].QuestDescription);
+			ActiveQuests.Num();
+			CurrentQuestIndex = 0;
+		    PlayerOverlay->GetQuestOverlay()->SetQuestText(
+			ActiveQuests[0].QuestName,
+			ActiveQuests[0].QuestDescription);
 		}
 		if (SpawnManager == nullptr)
 		{
@@ -224,6 +227,36 @@ void AWarriorCharacter::GetHit_Implementation(const FVector& ImpactPoint, AActor
 
 }
 
+void AWarriorCharacter::EnemyStartChasing()
+{
+
+	ChasedEnemies++;
+	
+		
+	if (CombatSound && !CombatAudioComponent->IsPlaying())
+	{
+	   UE_LOG(LogTemp, Warning, TEXT("this funciton called from interface"))			
+	   CombatAudioComponent = UGameplayStatics::SpawnSoundAttached(CombatSound, GetRootComponent());
+	   CombatAudioComponent->Play(10);
+	   CombatAudioComponent->SetVolumeMultiplier(0.2f);
+	   CombatSoundPlaying = true;
+
+	}
+
+}
+
+void AWarriorCharacter::EnemyStoppedChasing()
+{
+
+	ChasedEnemies--;
+	if (CombatSound && ChasedEnemies <= 0 && CombatAudioComponent->IsPlaying())
+	{
+		CombatAudioComponent->FadeOut(0.8f, 0.f);
+	}
+	UE_LOG(LogTemp, Warning, TEXT("this"))
+
+}
+
 
 void AWarriorCharacter::Jump()
 {
@@ -305,7 +338,7 @@ void AWarriorCharacter::CheckQuestProgress()
 
 
 
-		if (CurrentQuest.CurrentKillCount >= CurrentQuest.TargetKillCount)
+	  /*	if (CurrentQuest.CurrentKillCount >= CurrentQuest.TargetKillCount)
 		{
 
 
@@ -320,9 +353,11 @@ void AWarriorCharacter::CheckQuestProgress()
 			}
 			
 			
-			CompleteCurrentQuest();
 			
-		}
+		}*/
+
+		 CompleteCurrentQuest();
+
 
 
 	}
@@ -333,13 +368,34 @@ void AWarriorCharacter::StartNextQuest()
 {
 	if (QuestDataTable)
 	{
-		
-
 		static const FString ContextString(TEXT("Quest"));
 		FQuestStruct* NextQuest = QuestDataTable->FindRow<FQuestStruct>(NextQuestRowName, ContextString);
-		if (NextQuest)
-		{
+		
+		 if (NextQuest)
+		 {
 			CurrentQuest = *NextQuest;
+		
+			if (CurrentQuest.QuestType == EQuestType::PickupItem )
+			{
+				for (FInventoryStruct& ItemRef : InventoryComponent->InventoryItems)
+				{
+					if (ItemRef.ItemName == CurrentQuest.QuestItemName)
+					{
+						CompleteCurrentQuest();
+					}
+				}
+			}
+			 if (CurrentQuest.QuestType == EQuestType::PickupItem || CurrentQuest.QuestType == EQuestType::WearItem)
+			{
+				for (FInventoryStruct& ItemRef : InventoryComponent->EquippedItems)
+				{
+					if (ItemRef.ItemName == CurrentQuest.QuestItemName)
+					{
+						CompleteCurrentQuest();
+					}
+				}
+			}
+
 			if (PlayerOverlay)
 			{
 				PlayerOverlay->GetQuestOverlay()->SetQuestText(CurrentQuest.QuestName, CurrentQuest.QuestDescription);
@@ -362,6 +418,20 @@ void AWarriorCharacter::QuesstCompleteFadeOutAnim()
 bool AWarriorCharacter::HasEnoughStamina()
 {
 	return Attributes->GetStamina() > Attributes->GetStaminaCost();
+}
+
+void AWarriorCharacter::SetFalseIsSecondSkill()
+{
+	RageMode = false;
+}
+
+
+
+
+
+void AWarriorCharacter::SetFalseIsFirstSkillVar()
+{
+	IsFirstSkill = false;
 }
 
 
@@ -394,10 +464,12 @@ void AWarriorCharacter::StartShieldRegenerateTimer(float Time)
 
 void AWarriorCharacter::GetClosestEnemy()
 {
+	
     AEnemy* NewClosestEnemy = nullptr;
 	float MinDistance = FLT_MAX;
 	for (AEnemy* Enemy : EnemiesInRange)
 	{
+	
 		float Distance = FVector::Dist(this->GetActorLocation(), Enemy->GetActorLocation());
 		if (Distance < MinDistance)
 		{
@@ -407,7 +479,9 @@ void AWarriorCharacter::GetClosestEnemy()
 	}
 	if (CloseEnemy != NewClosestEnemy)
 	{
-		if (CloseEnemy) {
+		if (CloseEnemy) 
+		
+	    {
 
 			USkeletalMeshComponent* EnemyMesh = CloseEnemy->GetMesh();
 			if (EnemyMesh)
@@ -802,25 +876,29 @@ void AWarriorCharacter::EquipWeapon(AWeapon* Weapon)
 void AWarriorCharacter::Attack()
 {
 		Super::Attack();
-		bDidHoldingAttack = false;
+		bHoldingAttack = false;
+
 		AttackButtonStates = EAttackButtonState::EAB_Holding;
-		GetWorld()->GetTimerManager().SetTimer(AttackHoldingTimer, this, &AWarriorCharacter::PlayHoldingAttackAnim, 1.f, false);
+		GetWorld()->GetTimerManager().SetTimer(AttackHoldingTimer, this, &AWarriorCharacter::PlayHoldingAttackAnim, 0.5f, false);
 
 		
 }
 
 void AWarriorCharacter::AttackReleassed()
 {
-	if (bDidHoldingAttack)
+	if (bHoldingAttack)
 	{
 		return;
 	}
-
 	AttackButtonStates = EAttackButtonState::EAB_Releassed;
 	const bool bCanAttack = (ActionState == EActionState::EAS_Unoccupied && CharacterStates != ECharacterStates::ECS_UnEquipped);
 	if (bCanAttack)
 	{
 		WarriorAttackMontage();
+		if (PlayerOverlay)
+		{
+			PlayerOverlay->PlayAnimation(PlayerOverlay->NormalAttackAnim);
+		}
 		bAttackTimerOpen = true;
 		ActionState = EActionState::EAS_Attacking;
 	}
@@ -843,7 +921,14 @@ void AWarriorCharacter::UsingSkill()
 
 void AWarriorCharacter::FirstSkill()
 {
-	if (ActionState == EActionState::EAS_UsingSkill) return;
+	if (ActionState == EActionState::EAS_UsingSkill || IsFirstSkill == true) return;
+	IsFirstSkill = true;
+	 
+	if (PlayerOverlay)
+	{
+		PlayerOverlay->PlayAnimation(PlayerOverlay->FirstSkillAnim);
+	}
+
 	UAnimInstance* AnimInstance = GetMesh()->GetAnimInstance();
 	if (AnimInstance)
 	{
@@ -851,12 +936,18 @@ void AWarriorCharacter::FirstSkill()
 		AnimInstance->Montage_Play(FirstSkillMontage);
 		
 	}
+	GetWorld()->GetTimerManager().SetTimer(FirstSkillResetTimer,this,&AWarriorCharacter::SetFalseIsFirstSkillVar, 10, false);
+
 
 }
 
 void AWarriorCharacter::SecondSkill()
 {
-	if (ActionState == EActionState::EAS_UsingSkill) return;
+	if (ActionState == EActionState::EAS_UsingSkill || RageMode == true) return;
+	if (PlayerOverlay)
+	{
+		PlayerOverlay->PlayAnimation(PlayerOverlay->SecondSkillAnim);
+	}
 	UAnimInstance* AnimInstance = GetMesh()->GetAnimInstance();
 	RageMode = true;
 	UsingSkill();
@@ -868,7 +959,7 @@ void AWarriorCharacter::SecondSkill()
 	EquippedWeapon->SetDamage(EquippedWeapon->GetDamage() * 5);
 	GetCharacterMovement()->MaxWalkSpeed = 800.f;
 	GetWorld()->GetTimerManager().SetTimer(SecondSkillTimer, this, &AWarriorCharacter::DefaultVar, Ragetime, false);
-
+	GetWorld()->GetTimerManager().SetTimer(SecondSkillResetTimer, this, &AWarriorCharacter::SetFalseIsSecondSkill, 120, false);
 }
 
 
@@ -934,7 +1025,7 @@ void AWarriorCharacter::CompleteCurrentQuest()
 
 	if (!CurrentQuest.QuestName.IsEmpty()) 
 	{
-		
+		CurrentQuestIndex += 1;
 		FString CurrentRowName = NextQuestRowName.ToString();
 		FString BaseName = "Quest";
 		int32 QuestNumber = 2;
@@ -945,10 +1036,16 @@ void AWarriorCharacter::CompleteCurrentQuest()
 		}
 		NextQuestRowName = FName(FString::Printf(TEXT("%s_%d"), *BaseName, QuestNumber));
 		StartNextQuest();
+		if (CurrentQuest.QuestType == EQuestType::KillEnemies || CurrentQuest.QuestType == EQuestType::DestroyBoss)
+		{
+			SpawnEnemy(CurrentQuest.TargetKillCount,CurrentQuest.TargetLocation);
+		}
+
 		if (PlayerOverlay->GetQuestCompleteWidget())
 		{
 		PlayerOverlay->GetQuestCompleteWidget()->SetQuestText(CurrentQuest.QuestName);
 		PlayerOverlay->GetQuestCompleteWidget()->PlayFadeInAnimation();
+		
 
 		PlayerOverlay->PlayAnimation(PlayerOverlay->QuestCompleteFadeIn);
 		GetWorld()->GetTimerManager().SetTimer(QuestCompleteUITimer, this, &AWarriorCharacter::QuesstCompleteFadeOutAnim, 3, false);		
@@ -958,16 +1055,67 @@ void AWarriorCharacter::CompleteCurrentQuest()
 	if (QuestActorClass && !QuestActor)
 	{
 		QuestActor = GetWorld()->SpawnActor<AQuestActor>(QuestActorClass, CurrentQuest.TargetLocation, FRotator::ZeroRotator);
-	
-	
 	}
-	else
+	else if(QuestActor)
 	{
 		QuestActor->SetActorLocation(CurrentQuest.TargetLocation);
 		QuestActor->HiddenQuestTracker(true);
 
 	}
 
+}
+
+void AWarriorCharacter::SpawnEnemy(int32 NumbwerOfEnemies, FVector EnemyLocation)
+{
+
+
+	
+	FVector SpawnLocation = EnemyLocation;
+
+	float offset = 200.f;
+	float Radius = 200;
+	float AngelStep = 160.f / NumbwerOfEnemies;
+
+	
+	if (CurrentQuest.QuestType == EQuestType::KillEnemies)
+	{
+		for (int32 i = 0; i < NumbwerOfEnemies; i++)
+		{
+			float Angle = i * AngelStep;
+			float x = SpawnLocation.X + Radius * FMath::Cos(FMath::DegreesToRadians(Angle));
+			float y = SpawnLocation.Y + Radius * FMath::Sin(FMath::DegreesToRadians(Angle));
+
+			FVector NewspawnLocation(x, y, SpawnLocation.Z);
+			FVector NearestSpawnerLoc = GetActorLocation();
+
+			if (CurrentQuest.EnemyClass)
+			{
+				AEnemy* SpawnedEnemy = GetWorld()->SpawnActor<AEnemy>(CurrentQuest.EnemyClass, NewspawnLocation, FRotator::ZeroRotator);
+
+			}
+
+		}
+	}
+	
+	 if (CurrentQuest.QuestType == EQuestType::DestroyBoss)
+	{
+
+		for (int32 i = 0; i < NumbwerOfEnemies; i++)
+		{
+			float Angle = i * AngelStep;
+			float x = SpawnLocation.X + Radius;
+			float y = SpawnLocation.Y + Radius;
+
+			FVector NewspawnLocation(x, y, SpawnLocation.Z);
+			FVector NearestSpawnerLoc = GetActorLocation();
+
+
+			ABoss* SpawnedEnemy = GetWorld()->SpawnActor<ABoss>(CurrentQuest.BossClass, NewspawnLocation, FRotator::ZeroRotator);
+
+		}
+
+	 }
+	
 }
 
 void AWarriorCharacter::UsetPot()
@@ -1096,7 +1244,6 @@ void AWarriorCharacter::DefaultVar()
 {
 	EquippedWeapon->SetDamage(DefaultEquippedWeaponDamage);
 	GetCharacterMovement()->MaxWalkSpeed = CharacterRunSpeed;
-	RageMode = false;
 }
 
 void AWarriorCharacter::ChangeAttackType()
@@ -1108,8 +1255,16 @@ void AWarriorCharacter::PlayHoldingAttackAnim()
 {
 	if (AttackButtonStates == EAttackButtonState::EAB_Holding)
 	{
+		bHoldingAttack = true;
+
+		if (PlayerOverlay)
+		{
+			PlayerOverlay->PlayAnimation(PlayerOverlay->HoldingAttackAnim);
+		}
+
 		PlayHoldingAttackMontage();
-		bDidHoldingAttack = true;
+		
+
 		bAttackTimerOpen = true;
 		
 	}	
@@ -1278,7 +1433,7 @@ void AWarriorCharacter::AddHealth(AHealthPoint* Health)
 
 void AWarriorCharacter::Noise()
 {
-	NoiseEmitter->MakeNoise(this, 0.5f, GetActorLocation());
+	NoiseEmitter->MakeNoise(this, 1.f, GetActorLocation());
 
 }
 
@@ -1316,12 +1471,6 @@ void AWarriorCharacter::Tick(float DeltaTime)
 	ResetCameraPosition();
 	CheckQuestProgress();
 	CheckShieldRotation();
-
-
-
-
-	
-
 
 }
 void AWarriorCharacter::CheckShieldRotation()

@@ -17,6 +17,9 @@ class PROJECTX_API UEternaSaveGame : public USaveGame
 		
     UPROPERTY(EditDefaultsOnly)
 	FVector PlayerLocation;
+
+	UPROPERTY(EditDefaultsOnly)
+	int32 CurrentQuestIndex;
 	
 	UPROPERTY(EditdefaultsOnly)
 	float Health;
