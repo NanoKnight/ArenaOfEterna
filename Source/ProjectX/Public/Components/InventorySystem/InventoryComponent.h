@@ -36,6 +36,9 @@ protected:
 	UPROPERTY();
 	FRotator CharacterRot;
 
+	UPROPERTY(EditAnywhere)
+	FVector PreviewLoc;
+
 public:	
 	// Called every frame
 	virtual void TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction) override;
@@ -105,8 +108,6 @@ public:
 	UPROPERTY()
 	UInventoryWidget* InventoryWidget;
 
-	UPROPERTY(EditAnywhere)
-	TSubclassOf<APreviewCharacter> PreviewClass;
 private:
 	void CreateInventoryWidget(APlayerController* Controller);
 

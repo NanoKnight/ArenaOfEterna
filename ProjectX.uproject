@@ -37,7 +37,6 @@
 		}
 	],
 	"TargetPlatforms": [
-		"Android",
-		"HoloLens"
+		"Windows"
 	]
 }

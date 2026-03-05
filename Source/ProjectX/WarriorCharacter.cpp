@@ -232,16 +232,18 @@ void AWarriorCharacter::EnemyStartChasing()
 
 	ChasedEnemies++;
 	
-		
-	if (CombatSound && !CombatAudioComponent->IsPlaying())
+	if (CombatSound)
 	{
-	   UE_LOG(LogTemp, Warning, TEXT("this funciton called from interface"))			
-	   CombatAudioComponent = UGameplayStatics::SpawnSoundAttached(CombatSound, GetRootComponent());
-	   CombatAudioComponent->Play(10);
-	   CombatAudioComponent->SetVolumeMultiplier(0.2f);
-	   CombatSoundPlaying = true;
-
+		if (CombatAudioComponent && !CombatAudioComponent->IsPlaying())
+		{
+			UE_LOG(LogTemp, Warning, TEXT("this funciton called from interface"))
+				CombatAudioComponent = UGameplayStatics::SpawnSoundAttached(CombatSound, GetRootComponent());
+			CombatAudioComponent->Play(10);
+			CombatAudioComponent->SetVolumeMultiplier(0.2f);
+			CombatSoundPlaying = true;
+		}
 	}
+	
 
 }
 
@@ -335,6 +337,7 @@ void AWarriorCharacter::CheckQuestProgress()
 			QuestActor->HiddenQuestTracker(false);
 		 }
 
+		 //CompleteCurrentQuest();
 
 
 
@@ -356,7 +359,6 @@ void AWarriorCharacter::CheckQuestProgress()
 			
 		}*/
 
-		 CompleteCurrentQuest();
 
 
 

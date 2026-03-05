@@ -270,6 +270,7 @@ void UInventoryComponent::EquipItem(const FInventoryStruct& ItemToEquip)
 				}
 			}
 
+			
 			if (WarriorCharacter->GetCurrentQuest().QuestItemName == ItemToEquip.ItemName)
 			{
 				WarriorCharacter->CompleteCurrentQuest();
@@ -465,9 +466,6 @@ void UInventoryComponent::OpenInventory()
 	UWorld* World = GetOwner()->GetWorld();
 	if (World)
 	{
-		
-			
-		
 		APlayerController* Controller = World->GetFirstPlayerController();
 		if (InventoryWidgetClass && Controller)
 		{
@@ -509,17 +507,17 @@ void UInventoryComponent::ToggleInventory(APlayerController* Controller)
 
 			if (GetOwner()->ActorHasTag("WarriorCharacter"))
 			{
-				GetOwner()->SetActorLocation(FVector(11500.000000,-2200.000000, 1160.000000));
-				GetOwner()->SetActorRotation(FRotator(0, 90, 0));
-
-				
+				GetOwner()->SetActorLocation(PreviewLoc);
+				GetOwner()->SetActorRotation(FRotator(0, -90, 0));				
 			}
+
 			InventoryWidget->StoredSlotIndices = SavedSlotIndices;
 			InventoryWidget->UpdateInventoryDisplay(InventoryItems);
-
 			InventoryWidget->SetVisibility(ESlateVisibility::Visible);
 			
+
 			Controller->bShowMouseCursor = true;
+
 			FInputModeUIOnly InputMode;
 			InputMode.SetWidgetToFocus(InventoryWidget->TakeWidget());
 			Controller->SetInputMode(InputMode);

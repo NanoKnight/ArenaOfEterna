@@ -24,7 +24,10 @@ class PROJECTX_API AArenaGameMode : public AGameModeBase, public IRespawnEnemyIn
 
 public:
 	AArenaGameMode();
+
+	UFUNCTION(BlueprintCallable)
 	void SaveGame();
+
 	void LoadGame();
 	void PlayCombatSound();
 	void StopCombatSound();

@@ -718,7 +718,7 @@ void AEnemy::MoveToTarget(AActor* Target)
 void AEnemy::MoveToRandomLocation()
 {
 
-	/*
+	
 	if (!EnemyController) return;
 	if (PatrolTarget)return;
 	if (CombatTarget)return;
@@ -742,7 +742,7 @@ void AEnemy::MoveToRandomLocation()
 
 		}
 	}
-	*/
+	
 
 	
 
