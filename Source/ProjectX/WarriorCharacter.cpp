@@ -251,7 +251,7 @@ void AWarriorCharacter::EnemyStoppedChasing()
 {
 
 	ChasedEnemies--;
-	if (CombatSound && ChasedEnemies <= 0 && CombatAudioComponent->IsPlaying())
+	if (CombatSound && ChasedEnemies <= 0 && CombatAudioComponent && CombatAudioComponent->IsPlaying())
 	{
 		CombatAudioComponent->FadeOut(0.8f, 0.f);
 	}
@@ -336,8 +336,14 @@ void AWarriorCharacter::CheckQuestProgress()
 		 {
 			QuestActor->HiddenQuestTracker(false);
 		 }
+		 
+		 if (CurrentQuest.CurrentKillCount >= CurrentQuest.TargetKillCount) 
+		 {
+			 CompleteCurrentQuest();
 
-		 //CompleteCurrentQuest();
+		}
+
+
 
 
 

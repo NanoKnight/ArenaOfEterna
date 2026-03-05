@@ -59,6 +59,13 @@ void ABoss::Die()
 		BossOverlay = nullptr;
 	}
 
+	if (OptionalPortalClass)
+	{
+
+		UWorld* World = GetWorld();
+		AActor* Portal = World->SpawnActor<AActor>(OptionalPortalClass, GetActorLocation(), GetActorRotation());
+	}
+
 }
 
 void ABoss::SetBossHealthBar()

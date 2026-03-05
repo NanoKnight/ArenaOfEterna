@@ -79,7 +79,8 @@ class PROJECTX_API ABoss : public AEnemy , public ICombatStateInterFace
 		virtual void Tick(float DeltaTime) override;
 		virtual void SetEnemyState_Implementation(EEnemyState NewState) override;
 
-
+		UPROPERTY(EditAnywhere)
+		TSubclassOf<AActor> OptionalPortalClass;
 
 	 
 
