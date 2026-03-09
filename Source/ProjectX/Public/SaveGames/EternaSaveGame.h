@@ -14,7 +14,10 @@ class PROJECTX_API UEternaSaveGame : public USaveGame
 {
 	GENERATED_BODY()
 	public:
-		
+	
+	UPROPERTY(EditAnywhere,BlueprintReadWrite)
+	FString LevelName;
+
     UPROPERTY(EditDefaultsOnly)
 	FVector PlayerLocation;
 

@@ -59,13 +59,17 @@ void ABoss::Die()
 		BossOverlay = nullptr;
 	}
 
+	GetWorld()->GetTimerManager().SetTimer(PortalTimer, this, &ABoss::SpawnPortal, 2.f);
+}
+
+void ABoss::SpawnPortal()
+{
 	if (OptionalPortalClass)
 	{
-
+		FRotator Rot(0, 0, 0);
 		UWorld* World = GetWorld();
-		AActor* Portal = World->SpawnActor<AActor>(OptionalPortalClass, GetActorLocation(), GetActorRotation());
+		AActor* Portal = World->SpawnActor<AActor>(OptionalPortalClass, OptionalPortalLocation, Rot);
 	}
-
 }
 
 void ABoss::SetBossHealthBar()
