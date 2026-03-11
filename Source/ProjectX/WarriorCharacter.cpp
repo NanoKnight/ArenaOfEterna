@@ -325,7 +325,7 @@ void AWarriorCharacter::CheckQuestProgress()
 		}
 
 	}
-	 if(CurrentQuest.QuestType == EQuestType::KillEnemies)
+	 if(CurrentQuest.QuestType == EQuestType::KillEnemies || CurrentQuest.QuestType == EQuestType::DestroyBoss)
 	{
 
 

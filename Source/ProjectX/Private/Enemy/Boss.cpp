@@ -58,6 +58,7 @@ void ABoss::Die()
 		BossOverlay->RemoveFromParent();
 		BossOverlay = nullptr;
 	}
+	
 
 	GetWorld()->GetTimerManager().SetTimer(PortalTimer, this, &ABoss::SpawnPortal, 2.f);
 }

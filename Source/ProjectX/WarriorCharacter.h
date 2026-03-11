@@ -108,7 +108,7 @@ public:
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Quest")
 	FQuestStruct CurrentQuest;
 
-	UPROPERTY(BlueprintReadWrite)
+	UPROPERTY(EditAnywhere,BlueprintReadWrite)
 	int32 CurrentQuestIndex;
 	 
 	FName CurrentQuestRowName;

@@ -193,6 +193,11 @@ void AEnemy::IncreaseQuestKillCount()
 		WarriorCharacter->CurrentQuest.CurrentKillCount++;
 	}
 
+	if (WarriorCharacter && !InfiniteEnemy && WarriorCharacter->CurrentQuest.QuestType == EQuestType::DestroyBoss)
+	{
+
+		WarriorCharacter->CurrentQuest.CurrentKillCount++;
+	}
 
 }
 
