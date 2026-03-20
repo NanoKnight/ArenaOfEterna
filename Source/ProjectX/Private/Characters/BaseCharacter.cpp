@@ -388,6 +388,20 @@ void ABaseCharacter::SpawnShieldHitParticles(const FVector& ImpactPoint)
 			ImpactPoint
 		);
 	}
+	else if (ShieldNiagara && GetWorld())
+	{
+
+
+		UNiagaraComponent* NiagaraComp = UNiagaraFunctionLibrary::SpawnSystemAttached(
+			ShieldNiagara,
+			GetRootComponent(),
+			NAME_None,
+			FVector::ZeroVector,
+			FRotator::ZeroRotator,
+			EAttachLocation::KeepRelativeOffset,
+			true
+		);
+	}
 }
 
 void ABaseCharacter::HandleDamage(float DamageAmount)

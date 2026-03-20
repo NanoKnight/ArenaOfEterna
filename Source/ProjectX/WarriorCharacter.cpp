@@ -5,6 +5,9 @@
 #include "GameFramework/SpringArmComponent.h"
 #include "Camera/CameraComponent.h"
 #include "Kismet/GameplayStatics.h"
+#include"Kismet/KismetSystemLibrary.h"
+#include "NiagaraFunctionLibrary.h"
+#include"NiagaraComponent.h"
 #include "GameFramework/CharacterMovementComponent.h"
 #include "Components\SphereComponent.h"
 #include "Components/PawnNoiseEmitterComponent.h"
@@ -236,8 +239,7 @@ void AWarriorCharacter::EnemyStartChasing()
 	{
 		if (CombatAudioComponent && !CombatAudioComponent->IsPlaying())
 		{
-			UE_LOG(LogTemp, Warning, TEXT("this funciton called from interface"))
-				CombatAudioComponent = UGameplayStatics::SpawnSoundAttached(CombatSound, GetRootComponent());
+			CombatAudioComponent = UGameplayStatics::SpawnSoundAttached(CombatSound, GetRootComponent());
 			CombatAudioComponent->Play(10);
 			CombatAudioComponent->SetVolumeMultiplier(0.2f);
 			CombatSoundPlaying = true;
@@ -364,10 +366,6 @@ void AWarriorCharacter::CheckQuestProgress()
 			
 			
 		}*/
-
-
-
-
 	}
 
 }
@@ -824,7 +822,12 @@ void AWarriorCharacter::Die()
 {
 	Super::Die();
 	ActionState = EActionState::EAS_Dead;
+	GetWorld()->GetTimerManager().SetTimer(DeathWidgetTimer, this, &AWarriorCharacter::CreateDeathWidget, 2.f, false);
 
+}
+
+void AWarriorCharacter::CreateDeathWidget()
+{
 	if (DeathWidgetClass)
 	{
 		DeathWidgetInstance = CreateWidget<UUserWidget>(GetWorld(), DeathWidgetClass);
@@ -836,18 +839,16 @@ void AWarriorCharacter::Die()
 
 			if (PlayerController)
 			{
-				
-				PlayerController->bShowMouseCursor = true;
 
+				PlayerController->bShowMouseCursor = true;
 				FInputModeUIOnly InputMode;
 				InputMode.SetWidgetToFocus(DeathWidgetInstance->TakeWidget());
 				PlayerController->SetInputMode(InputMode);
+				PlayerController->Pause();
 			}
 
 		}
 	}
-	
-
 }
 
 void AWarriorCharacter::DisArm()
@@ -952,6 +953,8 @@ void AWarriorCharacter::FirstSkill()
 void AWarriorCharacter::SecondSkill()
 {
 	if (ActionState == EActionState::EAS_UsingSkill || RageMode == true) return;
+	if (!WeaponClass)return;
+
 	if (PlayerOverlay)
 	{
 		PlayerOverlay->PlayAnimation(PlayerOverlay->SecondSkillAnim);
@@ -1137,6 +1140,46 @@ void AWarriorCharacter::UsetPot()
 			ItemL.StackCounter -= 1;
 			GetAttributesComponent()->AddHealth(Attributes->GetPotHealth());
 			InitializePlayerOverlay();
+			
+			if (HealthPotEffect && GetWorld())
+			{
+				if (HealthPotionSound)
+				{
+					UGameplayStatics::PlaySoundAtLocation(this, HealthPotionSound, GetActorLocation());
+				}
+			
+
+				UNiagaraComponent* NiagaraComp = UNiagaraFunctionLibrary::SpawnSystemAttached(
+					HealthPotEffect,
+					GetRootComponent(),
+					NAME_None,
+					FVector::ZeroVector,
+					FRotator::ZeroRotator,
+					EAttachLocation::KeepRelativeOffset,
+					true
+				);
+
+				if (NiagaraComp)
+				{
+					NiagaraComp->SetAutoDestroy(true);
+					FTimerHandle TimerHandle;
+					GetWorld()->GetTimerManager().SetTimer(
+						TimerHandle,
+						[NiagaraComp]()
+						{
+							if (NiagaraComp)
+							{
+								NiagaraComp->DestroyComponent();
+							}
+						},
+						1.0f,
+						false
+					);
+				}
+
+
+				
+			}
 
 		}
 		if (ItemL.ItemTypes == EItemTypes::Pot && ItemL.StackCounter <= 0)

@@ -121,6 +121,9 @@ private:
 
 	UPROPERTY(EditAnywhere, Category = VFX)
 	UParticleSystem* ShieldParticles;
+	
+	UPROPERTY(EditAnywhere,Category = VFX)
+	UNiagaraSystem* ShieldNiagara;
 
 	UPROPERTY(EditDefaultsOnly, Category = Montages)
 	UAnimMontage* AttackMontage;

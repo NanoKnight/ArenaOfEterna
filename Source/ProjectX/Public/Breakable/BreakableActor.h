@@ -33,14 +33,16 @@ protected:
 	class UCapsuleComponent* Capsule;
 
 
+	UPROPERTY(BlueprintReadWrite)
+	bool bBroken = false;
+
 private:
 
 
 	UPROPERTY(EditAnywhere, Category = "BreakableProperties")
 	TArray<TSubclassOf<class ATreasure>> TreasureClasses;
 
-	
-	bool bBroken = false;
+
 
 
 };

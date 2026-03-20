@@ -116,7 +116,6 @@ void AEnemy::Die()
 	{
 		AEnemySpawner* SpawnerActor = Cast<AEnemySpawner>(Actor);
 		SpawnerActor->OnEnemyKilled();
-		GEngine->AddOnScreenDebugMessage(-1, 3.f, FColor::Cyan, FString::Printf(TEXT("EnemyKilled")));
 		FTimerDelegate TimerDelegate;
 		TimerDelegate.BindUFunction(this, FName("RespawnInfiniteEnemy"), SpawnerActor);
 		GetWorld()->GetTimerManager().SetTimer(RespawnInfiniteEnemyTimer, TimerDelegate, 3.f, false);
@@ -479,8 +478,8 @@ void AEnemy::SkillHit(const FVector& ImpactPoint, AActor* Hitter)
 	SetWeaponCollisionEnabled(ECollisionEnabled::NoCollision);
 	PlayHitSound(ImpactPoint);
 	StopAttackMontage();
-	GEngine->AddOnScreenDebugMessage(-1, 3.f, FColor::Cyan, FString::Printf(TEXT("skill hit")));
-	
+
+
 	if (EnemyType == EEnemyType::EET_Boss)	DirectionalHit(Hitter->GetActorLocation());	
 	if (EnemyType == EEnemyType::EET_Enemy) EnemyState = EEnemyState::EAS_Stun;
 

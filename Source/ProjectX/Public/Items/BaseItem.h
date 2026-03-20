@@ -77,9 +77,6 @@ protected:
 	UPROPERTY(VisibleAnywhere)
 	class UNiagaraComponent* ItemEffect;
 
-
-
-
 	UPROPERTY(VisibleAnywhere)
 	TSubclassOf<UUserWidget> WidgetClass;
 

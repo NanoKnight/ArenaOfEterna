@@ -178,14 +178,22 @@ protected:
 	FTimerHandle StaminaRegenerateTimer;
 	FTimerHandle SecondSkillTimer;
 	FTimerHandle AttackTypeCheckTimer;
+	FTimerHandle DeathWidgetTimer;
+
 	FTimerHandle AttackHoldingTimer;
 	FTimerHandle QuestCompleteUITimer;
 	FTimerHandle ItemTextAnimTimer;
 	FTimerHandle FirstSkillResetTimer;
 	FTimerHandle SecondSkillResetTimer;
 
+	UPROPERTY(EditAnywhere, Category = "VFX")
+	UNiagaraSystem* HealthPotEffect;
+
 	UPROPERTY(EditAnywhere)
 	USoundBase* CombatSound;
+
+	UPROPERTY(EditAnywhere,Category = "Sound")
+	USoundBase* HealthPotionSound;
 
 	UPROPERTY()
 	UAudioComponent* CombatAudioComponent;
@@ -302,6 +310,7 @@ private:
 	void QuesstCompleteFadeOutAnim();
 	void SetFalseIsFirstSkillVar();
 	void SetFalseIsSecondSkill();
+	void CreateDeathWidget();
 	bool IsUnoccupied();
 	bool HasEnoughStamina();
 	

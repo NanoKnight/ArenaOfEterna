@@ -68,7 +68,7 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite,meta = (EditCondition = "ItemTypes != EItemTypes::Weapon && ItemType != EItemTypes::Pot", EditConditionHides))
 	float Defense;
 
-	UPROPERTY(EditAnywhere, meta = (EditCondition = "ItemTypes == EItemTypes::Pot", EditConditionHides))
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, meta = (EditCondition = "ItemTypes == EItemTypes::Pot", EditConditionHides))
 	int32 StackCounter = 1;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)

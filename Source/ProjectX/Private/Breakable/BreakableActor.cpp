@@ -28,12 +28,12 @@ ABreakableActor::ABreakableActor()
 void ABreakableActor::GetHit_Implementation(const FVector& ImpactPoint,AActor* Hitter)
 {
 	if (bBroken) return;
+	GeometryCollection->SetSimulatePhysics(true);
 	bBroken = true;
 	UWorld* World = GetWorld();
 	if (World && TreasureClasses.Num() > 0 )
 	{
 		FVector Location = GetActorLocation();
-		//Location.Z += 75;
 
 		const int32 Selection = FMath::RandRange(0, TreasureClasses.Num() - 1);
 

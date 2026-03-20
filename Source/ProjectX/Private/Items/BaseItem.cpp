@@ -111,9 +111,13 @@ void ABaseItem::PickUp(AWarriorCharacter* WarriorCharacter)
 
 		if (Item.ItemTypes == EItemTypes::Pot)
 		{
-			Item.StackCounter += 1;
-			WarriorCharacter->PlayItemPickupNameAnim(ItemName);
-			this->Destroy();
+			if (ItemType == EItemTypes::Pot)
+			{
+				Item.StackCounter += 1;
+				WarriorCharacter->PlayItemPickupNameAnim(ItemName);
+				this->Destroy();
+			}
+			
 			if (ItemType == EItemTypes::Pot) return;
 		
 		}
