@@ -92,6 +92,10 @@ public:
 	void AddHealth(float HealthAmmount);
 
 
+	UPROPERTY(BlueprintReadWrite)
+	int32 PotStack;
+
+
 	/*   GETTER    */
 	FORCEINLINE float GetHealth() const { return Health; }
 	FORCEINLINE float GetPotHealth() const { return PotHealthValue; }
