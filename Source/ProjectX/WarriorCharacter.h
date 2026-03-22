@@ -255,6 +255,14 @@ protected:
 	UFUNCTION()
 	void SphereCollisionEndOverlap(UPrimitiveComponent* OverlappedComp, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex);
 
+	UFUNCTION()
+	void EnemyDetectionCollisionBeginOverlap(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult);
+
+	UFUNCTION()
+	void EnemyDetectionCollisionEndOverlap(UPrimitiveComponent* OverlappedComp, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex);
+
+
+
 	virtual void Die() override;
 
 	UPROPERTY()
@@ -266,7 +274,8 @@ protected:
 	UPROPERTY(BlueprintReadWrite)
 	AEnemy* CloseEnemy;
 
-	
+	UPROPERTY(EditAnywhere)
+	TArray<AEnemy*> NearbyEnemies;
 
 
 	UPROPERTY(EditAnywhere, Category = "Settings")
@@ -311,6 +320,7 @@ private:
 	void SetFalseIsFirstSkillVar();
 	void SetFalseIsSecondSkill();
 	void CreateDeathWidget();
+	void CombatSoundFadeOut();
 	bool IsUnoccupied();
 	bool HasEnoughStamina();
 	
@@ -325,6 +335,9 @@ private:
 
 	UPROPERTY(EditDefaultsOnly)
 	USphereComponent* Sphere;
+
+	UPROPERTY(EditDefaultsOnly)
+	USphereComponent* EnemyDetectionSphere;
 
 	UPROPERTY(EditAnywhere)
 	UPawnNoiseEmitterComponent* NoiseEmitter;

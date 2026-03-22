@@ -60,10 +60,16 @@ AWarriorCharacter::AWarriorCharacter()
 	ViewCamera = CreateDefaultSubobject<UCameraComponent>(TEXT("ViewCamera"));
 	ViewCamera->SetupAttachment(CameraBoom);
 	Sphere = CreateDefaultSubobject<USphereComponent>(TEXT("Sphere"));
+	EnemyDetectionSphere = CreateDefaultSubobject<USphereComponent>(TEXT("EnemyDetectionSphere"));
 	NoiseEmitter = CreateDefaultSubobject<UPawnNoiseEmitterComponent>(TEXT("NoiseEmitter"));
 	Sphere->SetupAttachment(GetRootComponent());
+	EnemyDetectionSphere->SetupAttachment(GetRootComponent());
+	EnemyDetectionSphere->SetGenerateOverlapEvents(true);
 	Sphere->OnComponentBeginOverlap.AddDynamic(this, &AWarriorCharacter::SphereCollisionBeginOverlap);
 	Sphere->OnComponentEndOverlap.AddDynamic(this, &AWarriorCharacter::SphereCollisionEndOverlap);
+	EnemyDetectionSphere->OnComponentBeginOverlap.AddDynamic(this, &AWarriorCharacter::EnemyDetectionCollisionBeginOverlap);
+	EnemyDetectionSphere->OnComponentEndOverlap.AddDynamic(this, &AWarriorCharacter::EnemyDetectionCollisionEndOverlap);
+
 	CombatAudioComponent = CreateDefaultSubobject<UAudioComponent>(TEXT("CombatAudio"));
 	CombatAudioComponent->bAutoActivate = false;
 	CombatAudioComponent->bAutoDestroy = false;
@@ -133,7 +139,6 @@ void AWarriorCharacter::BeginPlay()
 		if (ActiveQuests.IsValidIndex(0) && PlayerOverlay &&PlayerOverlay->GetQuestOverlay())
 		{
 			ActiveQuests.Num();
-			CurrentQuestIndex = 0;
 		    PlayerOverlay->GetQuestOverlay()->SetQuestText(
 			ActiveQuests[0].QuestName,
 			ActiveQuests[0].QuestDescription);
@@ -232,18 +237,25 @@ void AWarriorCharacter::GetHit_Implementation(const FVector& ImpactPoint, AActor
 
 void AWarriorCharacter::EnemyStartChasing()
 {
-
-	ChasedEnemies++;
+	if(!CombatAudioComponent) return;
 	
 	if (CombatSound)
 	{
-		if (CombatAudioComponent && !CombatAudioComponent->IsPlaying())
+		if (!CombatAudioComponent->IsPlaying())
 		{
 			CombatAudioComponent = UGameplayStatics::SpawnSoundAttached(CombatSound, GetRootComponent());
 			CombatAudioComponent->Play(10);
-			CombatAudioComponent->SetVolumeMultiplier(0.2f);
+			CombatAudioComponent->SetVolumeMultiplier(0.5f);
 			CombatSoundPlaying = true;
 		}
+		if (CombatAudioComponent->IsPlaying() && ChasedEnemies == 0)
+		{
+			CombatAudioComponent->SetVolumeMultiplier(0.5f);
+	    }
+	    
+		ChasedEnemies++;
+
+		
 	}
 	
 
@@ -253,11 +265,33 @@ void AWarriorCharacter::EnemyStoppedChasing()
 {
 
 	ChasedEnemies--;
+	TArray<AActor*> OverlappingActors;
+	
+
 	if (CombatSound && ChasedEnemies <= 0 && CombatAudioComponent && CombatAudioComponent->IsPlaying())
 	{
-		CombatAudioComponent->FadeOut(0.8f, 0.f);
+		CombatAudioComponent->SetVolumeMultiplier(0.1);
 	}
-	UE_LOG(LogTemp, Warning, TEXT("this"))
+
+
+	/*if (NearbyEnemies.IsEmpty())
+	{
+		CombatAudioComponent->FadeOut(0.8f, 0.2f);
+
+	}*/
+	
+	/*EnemyDetectionSphere->GetOverlappingActors(OverlappingActors, AEnemy::StaticClass());
+	for (AActor* Actor : OverlappingActors)
+	{
+		AEnemy* Enemy = Cast<AEnemy>(Actor);
+		if (Enemy)
+		{
+			NearbyEnemies.AddUnique(Enemy);
+		}
+		
+	}*/
+
+
 
 }
 
@@ -471,6 +505,9 @@ void AWarriorCharacter::StartShieldRegenerateTimer(float Time)
 void AWarriorCharacter::GetClosestEnemy()
 {
 	
+     	
+
+
     AEnemy* NewClosestEnemy = nullptr;
 	float MinDistance = FLT_MAX;
 	for (AEnemy* Enemy : EnemiesInRange)
@@ -826,6 +863,8 @@ void AWarriorCharacter::Die()
 
 }
 
+
+
 void AWarriorCharacter::CreateDeathWidget()
 {
 	if (DeathWidgetClass)
@@ -848,6 +887,14 @@ void AWarriorCharacter::CreateDeathWidget()
 			}
 
 		}
+	}
+}
+
+void AWarriorCharacter::CombatSoundFadeOut()
+{
+	if (NearbyEnemies.IsEmpty())
+	{
+		CombatAudioComponent->FadeOut(0.8f, 0.2f);
 	}
 }
 
@@ -1426,6 +1473,44 @@ void AWarriorCharacter::SphereCollisionEndOverlap(UPrimitiveComponent* Overlappe
 	}
 
 }
+
+void AWarriorCharacter::EnemyDetectionCollisionEndOverlap(UPrimitiveComponent* OverlappedComp, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex)
+{
+	if (OtherActor && CombatAudioComponent)
+	{
+		FTimerHandle CombatSoundTimer;
+
+		AEnemy* Enemy = Cast<AEnemy>(OtherActor);
+		if (Enemy)
+		{
+			NearbyEnemies.Remove(Enemy);
+		}
+		GetWorld()->GetTimerManager().SetTimer(CombatSoundTimer, this, &AWarriorCharacter::CombatSoundFadeOut, 2.f);
+	}
+	
+}
+
+void AWarriorCharacter::EnemyDetectionCollisionBeginOverlap(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult)
+{
+	UE_LOG(LogTemp, Warning, TEXT("analseveaf"));
+
+	if (OtherActor && CombatAudioComponent)
+	{
+		AEnemy* Enemy = Cast<AEnemy>(OtherActor);
+		if (Enemy)
+		{
+			if (Enemy->EnemyState != EEnemyState::EES_Dead)
+			{
+				NearbyEnemies.AddUnique(Enemy);
+			}
+			else
+			{
+				NearbyEnemies.Remove(Enemy);
+			}
+		}
+	}
+}
+
 
 
 
