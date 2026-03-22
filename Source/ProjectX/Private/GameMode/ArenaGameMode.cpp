@@ -9,6 +9,7 @@
 #include"Items\BaseItem.h"
 #include "Kismet/GameplayStatics.h"
 #include "./Items/EnemySpawner.h"
+#include"Components\AudioComponent.h"
 #include"../WarriorCharacter.h"
 #include"Items\SpawnManager.h"
 #include"Items/Weapons/Weapon.h"
@@ -23,8 +24,14 @@ void AArenaGameMode::BeginPlay()
 {
 	Super::BeginPlay();
 	LoadGame();
-   /*	EnemySpawner = Cast<AEnemySpawner>(UGameplayStatics::GetActorOfClass(GetWorld(), AEnemySpawner::StaticClass()));
-	NextWaveEnemyCount = EnemySpawner->EnemySpawnCount;
+ 
+	/*
+	if (EnemySpawner)
+	{
+		EnemySpawner = Cast<AEnemySpawner>(UGameplayStatics::GetActorOfClass(GetWorld(), AEnemySpawner::StaticClass()));
+		NextWaveEnemyCount = EnemySpawner->EnemySpawnCount;
+	}
+	
 
 	if (!SpawnManager)
 	{
@@ -74,6 +81,7 @@ void AArenaGameMode::SaveGame()
 	{
 		Attributes = WarriorCharacter->GetAttributesComponent();
 		SaveGameObject->PlayerLocation = WarriorCharacter->GetActorLocation();
+		SaveGameObject->CurrentQuestIndex = WarriorCharacter->CurrentQuestIndex;
 		SaveGameObject->SavedInventoryItems = WarriorCharacter->GetInventoryComponent()->InventoryItems;
 		SaveGameObject->SavedEquipItems = WarriorCharacter->GetInventoryComponent()->EquippedItems;
 		SaveGameObject->Health = Attributes->GetHealth();
@@ -118,6 +126,7 @@ void AArenaGameMode::LoadGame()
 			Attributes->SetMaxExp(SaveGameObject->MaxExp);
 			Attributes->SetGold(SaveGameObject->Gold);
 			WarriorCharacter->SetActorLocation(SaveGameObject->PlayerLocation);
+			WarriorCharacter->CurrentQuestIndex = SaveGameObject->CurrentQuestIndex;
 			WarriorCharacter->GetInventoryComponent()->InventoryItems = SaveGameObject->SavedInventoryItems;
 			WarriorCharacter->GetInventoryComponent()->EquippedItems = SaveGameObject->SavedEquipItems;
 			WaveCount = SaveGameObject->WaveCount;
@@ -168,6 +177,33 @@ void AArenaGameMode::LoadGame()
 			//WarriorCharacter->WeaponClass = SaveGameObject->EquippedWeapon;
 
 		}
+	}
+}
+
+void AArenaGameMode::PlayCombatSound()
+{
+	if (ChasedEnemies >= 2 && IsCombatSoundPlaying == false)
+	{
+
+		CombatAudioComponent = UGameplayStatics::SpawnSoundAttached(CombatSound, GetRootComponent());
+		IsCombatSoundPlaying = true;
+		CombatAudioComponent->Play(120);
+		CombatAudioComponent->SetVolumeMultiplier(0.1);
+
+	}
+
+
+}
+
+void AArenaGameMode::StopCombatSound()
+{
+	if (IsCombatSoundPlaying == true && !CombatAudioComponent) return;
+
+	if (ChasedEnemies <= 0)
+	{
+		CombatAudioComponent->FadeOut(0.8f,0);
+		IsCombatSoundPlaying = false;
+		UE_LOG(LogTemp, Warning, TEXT("audio stopped"));
 	}
 }
 

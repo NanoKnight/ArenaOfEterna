@@ -8,7 +8,7 @@ public class ProjectX : ModuleRules
 	{
 		PCHUsage = PCHUsageMode.UseExplicitOrSharedPCHs;
 	
-		PublicDependencyModuleNames.AddRange(new string[] { "Core", "CoreUObject", "Engine", "InputCore","GeometryCollectionEngine","Niagara","UMG","AIModule","Slate","SlateCore","ProjectX" });
+		PublicDependencyModuleNames.AddRange(new string[] { "Core", "CoreUObject", "Engine", "InputCore","GeometryCollectionEngine","Niagara","UMG","AIModule","Slate","SlateCore", "NavigationSystem","ProjectX" });
 
 		PrivateDependencyModuleNames.AddRange(new string[] {});
 

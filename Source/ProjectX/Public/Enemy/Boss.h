@@ -67,17 +67,25 @@ class PROJECTX_API ABoss : public AEnemy , public ICombatStateInterFace
 		virtual  void ChaseTarget() override;
 		virtual float TakeDamage(float DamageAmount, struct FDamageEvent const& DamageEvent, class AController* EventInstigator, AActor* DamageCauser) override;
 		virtual void Die()override;
+		void SpawnPortal();
 		void SetBossHealthBar();
 
 		UPROPERTY(EditDefaultsOnly)
 		FString BossName;
 
+		FTimerHandle PortalTimer;
 
 	public:
 	     ABoss();
 		 void SetNoCollisionDamageForSpheres();
 		virtual void Tick(float DeltaTime) override;
 		virtual void SetEnemyState_Implementation(EEnemyState NewState) override;
+
+		UPROPERTY(EditAnywhere)
+		TSubclassOf<AActor> OptionalPortalClass;
+
+		UPROPERTY(EditAnywhere)
+		FVector OptionalPortalLocation;
 
 
 

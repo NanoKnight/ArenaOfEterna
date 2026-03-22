@@ -7,6 +7,7 @@
 #include "Public\Characters\BaseCharacter.h"
 #include"Blueprint/UserWidget.h"
 #include"Public\Interfaces\PickUpInterface.h"
+#include"Public\Interfaces\CombatSoundInterface.h"
 #include "Public\QuestStruct.h"
 #include"Public\Items\ExperiencePoint.h"
 #include"Public\Items/HealthPoint.h"
@@ -39,11 +40,12 @@ class UPawnNoiseEmitterComponent;
 
 
 UCLASS()
-class PROJECTX_API AWarriorCharacter : public ABaseCharacter, public IPickUpInterface 
+class PROJECTX_API AWarriorCharacter : public ABaseCharacter, public IPickUpInterface , public ICombatSoundInterface
 {
 	GENERATED_BODY()
 
 	friend class ABaseItem;
+	friend class UInventoryComponent;
 	friend class UEqiupmentSlotWidget;
 
 public:
@@ -52,6 +54,8 @@ public:
 
 	/* <IHitInterface> */
 	virtual void GetHit_Implementation(const FVector& ImpactPoint,AActor* Hitter) override;
+	virtual void EnemyStartChasing() override;
+	virtual void EnemyStoppedChasing() override;
 	virtual void Jump() override;
 	bool CheckShieldClose();
 	bool CheckShieldOpen();
@@ -104,9 +108,9 @@ public:
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Quest")
 	FQuestStruct CurrentQuest;
 
-	UPROPERTY()
+	UPROPERTY(EditAnywhere,BlueprintReadWrite)
 	int32 CurrentQuestIndex;
-
+	 
 	FName CurrentQuestRowName;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Quest System")
@@ -128,7 +132,9 @@ public:
 	void InitializePlayerOverlay();
 	void PlayItemPickupNameAnim(FString ItemName);
 
-
+	FORCEINLINE void SetChasedEnemy(int32 NewChasedEnemy) {  ChasedEnemies = NewChasedEnemy; }
+	FORCEINLINE int32 GetChasedEnemy() const { return ChasedEnemies; }
+	FORCEINLINE UAudioComponent* GetAudioComponent() const { return CombatAudioComponent; }
 protected:
 
 
@@ -143,7 +149,8 @@ protected:
 	void Interact();
 	void OpenInventory();
 
-
+	//DISPOSBLE FUNC
+	void SpawnEnemy(int32 NumberOfEnemies,FVector EnemyLocation);
 	void MoveCamera();
 	void MoveCameraReleased();
 	/*
@@ -171,10 +178,32 @@ protected:
 	FTimerHandle StaminaRegenerateTimer;
 	FTimerHandle SecondSkillTimer;
 	FTimerHandle AttackTypeCheckTimer;
+	FTimerHandle DeathWidgetTimer;
+
 	FTimerHandle AttackHoldingTimer;
 	FTimerHandle QuestCompleteUITimer;
 	FTimerHandle ItemTextAnimTimer;
+	FTimerHandle FirstSkillResetTimer;
+	FTimerHandle SecondSkillResetTimer;
 
+	UPROPERTY(EditAnywhere, Category = "VFX")
+	UNiagaraSystem* HealthPotEffect;
+
+	UPROPERTY(EditAnywhere)
+	USoundBase* CombatSound;
+
+	UPROPERTY(EditAnywhere,Category = "Sound")
+	USoundBase* HealthPotionSound;
+
+	UPROPERTY()
+	UAudioComponent* CombatAudioComponent;
+
+	UPROPERTY(EditAnywhere,BlueprintReadWrite)
+	int32 ChasedEnemies;
+
+	bool CombatSoundPlaying;
+	bool IsFirstSkill;
+	bool IsSecondSkill;
 	bool FadeoutTimer = false;
 	float FadeoutSeconds = 0;
 	
@@ -226,16 +255,28 @@ protected:
 	UFUNCTION()
 	void SphereCollisionEndOverlap(UPrimitiveComponent* OverlappedComp, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex);
 
+	UFUNCTION()
+	void EnemyDetectionCollisionBeginOverlap(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult);
+
+	UFUNCTION()
+	void EnemyDetectionCollisionEndOverlap(UPrimitiveComponent* OverlappedComp, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex);
+
+
+
 	virtual void Die() override;
 
-	UPROPERTY(BlueprintReadOnly)
+	UPROPERTY()
 	TArray<AEnemy*> EnemiesInRange;
 
 	UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = "Materials")
 	UMaterialInterface* EnemyOutlineMaterial;
 	
-	UPROPERTY(BlueprintReadOnly)
+	UPROPERTY(BlueprintReadWrite)
 	AEnemy* CloseEnemy;
+
+	UPROPERTY(EditAnywhere)
+	TArray<AEnemy*> NearbyEnemies;
+
 
 	UPROPERTY(EditAnywhere, Category = "Settings")
 	float DistanceThreshold ;
@@ -257,7 +298,8 @@ protected:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Camera")
 	float MaxY = 300.f;  
 
-
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	bool bHoldingAttack;
 private:
 	void Save();
 	void LoadSaveGame();
@@ -275,9 +317,13 @@ private:
 	void CheckQuestProgress();
 	void StartNextQuest();
 	void QuesstCompleteFadeOutAnim();
+	void SetFalseIsFirstSkillVar();
+	void SetFalseIsSecondSkill();
+	void CreateDeathWidget();
+	void CombatSoundFadeOut();
 	bool IsUnoccupied();
 	bool HasEnoughStamina();
-
+	
 
 
 
@@ -289,6 +335,9 @@ private:
 
 	UPROPERTY(EditDefaultsOnly)
 	USphereComponent* Sphere;
+
+	UPROPERTY(EditDefaultsOnly)
+	USphereComponent* EnemyDetectionSphere;
 
 	UPROPERTY(EditAnywhere)
 	UPawnNoiseEmitterComponent* NoiseEmitter;
@@ -331,7 +380,9 @@ private:
 	float ComboResetTimer = 2.f;
 	float TimeElapsed = 0.f;
 	bool bAttackTimerOpen = false;
-	bool bDidHoldingAttack;
+
+
+
 	///////////////////////////
 	bool bForward = false;
 

@@ -36,6 +36,9 @@ protected:
 	UPROPERTY();
 	FRotator CharacterRot;
 
+	UPROPERTY(EditAnywhere)
+	FVector PreviewLoc;
+
 public:	
 	// Called every frame
 	virtual void TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction) override;
@@ -48,6 +51,7 @@ public:
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Inventory")
 	TArray<int32> SavedSlotIndices;
+
 	UPROPERTY()
 	int32 OldSlotIndex;
 
@@ -101,10 +105,9 @@ public:
 	UPROPERTY(EditAnywhere)
 	TSubclassOf<UInventoryWidget> InventoryWidgetClass;
 
+	UPROPERTY()
 	UInventoryWidget* InventoryWidget;
 
-	UPROPERTY(EditAnywhere)
-	TSubclassOf<APreviewCharacter> PreviewClass;
 private:
 	void CreateInventoryWidget(APlayerController* Controller);
 

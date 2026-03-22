@@ -12,10 +12,12 @@
 #include "Components/CapsuleComponent.h"
 #include"HUD/HealthBarComponent.h"
 #include"../WarriorCharacter.h"
+#include"Interfaces\CombatSoundInterface.h"
 #include"Items\Weapons\Weapon.h"
 #include"GameMode\ArenaGameMode.h"
 #include"CameraShakes\MainLegacyCameraShake.h"
 #include "Kismet/GameplayStatics.h"
+#include"Components\AudioComponent.h"
 #include"Items\EnemySpawner.h"
 #include "AIController.h"
 #include"NavigationSystem.h"
@@ -49,7 +51,7 @@ void AEnemy::BeginPlay()
 {
 	Super::BeginPlay();
 	Tags.Add("Enemy");
-	InitializeEquipItems();
+	 InitializeEquipItems();
 	EnemyName = GetName();
 	if (PawnSensing)
 	{
@@ -59,6 +61,8 @@ void AEnemy::BeginPlay()
 	}
 		
 	InitializeEnemy();
+
+	GetWorld()->GetTimerManager().SetTimer(RandomMoveTimer, this, &AEnemy::MoveToRandomLocation, 2.f, true);
 	AGameModeBase* GameMode = GetWorld()->GetAuthGameMode();
 	AArenaGameMode* ArenaGameMode = Cast<AArenaGameMode>(GameMode);
 	ArenaGameMode->IncrementEnemyAlive();
@@ -112,17 +116,22 @@ void AEnemy::Die()
 	{
 		AEnemySpawner* SpawnerActor = Cast<AEnemySpawner>(Actor);
 		SpawnerActor->OnEnemyKilled();
-		GEngine->AddOnScreenDebugMessage(-1, 3.f, FColor::Cyan, FString::Printf(TEXT("EnemyKilled")));
 		FTimerDelegate TimerDelegate;
 		TimerDelegate.BindUFunction(this, FName("RespawnInfiniteEnemy"), SpawnerActor);
 		GetWorld()->GetTimerManager().SetTimer(RespawnInfiniteEnemyTimer, TimerDelegate, 3.f, false);
 
 	}
-	AGameModeBase* GameMode = GetWorld()->GetAuthGameMode();
-	AArenaGameMode* ArenaGameMode = Cast<AArenaGameMode>(GameMode);
-	//ArenaGameMode->DecrementEnemyAlive();
-	
 
+	
+	if (SeenPawnRef)
+	{
+		if (ICombatSoundInterface* CombatInterface = Cast<ICombatSoundInterface>(SeenPawnRef))
+		{
+			CombatInterface->EnemyStoppedChasing();
+		}
+	}
+	
+	
 
 }
 
@@ -175,11 +184,20 @@ void AEnemy::RespawnInfiniteEnemy(AEnemySpawner* SpawnerActor)
 
 void AEnemy::IncreaseQuestKillCount()
 {
+	if (IgnoreEnemyCount == true) return;
+
 	if (WarriorCharacter && !InfiniteEnemy && WarriorCharacter->CurrentQuest.QuestType == EQuestType::KillEnemies)
 	{
 
 		WarriorCharacter->CurrentQuest.CurrentKillCount++;
 	}
+
+	if (WarriorCharacter && !InfiniteEnemy && WarriorCharacter->CurrentQuest.QuestType == EQuestType::DestroyBoss)
+	{
+
+		WarriorCharacter->CurrentQuest.CurrentKillCount++;
+	}
+
 }
 
 void AEnemy::SetEnemyDead()
@@ -215,6 +233,7 @@ void AEnemy::SpawnExperience()
 
 void AEnemy::Attack()
 {
+	
 	if (EnemyState == EEnemyState::EAS_Stun)
 	{
 		CombatTarget = nullptr;
@@ -277,6 +296,7 @@ void AEnemy::Tick(float DeltaTime)
 		CheckPatrolTarget(); 
 	}
 
+
 	if (Ragdoll)
 	{
 		FVector newLoc = GetMesh()->GetSocketLocation("pelvis");
@@ -309,7 +329,6 @@ void AEnemy::Tick(float DeltaTime)
 
 		if (IdleTime >= 2.f)
 		{
-			GEngine->AddOnScreenDebugMessage(-1, 3.f, FColor::Cyan, FString::Printf(TEXT("patrolmod")));
 
 
 			BackPatrol();
@@ -329,12 +348,12 @@ float AEnemy::TakeDamage(float DamageAmount, FDamageEvent const & DamageEvent, A
 	if (!IsDead())
 	{
 		HandleDamage(DamageAmount);
+
 		CombatTarget = EventInstigator->GetPawn();
 		
 		if (IsInsideAttackRadius() && EnemyState != EEnemyState::EAS_Stun)
 		{
 			ResetEnemyState();
-			UE_LOG(LogTemp, Warning, TEXT("Attack"));
 		}
 		else if (IsOutsideAttackRadius())
 		{
@@ -406,6 +425,17 @@ void AEnemy::ResetRagdoll()
 	FVector MeshLoc(0, 0, -90);
 	GetMesh()->SetRelativeLocationAndRotation(MeshLoc, MeshRot);
 
+
+	if (CombatTarget)
+	{
+		EnemyState = EEnemyState::EES_Chasing;
+	}
+	else
+	{
+		EnemyState = EEnemyState::EES_NoState;
+
+	}
+
 }
 
 void AEnemy::BackPatrol()
@@ -448,8 +478,8 @@ void AEnemy::SkillHit(const FVector& ImpactPoint, AActor* Hitter)
 	SetWeaponCollisionEnabled(ECollisionEnabled::NoCollision);
 	PlayHitSound(ImpactPoint);
 	StopAttackMontage();
-	GEngine->AddOnScreenDebugMessage(-1, 3.f, FColor::Cyan, FString::Printf(TEXT("skill hit")));
-	
+
+
 	if (EnemyType == EEnemyType::EET_Boss)	DirectionalHit(Hitter->GetActorLocation());	
 	if (EnemyType == EEnemyType::EET_Enemy) EnemyState = EEnemyState::EAS_Stun;
 
@@ -509,6 +539,21 @@ void AEnemy::CheckCombatTarget()
 	{
 		ClearAttackTimer();
 		LoseInterest();
+		AGameModeBase* GameMode = GetWorld()->GetAuthGameMode();
+		AArenaGameMode* ArenaGameMod = Cast<AArenaGameMode>(GameMode);
+		if (ArenaGameMod && Chased)
+		{
+			//ArenaGameMod->ChasedEnemies -= 1;
+			//Chased = false;
+			//ArenaGameMod->StopCombatSound();
+
+		}
+
+	
+	
+
+
+		CheckCombatMusic();
 		if (!IsEngaged()) StartPatrolling();
 
 		
@@ -526,6 +571,19 @@ void AEnemy::CheckCombatTarget()
 	else if(CanAttack())
 	{
 		StartAttackTimer();
+	}
+}
+
+void AEnemy::CheckCombatMusic()
+{
+	if (Chased && SeenPawnRef)
+	{
+		if (ICombatSoundInterface* CombatInterface = Cast<ICombatSoundInterface>(SeenPawnRef))
+		{
+			CombatInterface->EnemyStoppedChasing();
+			Chased = false;
+			SeenPawnRef = nullptr;
+		}
 	}
 }
 
@@ -563,10 +621,12 @@ void AEnemy::ChaseTarget()
 	if (EnemyState == EEnemyState::EAS_Stun) return;
 
 
+
+
+
 	if (CombatTarget && CombatTarget->ActorHasTag(FName("Dead"))) {
 		CombatTarget = nullptr;
 		MoveToTarget(PatrolTarget);
-
 	}
 
 	
@@ -659,6 +719,39 @@ void AEnemy::MoveToTarget(AActor* Target)
 	
 }
 
+void AEnemy::MoveToRandomLocation()
+{
+
+	
+	if (!EnemyController) return;
+	if (PatrolTarget)return;
+	if (CombatTarget)return;
+
+	FVector RandomLocatation = GetActorLocation();
+	RandomLocatation.X += FMath::RandRange(-1000.f, 1000.f);
+	RandomLocatation.Y += FMath::RandRange(-1000.f, 1000.f);
+
+
+	FVector Origin = GetActorLocation();
+	float Radius = 500.f; 
+	FNavLocation NavLocation;
+
+	if (EnemyController)
+	{
+		if (UNavigationSystemV1::GetCurrent(GetWorld())->GetRandomPointInNavigableRadius(Origin, Radius, NavLocation)) {
+			FAIMoveRequest MoveRequest;
+			MoveRequest.SetGoalLocation(RandomLocatation);
+			MoveRequest.SetAcceptanceRadius(50.f);
+			EnemyController->MoveTo(MoveRequest);
+
+		}
+	}
+	
+
+	
+
+}
+
 AActor* AEnemy::ChoosePatrolTarget()
 {
 
@@ -684,6 +777,19 @@ AActor* AEnemy::ChoosePatrolTarget()
 
 void AEnemy::PawnSeen(APawn* SeenPawn)
 {
+	SeenPawnRef = SeenPawn;
+	if (!Chased)
+	{
+		if (ICombatSoundInterface* CombatInterface = Cast<ICombatSoundInterface>(SeenPawn))
+		{
+			CombatInterface->EnemyStartChasing();
+			Chased = true;
+		}
+	}
+	
+
+
+
 	const bool bShouldChaseTarget =
 		EnemyState != EEnemyState::EES_Dead &&
 		EnemyState != EEnemyState::EES_Chasing &&

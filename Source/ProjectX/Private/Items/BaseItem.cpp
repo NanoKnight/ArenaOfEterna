@@ -104,16 +104,20 @@ void ABaseItem::PickUp(AWarriorCharacter* WarriorCharacter)
 {	
 
 
-	if (!WarriorCharacter && !WarriorCharacter->GetInventoryComponent()) return;
+	if (!WarriorCharacter || !WarriorCharacter->GetInventoryComponent()) return;
 
 	for ( FInventoryStruct& Item: WarriorCharacter->GetInventoryComponent()->InventoryItems)
 	{
 
 		if (Item.ItemTypes == EItemTypes::Pot)
 		{
-			Item.StackCounter += 1;
-			WarriorCharacter->PlayItemPickupNameAnim(ItemName);
-			this->Destroy();
+			if (ItemType == EItemTypes::Pot)
+			{
+				Item.StackCounter += 1;
+				WarriorCharacter->PlayItemPickupNameAnim(ItemName);
+				this->Destroy();
+			}
+			
 			if (ItemType == EItemTypes::Pot) return;
 		
 		}
@@ -167,9 +171,14 @@ void ABaseItem::BeginPlay()
 {
 	Super::BeginPlay();
 	ItemID = GetName();
+	if (Sphere)
+	{
+		Sphere->OnComponentBeginOverlap.AddDynamic(this, &ABaseItem::OnSphereOverlap);
+		Sphere->OnComponentEndOverlap.AddDynamic(this, &ABaseItem::OnSphereEndOverlap);
 
-	Sphere->OnComponentBeginOverlap.AddDynamic(this, &ABaseItem::OnSphereOverlap);
-	Sphere->OnComponentEndOverlap.AddDynamic(this, &ABaseItem::OnSphereEndOverlap);
+	}
+
+	
 	
 }
 
@@ -182,7 +191,11 @@ void ABaseItem::OnSphereOverlap(UPrimitiveComponent* OverlappedComponent, AActor
 		ItemActorInterface->SetOverlappingItem(this);
 	}
 
-	ItemInteraction->SetVisibility(true);
+	if (ItemInteraction)
+	{
+		ItemInteraction->SetVisibility(true);
+
+	}
 
 	UUserWidget* UserWidget = ItemInteraction->GetUserWidgetObject();
 	if (UserWidget)
@@ -213,7 +226,11 @@ void ABaseItem::OnSphereEndOverlap(UPrimitiveComponent* OverlappedComponent, AAc
 		ItemActorInterface->SetOverlappingItem(nullptr);
 
 	}
-	ItemInteraction->SetVisibility(false);
+	if (ItemInteraction)
+	{
+		ItemInteraction->SetVisibility(false);
+
+	}
 
 
 

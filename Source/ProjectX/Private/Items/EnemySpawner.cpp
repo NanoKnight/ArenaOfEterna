@@ -64,7 +64,7 @@ void AEnemySpawner::SpawnEnemy(int32 NumbwerOfEnemies)
         EnemyAliveForLoop++;
 
     }
-
+    
     if (SpawnEnemiesLoc.IsZero())
     {
         FVector SpawnLocation = GetActorLocation();

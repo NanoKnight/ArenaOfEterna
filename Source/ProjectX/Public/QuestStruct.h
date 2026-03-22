@@ -9,13 +9,18 @@
 /**
  * 
  */
+class AEnemy;
+class ABoss;
 
 UENUM(BlueprintType)
 enum class EQuestType : uint8
 {
 	GoToLocation UMETA(DisplayName = "Go to Location"),
 	KillEnemies UMETA(DisplayName = "Kill Enemies"),
-	PickupItem UMETA(DisplayName = "PickUpItem")
+	DestroyBoss UMETA(DisplayName = "Destroy Boss"),
+	PickupItem UMETA(DisplayName = "PickUp Item"),
+	WearItem UMETA(DisplayName = "Wear Item")
+
 
 
 };
@@ -39,6 +44,12 @@ public:
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	FString QuestItemName;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	TSubclassOf<AEnemy> EnemyClass;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	TSubclassOf<ABoss> BossClass;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Quests")
 	bool bIsQuestCompleted = false;

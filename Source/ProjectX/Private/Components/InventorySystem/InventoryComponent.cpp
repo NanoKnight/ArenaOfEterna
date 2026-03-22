@@ -190,6 +190,7 @@ void UInventoryComponent::PlayItemTextFadeOutAnim(UCharacterHUD* PlayerOverlay)
 
 void UInventoryComponent::EquipItem(const FInventoryStruct& ItemToEquip)
 {
+	
 	if (ItemToEquip.ItemClass)
 	{
 	    
@@ -208,6 +209,7 @@ void UInventoryComponent::EquipItem(const FInventoryStruct& ItemToEquip)
 			//EquippedItems.Add(ItemToEquip);
 
 		}
+
 		EquippedItems.Add(ItemToEquip);
 
 
@@ -259,7 +261,6 @@ void UInventoryComponent::EquipItem(const FInventoryStruct& ItemToEquip)
 					}
 
 				
-
 					if (SpawnedItem->Defense > 0 )
 					{
 						WarriorCharacter->GetAttributesComponent()->SetDefense(WarriorCharacter->GetAttributesComponent()->GetDefense() + SpawnedItem->Defense);
@@ -268,7 +269,17 @@ void UInventoryComponent::EquipItem(const FInventoryStruct& ItemToEquip)
 					}
 				}
 			}
+
+			
+			if (WarriorCharacter->GetCurrentQuest().QuestItemName == ItemToEquip.ItemName)
+			{
+				WarriorCharacter->CompleteCurrentQuest();
+			}
+		
+		
+		
 		}
+	
 	}
 	
 }
@@ -339,6 +350,12 @@ int32 UInventoryComponent::FindItemIndex(const FInventoryStruct& ItemToFind) con
 
 void UInventoryComponent::UnEquipItem(FInventoryStruct& Item, ABaseItem* EquippedItem)
 {
+
+	if (!Item.ItemClass) return;
+	AWarriorCharacter* WarriorCharacter = Cast<AWarriorCharacter>(GetOwner());
+	if (!WarriorCharacter)return;
+
+
 	if (EquippedItems.Contains(Item))
 	{ 
 		float defins = Item.Defense;
@@ -346,32 +363,20 @@ void UInventoryComponent::UnEquipItem(FInventoryStruct& Item, ABaseItem* Equippe
 
 		GEngine->AddOnScreenDebugMessage(-1, 2.f, FColor::Cyan, FString(TEXT("Deleted")));
 
-		AWarriorCharacter* WarriorCharacter = Cast<AWarriorCharacter>(GetOwner());
-
-
-
-		if (WarriorCharacter)
+		UWorld* World = WarriorCharacter->GetWorld();
+		if (World)
 		{
 			
 				WarriorCharacter->GetAttributesComponent()->SetDefense(WarriorCharacter->GetAttributesComponent()->GetDefense() - defins);
 				SetDefensePoint();
 
 			
-			UWorld* World = WarriorCharacter->GetWorld();
-			if (World)
+			if (WarriorCharacter)
 			{
 				
 
 			
-					if (Item.ItemTypes == EItemTypes::Weapon)
-					{
-
-						WarriorCharacter->SetCharacterStates(ECharacterStates::ECS_UnEquipped);
-						WarriorCharacter->EquippedWeapon->Destroy();
-					
-					
-					
-					}
+				
 				
 					for (int32 i = WarriorCharacter->ItemsToEquip.Num() - 1; i >= 0; i--)
 					{
@@ -384,6 +389,12 @@ void UInventoryComponent::UnEquipItem(FInventoryStruct& Item, ABaseItem* Equippe
 						}
 					}
 
+					if (Item.ItemTypes == EItemTypes::Weapon)
+					{
+
+						WarriorCharacter->SetCharacterStates(ECharacterStates::ECS_UnEquipped);
+						WarriorCharacter->EquippedWeapon->Destroy();
+					}
 				
 			}
 		
@@ -455,9 +466,6 @@ void UInventoryComponent::OpenInventory()
 	UWorld* World = GetOwner()->GetWorld();
 	if (World)
 	{
-		
-			
-		
 		APlayerController* Controller = World->GetFirstPlayerController();
 		if (InventoryWidgetClass && Controller)
 		{
@@ -499,17 +507,17 @@ void UInventoryComponent::ToggleInventory(APlayerController* Controller)
 
 			if (GetOwner()->ActorHasTag("WarriorCharacter"))
 			{
-				GetOwner()->SetActorLocation(FVector(11500.000000,-2200.000000, 1160.000000));
-				GetOwner()->SetActorRotation(FRotator(0, 90, 0));
-
-				
+				GetOwner()->SetActorLocation(PreviewLoc);
+				GetOwner()->SetActorRotation(FRotator(0, -90, 0));				
 			}
+
 			InventoryWidget->StoredSlotIndices = SavedSlotIndices;
 			InventoryWidget->UpdateInventoryDisplay(InventoryItems);
-
 			InventoryWidget->SetVisibility(ESlateVisibility::Visible);
 			
+
 			Controller->bShowMouseCursor = true;
+
 			FInputModeUIOnly InputMode;
 			InputMode.SetWidgetToFocus(InventoryWidget->TakeWidget());
 			Controller->SetInputMode(InputMode);
