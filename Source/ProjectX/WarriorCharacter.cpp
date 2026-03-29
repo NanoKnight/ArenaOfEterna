@@ -1185,6 +1185,7 @@ void AWarriorCharacter::UsetPot()
 		if (ItemL.ItemTypes == EItemTypes::Pot && ItemL.StackCounter > 0)
 		{
 			ItemL.StackCounter -= 1;
+			Attributes->PotStack -=1 ;
 			GetAttributesComponent()->AddHealth(Attributes->GetPotHealth());
 			InitializePlayerOverlay();
 			

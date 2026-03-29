@@ -12,6 +12,7 @@
 
 void ABoss::ChaseTarget()
 {
+	if (EnemyState == EEnemyState::EES_Dead) return;
 	Super::ChaseTarget();
 
 
@@ -134,7 +135,7 @@ void ABoss::BeginPlay()
 
 void ABoss::Attack()
 {
-	if (Attributes->GetStamina() >= 10)
+	if (Attributes->GetStamina() >= 10 && EnemyState != EEnemyState::EES_Dead)
 	{
 		Super::Attack();
 
@@ -255,7 +256,7 @@ void ABoss::SphereTrace(USphereComponent* SphereRef,FHitResult& TraceHit)
 		TraceType,
         false,
 		IgnoreActors,
-		EDrawDebugTrace::ForDuration,
+		EDrawDebugTrace::None,
 		TraceHit,
 		true);
 

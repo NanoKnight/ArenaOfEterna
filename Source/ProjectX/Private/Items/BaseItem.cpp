@@ -12,6 +12,7 @@
 #include"Components\WidgetComponent.h"
 #include"HUD\ItemInteractionWidget.h"
 #include"Components\InventorySystem\InventoryComponent.h"
+#include"Components/AttributeComponent.h"
 #include"GameMode\ArenaGameMode.h"
 
 
@@ -115,6 +116,7 @@ void ABaseItem::PickUp(AWarriorCharacter* WarriorCharacter)
 			{
 				Item.StackCounter += 1;
 				WarriorCharacter->PlayItemPickupNameAnim(ItemName);
+				WarriorCharacter->Attributes->PotStack = Item.StackCounter;
 				this->Destroy();
 			}
 			
@@ -144,6 +146,8 @@ void ABaseItem::PickUp(AWarriorCharacter* WarriorCharacter)
 				NewItem.EquipmentSlot = ItemEquipmentSlot;
 				NewItem.Defense = Defense;
 				NewItem.Damage = Damage;
+				if (ItemType == EItemTypes::Pot) WarriorCharacter->Attributes->PotStack = 1;
+				
 				WarriorCharacter->GetInventoryComponent()->AddItem(NewItem);
 				if (QuestItem && WarriorCharacter->CurrentQuest.QuestItemName == ItemName)
 				{
@@ -162,6 +166,7 @@ void ABaseItem::PickUp(AWarriorCharacter* WarriorCharacter)
 		}
 	}
 
+	
 
 
 }

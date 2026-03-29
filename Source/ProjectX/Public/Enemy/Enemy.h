@@ -56,6 +56,7 @@ public:
 	bool IsDead();
     /* <AActor>  */
 	virtual void Tick(float DeltaTime) override;
+	void IfEnemyFallingDie();
 	virtual float TakeDamage(float DamageAmount, struct FDamageEvent const& DamageEvent, class AController* EventInstigator, AActor* DamageCauser) override;
 	virtual void Destroyed() override;
 	void SetRagdoll();
