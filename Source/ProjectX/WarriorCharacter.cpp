@@ -17,6 +17,7 @@
 #include"Items\Weapons\Shield.h"
 #include"Enemy\Enemy.h"
 #include "Enemy\Boss.h"
+#include"Breakable\BreakableActor.h"
 #include"Components/AttributeComponent.h"
 #include "Animation/AnimMontage.h"
 #include"Interfaces\HitInterface.h"
@@ -505,9 +506,7 @@ void AWarriorCharacter::StartShieldRegenerateTimer(float Time)
 void AWarriorCharacter::GetClosestEnemy()
 {
 	
-     	
-
-
+  
     AEnemy* NewClosestEnemy = nullptr;
 	float MinDistance = FLT_MAX;
 	for (AEnemy* Enemy : EnemiesInRange)
@@ -545,6 +544,24 @@ void AWarriorCharacter::GetClosestEnemy()
 	}
 	CloseEnemy = NewClosestEnemy;
 	
+
+	if (!CloseEnemy)
+	{
+		ABreakableActor* NewBreakable;
+		float BminDistance = FLT_MAX;
+
+		for (ABreakableActor* Breakable : BreakablesRange)
+		{
+			float Distance = FVector::Dist(this->GetActorLocation(), Breakable->GetActorLocation());
+			if (Distance < MinDistance)
+			{
+				MinDistance = Distance;
+				NewBreakable = Breakable;
+				CloseBreakable = NewBreakable;
+			}
+		}
+	}
+
 	}
 
 void AWarriorCharacter::SpawnDefaultShield()
@@ -1444,6 +1461,25 @@ void AWarriorCharacter::SphereCollisionBeginOverlap(UPrimitiveComponent* Overlap
 				EnemiesInRange.Remove(Enemy);
 			}		
 		}
+		else 
+		{
+			ABreakableActor* Breakable = Cast<ABreakableActor>(OtherActor);
+			if (CloseBreakable)
+			{
+				if (CloseBreakable->bBroken == false)
+				{
+					BreakablesRange.Add(Breakable);
+
+				}
+				else
+				{
+					BreakablesRange.Remove(Breakable);
+				}
+
+			}
+			
+		}
+		
 		
 	}	
 }
@@ -1458,6 +1494,14 @@ void AWarriorCharacter::SphereCollisionEndOverlap(UPrimitiveComponent* Overlappe
 		if (Enemy)
 		{
 			EnemiesInRange.Remove(Enemy);
+		}
+		else
+		{
+			ABreakableActor* Breakable = Cast<ABreakableActor>(OtherActor);
+			if (Breakable)
+			{
+				BreakablesRange.Remove(Breakable);
+			}
 		}
 
 

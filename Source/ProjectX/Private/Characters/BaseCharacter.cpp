@@ -148,7 +148,7 @@ void ABaseCharacter::DisableCapsule()
 FVector ABaseCharacter::GetTranslationWarpTarget(AActor* Target)
 {
 	if(Target == nullptr) return FVector();
-
+	
 	const FVector CombatTargetLocation = Target->GetActorLocation();
 	const FVector Location = GetActorLocation();
 
