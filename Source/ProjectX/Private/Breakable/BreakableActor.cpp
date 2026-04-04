@@ -30,6 +30,7 @@ void ABreakableActor::GetHit_Implementation(const FVector& ImpactPoint,AActor* H
 	if (bBroken) return;
 	GeometryCollection->SetSimulatePhysics(true);
 	bBroken = true;
+
 	UWorld* World = GetWorld();
 	if (World && TreasureClasses.Num() > 0 )
 	{

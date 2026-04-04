@@ -47,6 +47,8 @@ protected:
 
 	FTimerHandle RandomMoveTimer;
 
+	UFUNCTION()
+	void PawnSeen(APawn* SeenPawn);
 
 
 	
@@ -110,8 +112,6 @@ private:
 	bool InTargetRange(AActor* Target, double Radius);
 	AActor* ChoosePatrolTarget();
 
-	UFUNCTION()
-	void PawnSeen(APawn* SeenPawn);
 
 	UFUNCTION()
 	void PawnHeard(APawn* SeenPawn,const FVector& Location, float Volume);

@@ -304,7 +304,7 @@ void UInventoryComponent::DropItem(const FInventoryStruct& ItemToDrop)
 				ABaseItem* ItemRef = Cast<ABaseItem>(SpawnedItem);
 				if (ItemRef)
 				{
-					FVector Location = WarriorCharacter->GetActorLocation();
+					FVector Location = CharacterLoc;
 					Location.X = Location.X + -150.f;
 					Location.Z = Location.Z + 30.f;
 					SpawnedItem->SetActorLocation(Location);

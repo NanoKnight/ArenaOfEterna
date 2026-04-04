@@ -792,6 +792,8 @@ AActor* AEnemy::ChoosePatrolTarget()
 
 void AEnemy::PawnSeen(APawn* SeenPawn)
 {
+
+	UE_LOG(LogTemp, Warning, TEXT("this fucntion called from enemy "));
 	SeenPawnRef = SeenPawn;
 	if (!Chased)
 	{

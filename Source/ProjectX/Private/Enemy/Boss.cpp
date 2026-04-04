@@ -264,6 +264,8 @@ void ABoss::SphereTrace(USphereComponent* SphereRef,FHitResult& TraceHit)
 }
 
 
+
+
 void ABoss::StartStaminaRegenerateTimer()
 {
 	if (StaminaTimerStarted == false)
