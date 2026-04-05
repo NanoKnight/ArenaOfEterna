@@ -178,8 +178,6 @@ void ABoss::SetEnableDamageCollision(USphereComponent* SphereRef, ECollisionEnab
 		SphereRef->SetCollisionEnabled(CollisionEnabled);
 	}
 
-
-
 }
 
 
@@ -266,12 +264,14 @@ void ABoss::SphereTrace(USphereComponent* SphereRef,FHitResult& TraceHit)
 }
 
 
+
+
 void ABoss::StartStaminaRegenerateTimer()
 {
 	if (StaminaTimerStarted == false)
 	{
 		StaminaTimerStarted = true;
-		GetWorld()->GetTimerManager().SetTimer(StaminaRegenerateTimer, this, &ABoss::StaminaRegenerate, 5, false);
+		GetWorld()->GetTimerManager().SetTimer(StaminaRegenerateTimer, this, &ABoss::StaminaRegenerate, 3, false);
 	}
 
 
@@ -279,6 +279,8 @@ void ABoss::StartStaminaRegenerateTimer()
 
 void ABoss::StaminaRegenerate()
 {
+	if (EnemyState == EEnemyState::EES_Dead) return;
+	
 	Attributes->RegenerateStamina();
 
 }

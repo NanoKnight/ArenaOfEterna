@@ -22,6 +22,7 @@ class USpringArmComponent;
 class AShield;
 class UCameraComponent;
 class ABaseItem;
+class ABreakableActor;
 class ACollectable;
 class AExperiencePoint;
 class AHealthPoint;
@@ -268,11 +269,17 @@ protected:
 	UPROPERTY()
 	TArray<AEnemy*> EnemiesInRange;
 
+	UPROPERTY()
+	TArray<ABreakableActor*> BreakablesRange;
+
 	UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = "Materials")
 	UMaterialInterface* EnemyOutlineMaterial;
 	
 	UPROPERTY(BlueprintReadWrite)
 	AEnemy* CloseEnemy;
+
+	UPROPERTY(BlueprintReadWrite,EditAnywhere)
+	ABreakableActor* CloseBreakable;
 
 	UPROPERTY(EditAnywhere)
 	TArray<AEnemy*> NearbyEnemies;

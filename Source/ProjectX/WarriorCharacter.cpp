@@ -17,6 +17,7 @@
 #include"Items\Weapons\Shield.h"
 #include"Enemy\Enemy.h"
 #include "Enemy\Boss.h"
+#include"Breakable\BreakableActor.h"
 #include"Components/AttributeComponent.h"
 #include "Animation/AnimMontage.h"
 #include"Interfaces\HitInterface.h"
@@ -263,10 +264,11 @@ void AWarriorCharacter::EnemyStartChasing()
 
 void AWarriorCharacter::EnemyStoppedChasing()
 {
+	if (ChasedEnemies >= 0 )
+	{
+		ChasedEnemies--;
 
-	ChasedEnemies--;
-	TArray<AActor*> OverlappingActors;
-	
+	}
 
 	if (CombatSound && ChasedEnemies <= 0 && CombatAudioComponent && CombatAudioComponent->IsPlaying())
 	{
@@ -274,22 +276,7 @@ void AWarriorCharacter::EnemyStoppedChasing()
 	}
 
 
-	/*if (NearbyEnemies.IsEmpty())
-	{
-		CombatAudioComponent->FadeOut(0.8f, 0.2f);
 
-	}*/
-	
-	/*EnemyDetectionSphere->GetOverlappingActors(OverlappingActors, AEnemy::StaticClass());
-	for (AActor* Actor : OverlappingActors)
-	{
-		AEnemy* Enemy = Cast<AEnemy>(Actor);
-		if (Enemy)
-		{
-			NearbyEnemies.AddUnique(Enemy);
-		}
-		
-	}*/
 
 
 
@@ -505,9 +492,7 @@ void AWarriorCharacter::StartShieldRegenerateTimer(float Time)
 void AWarriorCharacter::GetClosestEnemy()
 {
 	
-     	
-
-
+  
     AEnemy* NewClosestEnemy = nullptr;
 	float MinDistance = FLT_MAX;
 	for (AEnemy* Enemy : EnemiesInRange)
@@ -545,6 +530,28 @@ void AWarriorCharacter::GetClosestEnemy()
 	}
 	CloseEnemy = NewClosestEnemy;
 	
+
+	if (!CloseEnemy)
+	{
+		ABreakableActor* NewBreakable;
+		float BminDistance = FLT_MAX;
+
+		for (ABreakableActor* Breakable : BreakablesRange)
+		{
+			float Distance = FVector::Dist(this->GetActorLocation(), Breakable->GetActorLocation());
+			if (Distance < MinDistance)
+			{
+				MinDistance = Distance;
+				NewBreakable = Breakable;
+				CloseBreakable = NewBreakable;
+				if (CloseBreakable->bBroken == true)
+				{
+					CloseBreakable = nullptr;
+				}
+			}
+		}
+	}
+
 	}
 
 void AWarriorCharacter::SpawnDefaultShield()
@@ -1413,6 +1420,8 @@ void AWarriorCharacter::FinishEquipping()
 void AWarriorCharacter::HitReactEnd()
 {
 	ActionState = EActionState::EAS_Unoccupied;
+	APlayerController* PlayerController = Cast<APlayerController>(GetOwner());
+	PlayerController->SetIgnoreMoveInput(false);
 }
 void AWarriorCharacter::ComboCountReset()
 {
@@ -1433,6 +1442,7 @@ void AWarriorCharacter::SphereCollisionBeginOverlap(UPrimitiveComponent* Overlap
 	if (OtherActor && (OtherActor != this)&& OtherComp)
 	{
 		AEnemy* Enemy = Cast<AEnemy>(OtherActor);
+
 		if (Enemy)
 		{		
 			if (Enemy->EnemyState != EEnemyState::EES_Dead)
@@ -1444,6 +1454,35 @@ void AWarriorCharacter::SphereCollisionBeginOverlap(UPrimitiveComponent* Overlap
 				EnemiesInRange.Remove(Enemy);
 			}		
 		}
+		else 
+		{
+			    ABreakableActor* Breakable = Cast<ABreakableActor>(OtherActor);
+				if (Breakable)
+				{
+					if (Breakable->bBroken == false)
+					{
+						BreakablesRange.Add(Breakable);
+
+					}
+					else if (Breakable->bBroken == true)
+					{
+						BreakablesRange.Remove(Breakable);
+					}
+
+
+				else
+				{
+						BreakablesRange.Remove(Breakable);
+
+				}
+										
+
+		        }
+				
+			
+			
+		}
+		
 		
 	}	
 }
@@ -1458,6 +1497,19 @@ void AWarriorCharacter::SphereCollisionEndOverlap(UPrimitiveComponent* Overlappe
 		if (Enemy)
 		{
 			EnemiesInRange.Remove(Enemy);
+		}
+		else
+		{
+			ABreakableActor* Breakable = Cast<ABreakableActor>(OtherActor);
+			if (Breakable)
+			{
+				if (CloseBreakable == Breakable)
+				{
+					CloseBreakable = nullptr;
+				}
+				BreakablesRange.Remove(Breakable);
+				
+			}
 		}
 
 

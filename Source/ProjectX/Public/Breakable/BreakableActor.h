@@ -22,6 +22,8 @@ public:
 	virtual void Tick(float DeltaTime) override;
 	virtual void GetHit_Implementation(const FVector& ImpactPoint,AActor* Hitter) override;
 
+	UPROPERTY(BlueprintReadWrite)
+	bool bBroken = false;
 
 protected:
 	virtual void BeginPlay() override;
@@ -33,8 +35,6 @@ protected:
 	class UCapsuleComponent* Capsule;
 
 
-	UPROPERTY(BlueprintReadWrite)
-	bool bBroken = false;
 
 private:
 

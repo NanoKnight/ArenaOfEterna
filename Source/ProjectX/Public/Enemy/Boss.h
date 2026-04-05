@@ -14,6 +14,8 @@
 
 class USphereComponent;
 class UCurrentBossOverlayWidget;
+class UPawnSensingComponent;
+
 
 UCLASS()
 class PROJECTX_API ABoss : public AEnemy , public ICombatStateInterFace 
@@ -50,6 +52,7 @@ class PROJECTX_API ABoss : public AEnemy , public ICombatStateInterFace
 		void StaminaRegenerate();
 
 		void ExecuteGetHit(FHitResult& BoxHit);
+
 
 		UFUNCTION(BlueprintImplementableEvent)
 		void CreateFields(const FVector& FieldLocation);
