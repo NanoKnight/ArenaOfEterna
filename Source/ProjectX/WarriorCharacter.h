@@ -126,9 +126,7 @@ public:
 
 	UInventoryWidget* InventoryWidget;
 
-
-
-
+	
 
 	void InitializePlayerOverlay();
 	void PlayItemPickupNameAnim(FString ItemName);
@@ -307,6 +305,10 @@ protected:
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	bool bHoldingAttack;
+
+	UPROPERTY(EditAnywhere,BlueprintReadWrite)
+	bool IsPushing;
+
 private:
 	void Save();
 	void LoadSaveGame();

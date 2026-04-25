@@ -450,6 +450,9 @@ bool AWarriorCharacter::HasEnoughStamina()
 void AWarriorCharacter::SetFalseIsSecondSkill()
 {
 	RageMode = false;
+
+
+
 }
 
 
