@@ -178,7 +178,7 @@ protected:
 	FTimerHandle SecondSkillTimer;
 	FTimerHandle AttackTypeCheckTimer;
 	FTimerHandle DeathWidgetTimer;
-
+	FTimerHandle AmbientSoundTimer;
 	FTimerHandle AttackHoldingTimer;
 	FTimerHandle QuestCompleteUITimer;
 	FTimerHandle ItemTextAnimTimer;
@@ -190,6 +190,9 @@ protected:
 
 	UPROPERTY(EditAnywhere)
 	USoundBase* CombatSound;
+
+	UPROPERTY(EditAnywhere)
+	USoundBase* AmbientSound;
 
 	UPROPERTY(EditAnywhere,Category = "Sound")
 	USoundBase* HealthPotionSound;
@@ -330,6 +333,7 @@ private:
 	void SetFalseIsSecondSkill();
 	void CreateDeathWidget();
 	void CombatSoundFadeOut();
+	void FadeInAmbientSound();
 	bool IsUnoccupied();
 	bool HasEnoughStamina();
 	
