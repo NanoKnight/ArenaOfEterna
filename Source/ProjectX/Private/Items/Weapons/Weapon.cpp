@@ -19,11 +19,11 @@
 AWeapon::AWeapon()
 {
 	WeaponBox = CreateDefaultSubobject<UBoxComponent>(TEXT("Box"));
-	WeaponBox->SetupAttachment(GetRootComponent());
+	WeaponBox->SetupAttachment(ItemMesh);
 	BoxTraceStart = CreateDefaultSubobject <USceneComponent>(TEXT("Start"));
-	BoxTraceStart->SetupAttachment(GetRootComponent());
+	BoxTraceStart->SetupAttachment(ItemMesh);
 	BoxTraceEnd = CreateDefaultSubobject <USceneComponent>(TEXT("End"));
-	BoxTraceEnd->SetupAttachment(GetRootComponent());
+	BoxTraceEnd->SetupAttachment(ItemMesh);
 	WeaponBox->SetCollisionEnabled(ECollisionEnabled::NoCollision);
 	WeaponBox->SetCollisionResponseToAllChannels(ECollisionResponse::ECR_Overlap);
 	WeaponBox->SetCollisionResponseToChannel(ECollisionChannel::ECC_Pawn, ECollisionResponse::ECR_Ignore);

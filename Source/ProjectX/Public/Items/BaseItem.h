@@ -56,6 +56,9 @@ protected:
 	UFUNCTION()
 	virtual void OnSphereEndOverlap(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex);
 
+	UPROPERTY(VisibleAnywhere)
+	USceneComponent* Root;
+
 	UPROPERTY(EditAnyWhere)
 	bool QuestItem;
 
@@ -65,7 +68,7 @@ protected:
 	UPROPERTY(VisibleAnywhere, Category = "WeaponProperties")
 	USoundBase* EquipSound;
 
-	UPROPERTY(VisibleAnywhere,BlueprintReadOnly)
+	UPROPERTY(VisibleAnywhere,BlueprintReadWrite)
 	UStaticMeshComponent* ItemMesh;
 
 	UPROPERTY(VisibleAnywhere)

@@ -87,7 +87,7 @@ void AWarriorCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputCo
 	PlayerInputComponent->BindAxis(FName("CameraRight"), this, &AWarriorCharacter::CameraRight);
 	PlayerInputComponent->BindAction(FName("MoveCamera"), IE_Pressed, this, &AWarriorCharacter::MoveCamera);
 	PlayerInputComponent->BindAction(FName("MoveCamera"), IE_Released, this, &AWarriorCharacter::MoveCameraReleased);
-	//PlayerInputComponent->BindAction(FName("Jump"), IE_Pressed, this, &ACharacter::Jump);
+	PlayerInputComponent->BindAction(FName("Jump"), IE_Pressed, this, &ACharacter::Jump);
 	PlayerInputComponent->BindAction(FName("Use"), IE_Pressed, this, &AWarriorCharacter::Interact);
 	PlayerInputComponent->BindAction(FName("Inventory"), IE_Pressed, this, &AWarriorCharacter::OpenInventory);
 	PlayerInputComponent->BindAction(FName("Attack"), IE_Pressed, this, &AWarriorCharacter::Attack);
@@ -107,11 +107,6 @@ void AWarriorCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputCo
 void AWarriorCharacter::BeginPlay()
 {
 	Super::BeginPlay();
-
-	
-	
-	
-
 	SpawnDefaultShield();
 	SpawnDefaultWeapon();
 	InitializePlayerOverlay();
@@ -159,6 +154,13 @@ void AWarriorCharacter::BeginPlay()
 			QuestActor = GetWorld()->SpawnActor<AQuestActor>(QuestActorClass, CurrentQuest.TargetLocation, FRotator::ZeroRotator);
 
 		}
+	}
+
+	if (AmbientSound)
+	{
+		CombatAudioComponent->SetSound(AmbientSound);
+		CombatAudioComponent->Play();
+		CombatAudioComponent->SetVolumeMultiplier(0.2f);
 	}
 }
 
@@ -244,17 +246,28 @@ void AWarriorCharacter::EnemyStartChasing()
 	{
 		if (!CombatAudioComponent->IsPlaying())
 		{
-			CombatAudioComponent = UGameplayStatics::SpawnSoundAttached(CombatSound, GetRootComponent());
-			CombatAudioComponent->Play(10);
+			CombatAudioComponent->FadeOut(2.f, 0.2f);
+			if (CombatAudioComponent->GetSound() != CombatSound)
+			{
+				CombatAudioComponent->SetSound(CombatSound);
+
+			}
 			CombatAudioComponent->SetVolumeMultiplier(0.5f);
 			CombatSoundPlaying = true;
 		}
+
 		if (CombatAudioComponent->IsPlaying() && ChasedEnemies == 0)
 		{
-			CombatAudioComponent->SetVolumeMultiplier(0.5f);
+			//CombatAudioComponent->FadeOut(2.f,0.2f);
+			if (CombatAudioComponent->GetSound() != CombatSound)
+			{
+				CombatAudioComponent->SetSound(CombatSound);
+
+			}
 	    }
 	    
 		ChasedEnemies++;
+		CombatAudioComponent->SetVolumeMultiplier(0.5f);
 
 		
 	}
@@ -450,9 +463,6 @@ bool AWarriorCharacter::HasEnoughStamina()
 void AWarriorCharacter::SetFalseIsSecondSkill()
 {
 	RageMode = false;
-
-
-
 }
 
 
@@ -904,8 +914,21 @@ void AWarriorCharacter::CombatSoundFadeOut()
 {
 	if (NearbyEnemies.IsEmpty())
 	{
-		CombatAudioComponent->FadeOut(0.8f, 0.2f);
+		CombatAudioComponent->FadeOut(2.f, 0.2f);
+		GetWorld()->GetTimerManager().SetTimer(AmbientSoundTimer, this, &AWarriorCharacter::FadeInAmbientSound, 2.f);	
 	}
+}
+
+void AWarriorCharacter::FadeInAmbientSound()
+{
+	if (ChasedEnemies >= 0)
+	{
+		CombatAudioComponent->SetSound(AmbientSound);
+		CombatAudioComponent->SetVolumeMultiplier(0.2f);
+		CombatAudioComponent->Play();
+		//->FadeIn(2.f, 0.2);
+	}
+	
 }
 
 void AWarriorCharacter::DisArm()
@@ -1542,13 +1565,13 @@ void AWarriorCharacter::EnemyDetectionCollisionEndOverlap(UPrimitiveComponent* O
 			NearbyEnemies.Remove(Enemy);
 		}
 		GetWorld()->GetTimerManager().SetTimer(CombatSoundTimer, this, &AWarriorCharacter::CombatSoundFadeOut, 2.f);
+	
 	}
 	
 }
 
 void AWarriorCharacter::EnemyDetectionCollisionBeginOverlap(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult)
 {
-	UE_LOG(LogTemp, Warning, TEXT("analseveaf"));
 
 	if (OtherActor && CombatAudioComponent)
 	{

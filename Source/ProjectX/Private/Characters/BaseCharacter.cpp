@@ -4,6 +4,7 @@
 #include "Characters/BaseCharacter.h"
 #include "Components\BoxComponent.h"
 #include"Components\CapsuleComponent.h"
+#include"GameFramework/CharacterMovementComponent.h"
 #include"Items\Weapons\Weapon.h"
 #include"Components/AttributeComponent.h"
 #include"Components\InventorySystem\InventoryComponent.h"
@@ -15,6 +16,7 @@
 #include "Camera/PlayerCameraManager.h"
 #include "NiagaraFunctionLibrary.h"
 #include "NiagaraComponent.h"
+
 
 
 // Sets default values
@@ -29,6 +31,8 @@ ABaseCharacter::ABaseCharacter()
 void ABaseCharacter::BeginPlay()
 {
 	Super::BeginPlay();
+
+
 	
 }
 
@@ -92,12 +96,29 @@ void ABaseCharacter::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
 
+	if (GetCharacterMovement()->IsFalling())
+	{
+		if (!bFallingTimer)
+		{
+			GetWorld()->GetTimerManager().SetTimer(CheckFallingDieTimer, this, &ABaseCharacter::ifFallingDie, 5.f, true);
+			bFallingTimer = true;
+		}
+	}
+	
+	else
+	{
+		GetWorld()->GetTimerManager().ClearTimer(CheckFallingDieTimer);
+		bFallingTimer = false;
+	}
+
+	
 }
 
 void ABaseCharacter::Attack()
 {
 	
 }
+
 
 void ABaseCharacter::GetHit_Implementation(const FVector& ImpactPoint,AActor* Hitter)
 {
@@ -185,6 +206,15 @@ void ABaseCharacter::DisableCollision()
 {
 
 	GetMesh()->SetCollisionEnabled(ECollisionEnabled::NoCollision);
+
+}
+
+void ABaseCharacter::ifFallingDie()
+{
+	if (GetMovementComponent()->IsFalling())
+	{
+		Die();
+	}
 
 }
 

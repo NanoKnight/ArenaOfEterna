@@ -289,10 +289,7 @@ void AEnemy::Tick(float DeltaTime)
 	
 
 
-	FTimerHandle EnemyFallingTimer;
-	GetWorld()->GetTimerManager().SetTimer(EnemyFallingTimer, this, &AEnemy::IfEnemyFallingDie, 3.f);
-
-
+	
 	if (EnemyState > EEnemyState::EES_Patrolling )
 	{
 		CheckCombatTarget();
@@ -340,19 +337,11 @@ void AEnemy::Tick(float DeltaTime)
 			BackPatrol();
 
 		}
-		
 
 	}
 }
 
-void AEnemy::IfEnemyFallingDie()
-{
-	if (GetMovementComponent()->IsFalling())
-	{
 
-		Die();
-	}
-}
 	
 
 
@@ -818,7 +807,7 @@ void AEnemy::PawnSeen(APawn* SeenPawn)
 		CombatTarget = SeenPawn;
 		ClearPatrolTimer();
 		ChaseTarget();
-
+		
 	}
 	
 }

@@ -72,6 +72,7 @@ protected:
 	virtual void DodgeEnd();
 	virtual bool CanArm();
 	void DisableCollision();
+	void ifFallingDie();
 
 	
 	bool RageMode = false;
@@ -96,6 +97,10 @@ protected:
 
 	UPROPERTY(BlueprintReadOnly)
 	TEnumAsByte<EDeadPose>DeadPose;
+
+	FTimerHandle CheckFallingDieTimer;
+	bool bFallingTimer;
+
 
 	
 private:
@@ -148,6 +153,7 @@ private:
 
 	UPROPERTY(EditAnywhere, Category = Combat)
 	TArray<FName> DeathMontageSections;
+
 
 	
 };
