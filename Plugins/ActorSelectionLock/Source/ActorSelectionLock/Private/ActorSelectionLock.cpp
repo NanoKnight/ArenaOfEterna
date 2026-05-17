@@ -1,9 +1,9 @@
 #include "ActorSelectionLock.h"
+
 #include "Editor.h"
 #include "Engine/Selection.h"
 #include "GameFramework/Actor.h"
 #include "Framework/Application/SlateApplication.h"
-#include "Async/Async.h"
 #include "LevelEditorViewport.h"
 #include "SceneView.h"
 #include "CollisionQueryParams.h"
@@ -14,13 +14,23 @@ bool FActorSelectionLockInputProcessor::HandleMouseButtonUpEvent(
 {
 	if (MouseEvent.GetEffectingButton() == EKeys::LeftMouseButton)
 	{
-		AsyncTask(ENamedThreads::GameThread, [this]()
-			{
-				FixSelectionAfterClick();
-			});
+		FramesToCheck = 10;
+		FixSelectionAfterClick();
 	}
 
 	return false;
+}
+
+void FActorSelectionLockInputProcessor::Tick(
+	const float DeltaTime,
+	FSlateApplication& SlateApp,
+	TSharedRef<ICursor> Cursor)
+{
+	if (FramesToCheck > 0)
+	{
+		FramesToCheck--;
+		FixSelectionAfterClick();
+	}
 }
 
 void FActorSelectionLockInputProcessor::FixSelectionAfterClick()
@@ -54,6 +64,8 @@ void FActorSelectionLockInputProcessor::FixSelectionAfterClick()
 	{
 		return;
 	}
+
+	UE_LOG(LogTemp, Warning, TEXT("Locked actor deselected: %s"), *LockedSelectedActor->GetName());
 
 	GEditor->SelectActor(LockedSelectedActor, false, false);
 	GEditor->NoteSelectionChange();
@@ -131,6 +143,9 @@ void FActorSelectionLockInputProcessor::FixSelectionAfterClick()
 
 		GEditor->SelectActor(HitActor, true, true);
 		GEditor->NoteSelectionChange();
+
+		UE_LOG(LogTemp, Warning, TEXT("Selected actor behind locked actor: %s"), *HitActor->GetName());
+
 		break;
 	}
 }
