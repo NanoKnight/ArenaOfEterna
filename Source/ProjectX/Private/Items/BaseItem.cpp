@@ -195,6 +195,7 @@ void ABaseItem::OnSphereOverlap(UPrimitiveComponent* OverlappedComponent, AActor
 	IPickUpInterface* ItemActorInterface = Cast<IPickUpInterface>(OtherActor);
 	if (ItemActorInterface)
 	{
+
 		ItemActorInterface->SetOverlappingItem(this);
 	}
 

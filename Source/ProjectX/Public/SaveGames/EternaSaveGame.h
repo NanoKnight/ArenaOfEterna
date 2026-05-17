@@ -8,6 +8,7 @@
 #include "EternaSaveGame.generated.h"
 
 class AWeapon;
+class APushableObject;
 
 UCLASS()
 class PROJECTX_API UEternaSaveGame : public USaveGame
@@ -62,6 +63,9 @@ class PROJECTX_API UEternaSaveGame : public USaveGame
 
 	UPROPERTY(EditAnywhere, Category = Weapon)
 	AWeapon* weapon;
+
+	UPROPERTY(EditAnywhere)
+	TSubclassOf<APushableObject> SavedPushableObject;
 	
 	UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Category = "SaveGame")
 	TArray<FString> KilledEnemiesName;

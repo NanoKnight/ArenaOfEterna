@@ -10,9 +10,11 @@
 #include"NiagaraComponent.h"
 #include "GameFramework/CharacterMovementComponent.h"
 #include "Components\SphereComponent.h"
+#include "PhysicsEngine/PhysicsHandleComponent.h"
 #include "Components/PawnNoiseEmitterComponent.h"
 #include "Items\BaseItem.h"
 #include "./HUD/ItemInteractionWidget.h"
+#include "Items\CharacterInteractableItems\PushableObject.h"
 #include"Items\Weapons\Weapon.h"
 #include"Items\Weapons\Shield.h"
 #include"Enemy\Enemy.h"
@@ -62,6 +64,9 @@ AWarriorCharacter::AWarriorCharacter()
 	ViewCamera->SetupAttachment(CameraBoom);
 	Sphere = CreateDefaultSubobject<USphereComponent>(TEXT("Sphere"));
 	EnemyDetectionSphere = CreateDefaultSubobject<USphereComponent>(TEXT("EnemyDetectionSphere"));
+	PhysicsHandle = CreateDefaultSubobject<UPhysicsHandleComponent>(TEXT("PhysicsHandle"));
+	HoldPoint = CreateDefaultSubobject<USceneComponent>(TEXT("HoldingPoint"));
+	HoldPoint->SetupAttachment(RootComponent);
 	NoiseEmitter = CreateDefaultSubobject<UPawnNoiseEmitterComponent>(TEXT("NoiseEmitter"));
 	Sphere->SetupAttachment(GetRootComponent());
 	EnemyDetectionSphere->SetupAttachment(GetRootComponent());
@@ -823,7 +828,8 @@ void AWarriorCharacter::EKeyPressed()
 		EquipWeapon(OverlappingWeapon);
 	}
 
-	else {
+	else
+	{
 		if (CanDisarm())
 		{
 			DisArm();
@@ -835,6 +841,8 @@ void AWarriorCharacter::EKeyPressed()
 		}
 
 	}
+	 
+
 }
 
 void AWarriorCharacter::Interact()
@@ -844,6 +852,49 @@ void AWarriorCharacter::Interact()
 	{
 		OverlappingWeapon->PickUp(this);
 	}
+
+	   UAnimInstance* OriginalAnimInstance = GetMesh()->GetAnimInstance();
+          if ( bPushing == false)
+		  {
+
+			if (PushableObject)
+			{
+
+				bPushing = true;
+				yedekpush = PushableObject;
+				PushableObject->Mesh->SetSimulatePhysics(true);
+				FVector ActorLoc = GetActorLocation() + GetActorForwardVector();
+				ActorLoc.Z = PushableObject->Mesh->GetComponentLocation().Z;
+				GetCharacterMovement()->MaxWalkSpeed = 100;
+				//GetCharacterMovement()->bOrientRotationToMovement = false;
+				GetMesh()->SetAnimInstanceClass(PushingAnimInstance);
+				PhysicsHandle->GrabComponentAtLocationWithRotation(PushableObject->Mesh, FName("NULL"), PushableObject->Mesh->GetComponentLocation(), GetActorRotation());
+				//PhysicsHandle->GrabComponentAtLocation(PushableObject->Mesh, FName("Null"), ActorLoc);
+				PhysicsHandle->bRotationConstrained = true;
+				PhysicsHandle->LinearStiffness = 4000.f;
+				PhysicsHandle->LinearDamping = 300.f;
+				PhysicsHandle->AngularStiffness = 3000.f;
+				PhysicsHandle->AngularDamping = 300.f;
+				PhysicsHandle->bSoftLinearConstraint = true;
+				PhysicsHandle->bSoftAngularConstraint = true;
+			}
+			  
+
+
+	    }
+		else
+		{
+
+			bPushing = false;
+			PushableObject->Mesh->SetSimulatePhysics(false);
+			GetMesh()->SetAnimInstanceClass(OldAnimInstance);
+			PhysicsHandle->ReleaseComponent();
+			GetCharacterMovement()->MaxWalkSpeed = CharacterRunSpeed;
+			GetCharacterMovement()->bOrientRotationToMovement = true;
+        }
+	
+	
+
 }
 
 void AWarriorCharacter::OpenInventory()
@@ -1601,6 +1652,16 @@ void AWarriorCharacter::SetOverlappingItem(ABaseItem* Item)
 	OverlappingItem = Item;
 }
 
+void AWarriorCharacter::CharacterInteract(AActor* Actor)
+{
+
+	UE_LOG(LogTemp, Warning, TEXT("Interacted"));
+	PushableObject = Cast<APushableObject>(Actor);
+	
+}
+
+
+
 void AWarriorCharacter::AddXp(AExperiencePoint* Xp)
 {
 	if (Attributes && PlayerOverlay)
@@ -1688,6 +1749,17 @@ void AWarriorCharacter::Tick(float DeltaTime)
 	ResetCameraPosition();
 	CheckQuestProgress();
 	CheckShieldRotation();
+	if (PhysicsHandle->GrabbedComponent && HoldPoint)
+	{
+		FVector CharacterLoc = GetMesh()->GetComponentLocation() + GetActorForwardVector() * 25 ;
+		CharacterLoc.Z = PhysicsHandle->GrabbedComponent->GetComponentLocation().Z;
+
+		PhysicsHandle->bRotationConstrained = true;
+		PhysicsHandle->SetTargetLocationAndRotation(HoldPoint->GetComponentLocation(), HoldPoint->GetComponentRotation());
+	
+
+	}
+	
 
 }
 void AWarriorCharacter::CheckShieldRotation()

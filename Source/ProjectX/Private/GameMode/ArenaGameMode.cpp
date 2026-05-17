@@ -13,6 +13,7 @@
 #include"../WarriorCharacter.h"
 #include"Items\SpawnManager.h"
 #include"Items/Weapons/Weapon.h"
+#include"Items\CharacterInteractableItems\PushableObject.h"
 #include"Runtime/Engine/Public/TimerManager.h"
 
 AArenaGameMode::AArenaGameMode()
@@ -92,6 +93,14 @@ void AArenaGameMode::SaveGame()
 		SaveGameObject->Gold = Attributes->GetGold();
 		SaveGameObject->WaveCount = WaveCount;
 		SaveGameObject->EnemyNextWaveCount = NextWaveEnemyCount;
+
+		if (WarriorCharacter->yedekpush)
+		{
+
+			SaveGameObject->SavedPushableObject = WarriorCharacter->yedekpush->GetClass();
+
+		}
+			
 		TArray<FString> KilledEnemiesList = KilledEnemiesNames;
 		
 		for (FString EnemyName : KilledEnemiesList)
@@ -133,6 +142,21 @@ void AArenaGameMode::LoadGame()
 			NextWaveEnemyCount = SaveGameObject->EnemyNextWaveCount;
 		}
 
+		if (SaveGameObject->SavedPushableObject)
+		{
+			UE_LOG(LogTemp, Warning, TEXT("Pushable object Loaded"));
+		APushableObject* SpwanedPushable = GetWorld()->SpawnActor<APushableObject>(SaveGameObject->SavedPushableObject);
+		if (SpwanedPushable)
+		{
+			SpwanedPushable->SetActorLocation(WarriorCharacter->GetActorLocation() + 100);
+
+		}
+		
+		
+		}
+		
+		
+		
 		
 		int32 EquipItemsCount = WarriorCharacter->GetInventoryComponent()->EquippedItems.Num();
 		for (int32 i = 0; i < EquipItemsCount; i ++)

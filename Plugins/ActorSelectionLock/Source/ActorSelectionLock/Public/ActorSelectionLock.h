@@ -1,7 +1,3 @@
-// Copyright Epic Games, Inc. All Rights Reserved.
-
-#pragma once
-
 #pragma once
 
 #include "CoreMinimal.h"
@@ -11,11 +7,13 @@
 class FActorSelectionLockInputProcessor : public IInputProcessor
 {
 public:
-	virtual void Tick(const float DeltaTime,FSlateApplication& SlateApp,TSharedRef<ICursor> Cursor) override {}
+	virtual void Tick(const float DeltaTime,FSlateApplication& SlateApp,TSharedRef<ICursor> Cursor) override;
 
 	virtual bool HandleMouseButtonUpEvent(FSlateApplication& SlateApp,const FPointerEvent& MouseEvent) override;
 
 private:
+	int32 FramesToCheck = 0;
+
 	void FixSelectionAfterClick();
 };
 

@@ -7,6 +7,7 @@
 #include "Public\Characters\BaseCharacter.h"
 #include"Blueprint/UserWidget.h"
 #include"Public\Interfaces\PickUpInterface.h"
+#include"Public\Interfaces\CharacterInteractableInterFace.h"
 #include"Public\Interfaces\CombatSoundInterface.h"
 #include "Public\QuestStruct.h"
 #include"Public\Items\ExperiencePoint.h"
@@ -23,11 +24,13 @@ class AShield;
 class UCameraComponent;
 class ABaseItem;
 class ABreakableActor;
+class APushableObject;
 class ACollectable;
 class AExperiencePoint;
 class AHealthPoint;
 class ATreasure;
 class USphereComponent;
+class UPhysicsHandleComponent;
 class AEnemy;
 class UCharacterHUD;
 class UQuestUI;
@@ -41,7 +44,10 @@ class UPawnNoiseEmitterComponent;
 
 
 UCLASS()
-class PROJECTX_API AWarriorCharacter : public ABaseCharacter, public IPickUpInterface , public ICombatSoundInterface
+class PROJECTX_API AWarriorCharacter : public ABaseCharacter, 
+	public IPickUpInterface , 
+	public ICombatSoundInterface,
+	public ICharacterInteractableInterFace
 {
 	GENERATED_BODY()
 
@@ -52,6 +58,12 @@ class PROJECTX_API AWarriorCharacter : public ABaseCharacter, public IPickUpInte
 public:
 
 	AWarriorCharacter();
+	
+	UPROPERTY(EditDefaultsOnly)
+	TSubclassOf<UAnimInstance>PushingAnimInstance;
+
+	UPROPERTY(EditDefaultsOnly)
+	TSubclassOf<UAnimInstance>OldAnimInstance;
 
 	/* <IHitInterface> */
 	virtual void GetHit_Implementation(const FVector& ImpactPoint,AActor* Hitter) override;
@@ -102,6 +114,16 @@ public:
 	TSubclassOf<UUserWidget> DeathWidgetClass;
 	UUserWidget* DeathWidgetInstance;
 
+	UPROPERTY(EditAnywhere)
+	APushableObject* PushableObject;
+
+	UPROPERTY()
+	APushableObject* yedekpush;
+
+	UPROPERTY(EditAnyWhere, BlueprintReadWrite)
+	USceneComponent* HoldPoint;
+
+	bool bPushing = false;
 
 	UPROPERTY(EditAnywhere,BlueprintReadWrite , Category= "Quests")
 	UDataTable* QuestDataTable;
@@ -309,8 +331,7 @@ protected:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	bool bHoldingAttack;
 
-	UPROPERTY(EditAnywhere,BlueprintReadWrite)
-	bool IsPushing;
+
 
 private:
 	void Save();
@@ -351,6 +372,9 @@ private:
 
 	UPROPERTY(EditDefaultsOnly)
 	USphereComponent* EnemyDetectionSphere;
+
+	UPROPERTY(EditDefaultsOnly)
+	UPhysicsHandleComponent* PhysicsHandle;
 
 	UPROPERTY(EditAnywhere)
 	UPawnNoiseEmitterComponent* NoiseEmitter;
@@ -450,6 +474,7 @@ public:
 	void StaminaRegen();
 	virtual void SetupPlayerInputComponent(class UInputComponent* PlayerInputComponent) override;
 	virtual void SetOverlappingItem(ABaseItem* Item) override;
+	virtual void CharacterInteract(AActor* Actor) override;
 	virtual void AddXp(AExperiencePoint* Xp) override;
 	bool ExpGreaterMaxExp();
 	void SetExpPoint(AExperiencePoint* Xp);
