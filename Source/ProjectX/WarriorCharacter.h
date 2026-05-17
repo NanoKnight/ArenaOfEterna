@@ -168,6 +168,7 @@ protected:
 	void CameraRight(float Value);
 	void EKeyPressed();
 	void Interact();
+	void PushInteract();
 	void OpenInventory();
 
 	//DISPOSBLE FUNC

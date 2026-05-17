@@ -155,7 +155,11 @@ void ABaseCharacter::Die()
 {
 
 	Tags.Add(FName("Dead"));
-	PlayDeathMontage();
+	if (ActorHasTag(FName("WarriorCharacter")))
+	{
+		PlayDeathMontage();
+
+	}
 
 	
 }

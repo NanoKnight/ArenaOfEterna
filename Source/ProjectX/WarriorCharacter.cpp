@@ -852,51 +852,50 @@ void AWarriorCharacter::Interact()
 	{
 		OverlappingWeapon->PickUp(this);
 	}
+	PushInteract();
+	   
+}
 
-	   UAnimInstance* OriginalAnimInstance = GetMesh()->GetAnimInstance();
-          if ( bPushing == false)
-		  {
+void AWarriorCharacter::PushInteract()
+{
+	UAnimInstance* OriginalAnimInstance = GetMesh()->GetAnimInstance();
+	if (bPushing == false)
+	{
 
-			if (PushableObject)
-			{
-				OldRotationRate = GetCharacterMovement()->RotationRate;
-				bPushing = true;
-				yedekpush = PushableObject;
-				PushableObject->Mesh->SetSimulatePhysics(true);
-
-				PushableObject->Mesh->SetCollisionResponseToChannel(ECC_Pawn, ECR_Ignore);
-				GetCharacterMovement()->MaxWalkSpeed = 50;
-				GetMesh()->SetAnimInstanceClass(PushingAnimInstance);
-
-				PhysicsHandle->GrabComponentAtLocationWithRotation(PushableObject->Mesh,
-					FName("NULL"), PushableObject->Mesh->GetComponentLocation(),
-					GetActorRotation());
-				GetCharacterMovement()->RotationRate = FRotator(0,50,0);
-
-
-				PhysicsHandle->bRotationConstrained = true;
-				PhysicsHandle->LinearStiffness = 4000.f;
-				PhysicsHandle->LinearDamping = 300.f;
-				PhysicsHandle->AngularStiffness = 3000.f;
-				PhysicsHandle->AngularDamping = 300.f;
-				PhysicsHandle->bSoftLinearConstraint = true;
-				PhysicsHandle->bSoftAngularConstraint = true;
-			}
-			  
-
-
-	    }
-		else
+		if (PushableObject)
 		{
-			GetCharacterMovement()->RotationRate = OldRotationRate;
-			bPushing = false;
-			PushableObject->Mesh->SetSimulatePhysics(false);
-			PushableObject->Mesh->SetCollisionResponseToChannel(ECC_Pawn, ECR_Block);
+			OldRotationRate = GetCharacterMovement()->RotationRate;
+			bPushing = true;
+			yedekpush = PushableObject;
+			PushableObject->Mesh->SetSimulatePhysics(true);
+			PushableObject->Mesh->SetCollisionResponseToChannel(ECC_Pawn, ECR_Ignore);
+			GetCharacterMovement()->MaxWalkSpeed = 50;
+			GetMesh()->SetAnimInstanceClass(PushingAnimInstance);
 
-			GetMesh()->SetAnimInstanceClass(OldAnimInstance);
-			PhysicsHandle->ReleaseComponent();
-			GetCharacterMovement()->MaxWalkSpeed = CharacterRunSpeed;
-        }
+			PhysicsHandle->GrabComponentAtLocationWithRotation(PushableObject->Mesh,
+				FName("NULL"), PushableObject->Mesh->GetComponentLocation(),
+				GetActorRotation());
+			GetCharacterMovement()->RotationRate = FRotator(0, 50, 0);
+			PhysicsHandle->bRotationConstrained = true;
+			PhysicsHandle->LinearStiffness = 4000.f;
+			PhysicsHandle->LinearDamping = 300.f;
+			PhysicsHandle->AngularStiffness = 3000.f;
+			PhysicsHandle->AngularDamping = 300.f;
+			PhysicsHandle->bSoftLinearConstraint = true;
+			PhysicsHandle->bSoftAngularConstraint = true;
+		}
+	}
+	else
+	{
+		GetCharacterMovement()->RotationRate = OldRotationRate;
+		bPushing = false;
+		PushableObject->Mesh->SetSimulatePhysics(false);
+		PushableObject->Mesh->SetCollisionResponseToChannel(ECC_Pawn, ECR_Block);
+
+		GetMesh()->SetAnimInstanceClass(OldAnimInstance);
+		PhysicsHandle->ReleaseComponent();
+		GetCharacterMovement()->MaxWalkSpeed = CharacterRunSpeed;
+	}
 }
 
 void AWarriorCharacter::OpenInventory()
@@ -1154,6 +1153,7 @@ void AWarriorCharacter::SkillCanDamageF(float SphereRadiusFloat, float SkillDama
 					if (!Enemy->IsDead())
 					{
 						if (Enemy->EnemyType == EEnemyType::EET_Enemy) Enemy->SetRagdoll();
+						if (Enemy->EnemyType == EEnemyType::EET_Enemy) Enemy->SetStun();
 						if (Enemy->EnemyType == EEnemyType::EET_Boss) SkillDamage /= 3;
 										        
 						UGameplayStatics::ApplyDamage(HitActor, SkillDamage, GetInstigator()->GetController(), this, UDamageType::StaticClass());

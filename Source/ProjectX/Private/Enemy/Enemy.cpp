@@ -93,19 +93,18 @@ void AEnemy::Die()
 	
 	if (IsDead()) return;
 	Super::Die();
+	SetRagdoll();
 	AddKilledEnemy();
     SetEnemyDead();
 	ClearAttackTimer();
 	HideHealthBar();
 	DisableCapsule();
 	GetCharacterMovement()->bOrientRotationToMovement = false;
-	SetWeaponCollisionEnabled(ECollisionEnabled::NoCollision);
 	IncreaseQuestKillCount();
 	SetLifeSpan(DeathLifeSpan);
 	DestroyEquipItems();
 	SpawnEquipedItemsToWorld();
 	GetWorld()->GetTimerManager().SetTimer(SpawnExperienceTimer, this, &AEnemy::SpawnExperience, 2.f);
-	GetMesh()->SetCollisionEnabled(ECollisionEnabled::NoCollision);
 
 	
 	
@@ -389,12 +388,17 @@ void AEnemy::SetRagdoll()
 	Ragdoll = true;
 	GetMesh()->SetSimulatePhysics(true);
 	CombatTarget = nullptr;
-	GetCapsuleComponent()->SetCollisionEnabled(ECollisionEnabled::NoCollision);
+	SetWeaponCollisionEnabled(ECollisionEnabled::NoCollision);
+    GetCapsuleComponent()->SetCollisionEnabled(ECollisionEnabled::NoCollision);
+	
+
+}
+
+void AEnemy::SetStun()
+{
 	EnemyState = EEnemyState::EAS_Stun;
 	GetWorld()->GetTimerManager().SetTimer(HideHealthBarTimer, this, &AEnemy::HideHealthBar, 1.f);
 	GetWorld()->GetTimerManager().SetTimer(RagdollTimer, this, &AEnemy::ResetRagdoll, 3.f);
-	
-
 }
 
 void AEnemy::ResetRagdoll()
