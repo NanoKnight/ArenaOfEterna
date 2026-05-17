@@ -111,6 +111,7 @@ void AWarriorCharacter::BeginPlay()
 	SpawnDefaultWeapon();
 	InitializePlayerOverlay();
 	Tags.Add("WarriorCharacter");
+	bCanMoveCamera = true;
 	defaultCameraLoc = ViewCamera->GetRelativeLocation();
 
 
@@ -926,6 +927,7 @@ void AWarriorCharacter::FadeInAmbientSound()
 		CombatAudioComponent->SetSound(AmbientSound);
 		CombatAudioComponent->SetVolumeMultiplier(0.2f);
 		CombatAudioComponent->Play();
+		UE_LOG(LogTemp, Warning, TEXT("helelo"));
 		//->FadeIn(2.f, 0.2);
 	}
 	
