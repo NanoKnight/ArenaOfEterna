@@ -432,6 +432,7 @@ private:
 	bool bCanMoveCamera = false;
 	double CombatTargetRadius = 500.f;
 
+	FRotator OldRotationRate;
 
 
 	UPROPERTY(EditAnywhere)

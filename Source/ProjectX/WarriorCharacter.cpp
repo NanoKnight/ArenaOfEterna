@@ -859,17 +859,21 @@ void AWarriorCharacter::Interact()
 
 			if (PushableObject)
 			{
-
+				OldRotationRate = GetCharacterMovement()->RotationRate;
 				bPushing = true;
 				yedekpush = PushableObject;
 				PushableObject->Mesh->SetSimulatePhysics(true);
-				FVector ActorLoc = GetActorLocation() + GetActorForwardVector();
-				ActorLoc.Z = PushableObject->Mesh->GetComponentLocation().Z;
-				GetCharacterMovement()->MaxWalkSpeed = 100;
-				//GetCharacterMovement()->bOrientRotationToMovement = false;
+
+				PushableObject->Mesh->SetCollisionResponseToChannel(ECC_Pawn, ECR_Ignore);
+				GetCharacterMovement()->MaxWalkSpeed = 50;
 				GetMesh()->SetAnimInstanceClass(PushingAnimInstance);
-				PhysicsHandle->GrabComponentAtLocationWithRotation(PushableObject->Mesh, FName("NULL"), PushableObject->Mesh->GetComponentLocation(), GetActorRotation());
-				//PhysicsHandle->GrabComponentAtLocation(PushableObject->Mesh, FName("Null"), ActorLoc);
+
+				PhysicsHandle->GrabComponentAtLocationWithRotation(PushableObject->Mesh,
+					FName("NULL"), PushableObject->Mesh->GetComponentLocation(),
+					GetActorRotation());
+				GetCharacterMovement()->RotationRate = FRotator(0,50,0);
+
+
 				PhysicsHandle->bRotationConstrained = true;
 				PhysicsHandle->LinearStiffness = 4000.f;
 				PhysicsHandle->LinearDamping = 300.f;
@@ -884,17 +888,15 @@ void AWarriorCharacter::Interact()
 	    }
 		else
 		{
-
+			GetCharacterMovement()->RotationRate = OldRotationRate;
 			bPushing = false;
 			PushableObject->Mesh->SetSimulatePhysics(false);
+			PushableObject->Mesh->SetCollisionResponseToChannel(ECC_Pawn, ECR_Block);
+
 			GetMesh()->SetAnimInstanceClass(OldAnimInstance);
 			PhysicsHandle->ReleaseComponent();
 			GetCharacterMovement()->MaxWalkSpeed = CharacterRunSpeed;
-			GetCharacterMovement()->bOrientRotationToMovement = true;
         }
-	
-	
-
 }
 
 void AWarriorCharacter::OpenInventory()
@@ -1751,11 +1753,9 @@ void AWarriorCharacter::Tick(float DeltaTime)
 	CheckShieldRotation();
 	if (PhysicsHandle->GrabbedComponent && HoldPoint)
 	{
-		FVector CharacterLoc = GetMesh()->GetComponentLocation() + GetActorForwardVector() * 25 ;
-		CharacterLoc.Z = PhysicsHandle->GrabbedComponent->GetComponentLocation().Z;
-
-		PhysicsHandle->bRotationConstrained = true;
-		PhysicsHandle->SetTargetLocationAndRotation(HoldPoint->GetComponentLocation(), HoldPoint->GetComponentRotation());
+		
+		PhysicsHandle->SetTargetLocationAndRotation(HoldPoint->GetComponentLocation(),
+			HoldPoint->GetComponentRotation());
 	
 
 	}
