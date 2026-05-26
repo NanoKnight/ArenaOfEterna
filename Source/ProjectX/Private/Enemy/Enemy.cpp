@@ -347,6 +347,12 @@ void AEnemy::Tick(float DeltaTime)
 float AEnemy::TakeDamage(float DamageAmount, FDamageEvent const & DamageEvent, AController* EventInstigator, AActor* DamageCauser)
 {
 
+	AWarriorCharacter* WarChar = Cast<AWarriorCharacter>(DamageCauser);
+
+	if (WarChar)
+	{
+
+	}
 	
 	if (!IsDead())
 	{
