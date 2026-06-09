@@ -6,6 +6,7 @@ enum class ECharacterStates : uint8
 {
 	ECS_UnEquipped UMETA(DisplayName = "UnEquipped"),
 	ECS_EquippedOnehand UMETA(DisplayName = "EquippedOnehand"),
+	ECS_SpecialSword UMETA(DisplayName = "SpecialSword"),
 	ECS_EquippedTwoHand UMETA(DisplayName = "EquippedTwohand"),
 	ECS_EquippedShield UMETA(DisplayName = "EquippedShield")
 
@@ -18,6 +19,7 @@ enum class EActionState : uint8
 	EAS_Unoccupied UMETA(DisplayName = "Unocuppied"),
 	EAS_HitReaction UMETA(DisplayName = "HitReaction"),
 	EAS_Attacking UMETA(DisplayName = "Attacking"),
+	EAS_SpecialAttacking UMETA(DisplayName = "SpecialAttacking"),
 	EAS_UsingSkill UMETA(DisplayName = "UsingSkill"),
 	EAS_EquippingWeapon UMETA(DisplayName = "EquippingWeapon"),
 	EAS_Pushing UMETA(DisplayName = "Pushing"),

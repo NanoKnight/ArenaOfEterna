@@ -106,10 +106,15 @@ public:
 	UPROPERTY(EditAnywhere, Category = "Combat")
 	TSubclassOf<class AWeapon> WeaponClass;
 
+
+	UPROPERTY(EditAnywhere,Category = "Combat")
+	TSubclassOf<class AWeapon> SpecialWeapon;
+
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Quests")
 	TSubclassOf<class AQuestActor> QuestActorClass;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "UI")
+
 
 	TSubclassOf<UUserWidget> DeathWidgetClass;
 	UUserWidget* DeathWidgetInstance;
@@ -183,6 +188,8 @@ protected:
 	virtual void Attack() override;
 	void AttackReleassed();
 	virtual void AttackEnd() override;
+	void SpecialSwordAttack();
+	void SpecialSwordAttackReleassed();
 	void UsingSkill();
 	void Shield();
 	void ShieldRealesed();
@@ -226,10 +233,15 @@ protected:
 	UPROPERTY(EditAnywhere,BlueprintReadWrite)
 	int32 ChasedEnemies;
 
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	bool bHoldingAttack;
+
 	bool CombatSoundPlaying;
 	bool IsFirstSkill;
 	bool IsSecondSkill;
 	bool FadeoutTimer = false;
+	bool BShieldOn = false;
+
 	float FadeoutSeconds = 0;
 	
 
@@ -312,7 +324,6 @@ protected:
 	UPROPERTY(EditAnywhere, Category = "Settings")
 	float DistanceThreshold ;
 
-	bool BShieldOn = false;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Camera")
 	float CameraMoveSpeed = 2.f;
@@ -329,8 +340,7 @@ protected:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Camera")
 	float MaxY = 300.f;  
 
-	UPROPERTY(EditAnywhere, BlueprintReadWrite)
-	bool bHoldingAttack;
+
 
 
 
@@ -385,6 +395,7 @@ private:
 
 	UPROPERTY(EditAnywhere)
 	TSubclassOf<class AShield> ShieldClass;
+
 
 	UPROPERTY(EditDefaultsOnly, Category = Montages)
 	UAnimMontage* EquipMontage;

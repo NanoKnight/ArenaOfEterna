@@ -252,6 +252,11 @@ int32 ABaseCharacter::WarriorAttackMontage()
 	
 }
 
+int32 ABaseCharacter::WarriorSpecialAttackMontage()
+{
+	return PlayWarriorCountMontageSection(SpecialAttackMontage, false, AttackMontageSections);
+}
+
 
 
 int32 ABaseCharacter::PlayDeathMontage()

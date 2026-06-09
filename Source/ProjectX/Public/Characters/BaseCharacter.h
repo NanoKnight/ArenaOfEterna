@@ -56,6 +56,7 @@ protected:
     virtual int32 PlayAttackMontage();
 	virtual int32 PlayHoldingAttackMontage();
 	virtual int32 WarriorAttackMontage();
+	virtual int32 WarriorSpecialAttackMontage();
     virtual int32 PlayDeathMontage();	
 	virtual void PlayDodgeMontage();
 	void StopAttackMontage();
@@ -76,6 +77,8 @@ protected:
 
 	
 	bool RageMode = false;
+	bool BSpecialAttack;
+
    
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Combat)
 	UAttributeComponent* Attributes;
@@ -131,7 +134,10 @@ private:
 	UNiagaraSystem* ShieldNiagara;
 
 	UPROPERTY(EditDefaultsOnly, Category = Montages)
-	UAnimMontage* AttackMontage;
+	UAnimMontage* AttackMontage;	
+	
+	UPROPERTY(EditDefaultsOnly, Category = Montages)
+	UAnimMontage* SpecialAttackMontage;
 
 	UPROPERTY(EditDefaultsOnly, Category = montages)
 	UAnimMontage* HoldingAttackMontage;

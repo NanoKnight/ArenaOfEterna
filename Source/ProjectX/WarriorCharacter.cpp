@@ -97,6 +97,8 @@ void AWarriorCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputCo
 	PlayerInputComponent->BindAction(FName("Inventory"), IE_Pressed, this, &AWarriorCharacter::OpenInventory);
 	PlayerInputComponent->BindAction(FName("Attack"), IE_Pressed, this, &AWarriorCharacter::Attack);
 	PlayerInputComponent->BindAction(FName("Attack"), IE_Released, this, &AWarriorCharacter::AttackReleassed);
+	PlayerInputComponent->BindAction(FName("SpecialSwordAttack"), IE_Pressed,this,&AWarriorCharacter::SpecialSwordAttack);
+	PlayerInputComponent->BindAction(FName("SpecialSwordAttack"), IE_Released,this,&AWarriorCharacter::SpecialSwordAttackReleassed);
 	PlayerInputComponent->BindAction(FName("Shield"), IE_Pressed, this, &AWarriorCharacter::Shield);
 	PlayerInputComponent->BindAction(FName("Shield"), IE_Released, this, &AWarriorCharacter::ShieldRealesed);
 	PlayerInputComponent->BindAction(FName("Dodge"), IE_Pressed, this, &AWarriorCharacter::Dodge);
@@ -594,6 +596,8 @@ float AWarriorCharacter::TakeDamage(float DamageAmount, FDamageEvent const& Dama
 			
 			HandleDamage(DamageAmount);
 
+
+
 		}
 	}
 
@@ -736,7 +740,7 @@ void AWarriorCharacter::PlayItemPickupNameAnim(FString ItemName)
 
 void AWarriorCharacter::MoveForward(float value)
 {
-	if (ActionState != EActionState::EAS_Unoccupied) return;
+	if (ActionState != EActionState::EAS_Unoccupied && ActionState != EActionState::EAS_Pushing) return;
 	if(Controller && (value != 0.f))
 
 	{
@@ -765,7 +769,7 @@ void AWarriorCharacter::MoveForward(float value)
 
 void AWarriorCharacter::MoveRight(float value)
 {
-	if (ActionState != EActionState::EAS_Unoccupied) return;
+	if (ActionState != EActionState::EAS_Unoccupied && ActionState != EActionState::EAS_Pushing) return;
 	if (Controller && (value != 0.f))
 	{
 		const FRotator ControlRotation = GetControlRotation();
@@ -864,6 +868,7 @@ void AWarriorCharacter::PushInteract()
 
 		if (PushableObject)
 		{
+			ActionState = EActionState::EAS_Pushing;
 			OldRotationRate = GetCharacterMovement()->RotationRate;
 			bPushing = true;
 			yedekpush = PushableObject;
@@ -889,9 +894,9 @@ void AWarriorCharacter::PushInteract()
 	{
 		GetCharacterMovement()->RotationRate = OldRotationRate;
 		bPushing = false;
+		ActionState = EActionState::EAS_Unoccupied;
 		PushableObject->Mesh->SetSimulatePhysics(false);
 		PushableObject->Mesh->SetCollisionResponseToChannel(ECC_Pawn, ECR_Block);
-
 		GetMesh()->SetAnimInstanceClass(OldAnimInstance);
 		PhysicsHandle->ReleaseComponent();
 		GetCharacterMovement()->MaxWalkSpeed = CharacterRunSpeed;
@@ -1010,7 +1015,7 @@ void AWarriorCharacter::PlayShieldReactMontage()
 
 void AWarriorCharacter::EquipWeapon(AWeapon* Weapon)
 {
-	//Weapon->Equip(GetMesh(), FName("Sword"), this, this);
+	Weapon->Equip(GetMesh(), FName("Sword"), this, this);
 	CharacterStates = ECharacterStates::ECS_EquippedOnehand;
 	OverlappingItem = nullptr;
 	EquippedWeapon = Weapon;
@@ -1033,18 +1038,34 @@ void AWarriorCharacter::AttackReleassed()
 	{
 		return;
 	}
-	AttackButtonStates = EAttackButtonState::EAB_Releassed;
-	const bool bCanAttack = (ActionState == EActionState::EAS_Unoccupied && CharacterStates != ECharacterStates::ECS_UnEquipped);
-	if (bCanAttack)
+
+	else
 	{
-		WarriorAttackMontage();
-		if (PlayerOverlay)
+		AttackButtonStates = EAttackButtonState::EAB_Releassed;
+		const bool bCanAttack = (ActionState == EActionState::EAS_Unoccupied && CharacterStates != ECharacterStates::ECS_UnEquipped);
+		if (bCanAttack)
 		{
-			PlayerOverlay->PlayAnimation(PlayerOverlay->NormalAttackAnim);
+		 
+			if (BSpecialAttack)
+			{
+				WarriorSpecialAttackMontage();
+			}
+
+			else
+			{
+				WarriorAttackMontage();
+				if (PlayerOverlay)
+				{
+					PlayerOverlay->PlayAnimation(PlayerOverlay->NormalAttackAnim);
+				}
+				bAttackTimerOpen = true;
+			}
+
+			
+			ActionState = EActionState::EAS_Attacking;
 		}
-		bAttackTimerOpen = true;
-		ActionState = EActionState::EAS_Attacking;
 	}
+
 	
 
 }
@@ -1056,6 +1077,34 @@ void AWarriorCharacter::AttackEnd()
 
 }
 
+void AWarriorCharacter::SpecialSwordAttack()
+{
+	if (EquippedWeapon)
+	{
+		WeaponClass = EquippedWeapon->GetClass();
+		BSpecialAttack = true;
+		AWeapon* SpecialWeaponRef = GetWorld()->SpawnActor<AWeapon>(SpecialWeapon);
+		EquippedWeapon->Destroy();
+		EquipWeapon(SpecialWeaponRef);
+	}
+	
+
+}
+
+void AWarriorCharacter::SpecialSwordAttackReleassed()
+{
+
+	if (EquippedWeapon)
+	{
+		BSpecialAttack = false;
+		EquippedWeapon->Destroy();
+		EquippedWeapon = GetWorld()->SpawnActor<AWeapon>(WeaponClass);
+		EquipWeapon(EquippedWeapon);
+	}
+
+
+}
+
 void AWarriorCharacter::UsingSkill()
 {
 	ActionState = EActionState::EAS_UsingSkill;
@@ -1064,8 +1113,9 @@ void AWarriorCharacter::UsingSkill()
 
 void AWarriorCharacter::FirstSkill()
 {
-	if (ActionState == EActionState::EAS_UsingSkill || IsFirstSkill == true) return;
-	IsFirstSkill = true;
+	if (ActionState == EActionState::EAS_UsingSkill || IsFirstSkill == true  ) return;
+	if (!WeaponClass)return;
+	
 	 
 	if (PlayerOverlay)
 	{
@@ -1723,10 +1773,7 @@ void AWarriorCharacter::ExecuteGetHit(FHitResult& BoxHit)
 
 	if (HitInterface)
 	{
-		
 		HitInterface->Execute_GetHit(BoxHit.GetActor(), BoxHit.ImpactPoint, GetOwner());
-		
-
 	}
 	IgnoreActors.AddUnique(BoxHit.GetActor());
 }
