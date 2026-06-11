@@ -77,6 +77,9 @@ private:
 	UPROPERTY(EditAnywhere, Category = "WeaponProperties")
 	bool bShowBoxDebug = false;
 
+	UPROPERTY(EditAnywhere, Category = "WeaponProperties")
+	bool SpecialWeapon = false;
+
 	UPROPERTY(VisibleAnywhere)
 	USceneComponent* BoxTraceStart;
 

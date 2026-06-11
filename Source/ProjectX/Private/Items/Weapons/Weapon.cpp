@@ -107,7 +107,6 @@ void AWeapon::OnBoxOverlap(UPrimitiveComponent* OverlappedComponent, AActor* Oth
 			return;
 		}
 		UGameplayStatics::ApplyDamage(BoxHit.GetActor(),WeaponDamage,GetInstigator()->GetController(),this,UDamageType::StaticClass());
-		UE_LOG(LogTemp, Warning, TEXT("Applied %f damage to %s"), WeaponDamage, *BoxHit.GetActor()->GetName());
 		ExecuteGetHit(BoxHit);
 	}
 
@@ -125,9 +124,16 @@ void AWeapon::ExecuteGetHit(FHitResult& BoxHit)
 
 	if (HitInterface)
 	{
+		if (SpecialWeapon)
+		{
+			AEnemy* EnemyRef = Cast<AEnemy>(BoxHit.GetActor());
+			if (EnemyRef)
+			{
+				EnemyRef->SetEnemyFreeze();
+			}
+		}
 
 		HitInterface->Execute_GetHit(BoxHit.GetActor(), BoxHit.ImpactPoint, GetOwner());
-
 	}
 	IgnoreActors.AddUnique(BoxHit.GetActor());	
 	CreateFields(BoxHit.ImpactPoint);

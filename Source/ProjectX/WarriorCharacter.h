@@ -241,7 +241,6 @@ protected:
 	bool IsSecondSkill;
 	bool FadeoutTimer = false;
 	bool BShieldOn = false;
-
 	float FadeoutSeconds = 0;
 	
 

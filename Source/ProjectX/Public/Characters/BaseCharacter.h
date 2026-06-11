@@ -11,12 +11,11 @@
 
 
 class AWeapon;
-class ABaseItem;
 class UAttributeComponent;
 class UInventoryComponent;
 class UAnimMontage;
 class AEnemy;
-
+class ABaseItem;
 UCLASS()
 class PROJECTX_API ABaseCharacter : public ACharacter, public IHitInterface
 {
@@ -31,6 +30,10 @@ public:
  
   UPROPERTY(VisibleAnywhere,Category = Weapon)
   AWeapon* EquippedWeapon;
+
+
+ UPROPERTY(VisibleAnywhere, Category = Shield)
+  ABaseItem* EquippedShield;
 
   UPROPERTY(EditAnywhere)
   TArray<ABaseItem*> ItemsToEquip;
@@ -141,6 +144,7 @@ private:
 
 	UPROPERTY(EditDefaultsOnly, Category = montages)
 	UAnimMontage* HoldingAttackMontage;
+
 	
 	UPROPERTY(EditDefaultsOnly, Category = Montages)
 	UAnimMontage* HitReactMontage;
@@ -156,6 +160,9 @@ private:
 
 	UPROPERTY(EditAnywhere, Category = Combat)
 	TArray<FName>HoldingAttackMontageSections;
+
+	UPROPERTY(EditAnywhere, Category = Combat)
+	TArray<FName>SpecialAttackSections;
 
 	UPROPERTY(EditAnywhere, Category = Combat)
 	TArray<FName> DeathMontageSections;

@@ -63,6 +63,7 @@ public:
 	virtual void Destroyed() override;
 	void SetRagdoll();
 	void SetStun();
+	void SetEnemyFreeze();
 	/*</AActor>*/
 
 	/* <IHitInterface> */
@@ -82,6 +83,8 @@ public:
 
 	UPROPERTY(Editanywhere)
 	bool IgnoreEnemyCount;
+
+	bool Freezed;
 
 
 

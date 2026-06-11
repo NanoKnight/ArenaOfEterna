@@ -407,6 +407,13 @@ void AEnemy::SetStun()
 	GetWorld()->GetTimerManager().SetTimer(RagdollTimer, this, &AEnemy::ResetRagdoll, 3.f);
 }
 
+void AEnemy::SetEnemyFreeze()
+{
+	Freezed = true;
+	UE_LOG(LogTemp, Warning, TEXT("EnemyFrezed"));
+	this->GetCharacterMovement()->StopMovementImmediately();
+}
+
 void AEnemy::ResetRagdoll()
 {
 	if (IsDead())return;
@@ -633,6 +640,7 @@ void AEnemy::ChaseTarget()
 {	
     if (Attributes->GetStamina() <= 0 && EnemyType == EEnemyType::EET_Boss ) EnemyState = EEnemyState::EAS_Stun;
 	if (EnemyState == EEnemyState::EAS_Stun) return;
+	if (Freezed)return;
 
 
 
@@ -792,7 +800,8 @@ AActor* AEnemy::ChoosePatrolTarget()
 void AEnemy::PawnSeen(APawn* SeenPawn)
 {
 
-	UE_LOG(LogTemp, Warning, TEXT("this fucntion called from enemy "));
+	if (Freezed) return;
+
 	SeenPawnRef = SeenPawn;
 	if (!Chased)
 	{

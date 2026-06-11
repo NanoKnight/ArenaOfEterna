@@ -65,14 +65,14 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite , meta = (EditCondition = "ItemTypes == EItemTypes::Weapon", EditConditionHides))
 	float Damage;
 
-	UPROPERTY(EditAnywhere, BlueprintReadWrite,meta = (EditCondition = "ItemTypes != EItemTypes::Weapon && ItemType != EItemTypes::Pot", EditConditionHides))
+	UPROPERTY(EditAnywhere, BlueprintReadWrite,meta = (EditCondition = "ItemTypes != EItemTypes::Weapon && ItemTypes != EItemTypes::Pot", EditConditionHides))
 	float Defense;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, meta = (EditCondition = "ItemTypes == EItemTypes::Pot", EditConditionHides))
 	int32 StackCounter = 1;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
-	TSubclassOf<ABaseItem>ItemClass;
+	TSubclassOf<ABaseItem> ItemClass;
 
 	bool operator==(const FInventoryStruct& Other) const
 	{
