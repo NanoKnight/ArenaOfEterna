@@ -1081,6 +1081,7 @@ void AWarriorCharacter::SpecialSwordAttack()
 {
 	if (EquippedWeapon)
 	{
+		ComboCountReset();
 		WeaponClass = EquippedWeapon->GetClass();
 		BSpecialAttack = true;
 		AWeapon* SpecialWeaponRef = GetWorld()->SpawnActor<AWeapon>(SpecialWeapon);
@@ -1114,7 +1115,7 @@ void AWarriorCharacter::UsingSkill()
 void AWarriorCharacter::FirstSkill()
 {
 	if (ActionState == EActionState::EAS_UsingSkill || IsFirstSkill == true  ) return;
-	if (!WeaponClass)return;
+	if (!EquippedShield)return;
 	
 	 
 	if (PlayerOverlay)
@@ -1774,8 +1775,13 @@ void AWarriorCharacter::ExecuteGetHit(FHitResult& BoxHit)
 	if (HitInterface)
 	{
 		HitInterface->Execute_GetHit(BoxHit.GetActor(), BoxHit.ImpactPoint, GetOwner());
+
+		
 	}
 	IgnoreActors.AddUnique(BoxHit.GetActor());
+
+	
+	
 }
 
 void AWarriorCharacter::GetSkillHit(FHitResult& Skillhit)

@@ -31,7 +31,7 @@ void UInventoryComponent::BeginPlay()
 {
 	Super::BeginPlay();
 	/******BUD DEÐÝÞKENNERÝ BÖYLE BEGÝNPLAYDE SETLEYÝP KULLANMAYI DENÝYCEÐÝZ BU SINIFIN H DOSYASINDAN BUNLARIN REFERANSLARINI AKTÝF ET KAPALILAR ÞUAN*******/
-	MainCharacter = Cast<AWarriorCharacter>(GetOwner());
+	//MainCharacter = Cast<AWarriorCharacter>(GetOwner());
 	ABaseCharacter* BaseCharacter = Cast<ABaseCharacter>(GetOwner());
 
 
@@ -96,7 +96,8 @@ void UInventoryComponent::SetDefensePoint()
 {
 	if (InventoryWidget)
 	{
-		InventoryWidget->SetDefenseText(MainCharacter->GetAttributesComponent()->GetDefense());
+		AWarriorCharacter* Warrior = Cast<AWarriorCharacter>(GetOwner());
+		InventoryWidget->SetDefenseText(Warrior->GetAttributesComponent()->GetDefense());
 
 	}
 }
@@ -146,12 +147,21 @@ void UInventoryComponent::AddItemWithIndex(const FInventoryStruct& NewItem, int3
 	for (int32 i = 0; i < InventoryItems.Num(); i++)
 	{
 
-		if (InventoryItems[i].ItemName.IsEmpty())
+		/*if (InventoryItems[i].ItemName.IsEmpty())
 		{
 			//i hangi slota yerleþeceðini gösteriyor
 			InventoryItems[Index] = NewItem;
 			break;
+		}*/
+
+		if (!InventoryItems.IsValidIndex(Index))
+		{
+
+			return;
 		}
+
+		InventoryItems[Index] = NewItem;
+
 	}
 }
 
@@ -256,7 +266,10 @@ void UInventoryComponent::EquipItem(const FInventoryStruct& ItemToEquip)
 						SpawnedItem->GetItemMesh()->SetStaticMesh(ItemToEquip.ItemStaticMesh);
 						SpawnedItem->Defense = ItemToEquip.Defense;
 						WarriorCharacter->ItemsToEquip.Add(SpawnedItem);
-
+						if (ItemToEquip.ItemTypes == EItemTypes::Shield)
+						{
+							WarriorCharacter->EquippedShield = SpawnedItem;
+						}
 
 					}
 
@@ -357,7 +370,7 @@ void UInventoryComponent::UnEquipItem(FInventoryStruct& Item, ABaseItem* Equippe
 
 
 	if (EquippedItems.Contains(Item))
-	{ 
+	{
 		float defins = Item.Defense;
 		EquippedItems.Remove(Item);
 
@@ -366,40 +379,43 @@ void UInventoryComponent::UnEquipItem(FInventoryStruct& Item, ABaseItem* Equippe
 		UWorld* World = WarriorCharacter->GetWorld();
 		if (World)
 		{
-			
-				WarriorCharacter->GetAttributesComponent()->SetDefense(WarriorCharacter->GetAttributesComponent()->GetDefense() - defins);
-				SetDefensePoint();
 
-			
+			WarriorCharacter->GetAttributesComponent()->SetDefense(WarriorCharacter->GetAttributesComponent()->GetDefense() - defins);
+			SetDefensePoint();
+
+
 			if (WarriorCharacter)
 			{
-				
 
-			
-				
-				
-					for (int32 i = WarriorCharacter->ItemsToEquip.Num() - 1; i >= 0; i--)
-					{
-						if (WarriorCharacter->ItemsToEquip[i] && WarriorCharacter->ItemsToEquip[i]->ItemType == Item.ItemTypes) 
-						{
-							
-							WarriorCharacter->ItemsToEquip[i]->DetachFromActor(FDetachmentTransformRules::KeepWorldTransform);
-							WarriorCharacter->ItemsToEquip[i]->Destroy();
-							WarriorCharacter->ItemsToEquip.RemoveAt(i);
-						}
-					}
-
-					if (Item.ItemTypes == EItemTypes::Weapon)
+				for (int32 i = WarriorCharacter->ItemsToEquip.Num() - 1; i >= 0; i--)
+				{
+					if (WarriorCharacter->ItemsToEquip[i] && WarriorCharacter->ItemsToEquip[i]->ItemType == Item.ItemTypes)
 					{
 
-						WarriorCharacter->SetCharacterStates(ECharacterStates::ECS_UnEquipped);
-						WarriorCharacter->EquippedWeapon->Destroy();
+						WarriorCharacter->ItemsToEquip[i]->DetachFromActor(FDetachmentTransformRules::KeepWorldTransform);
+						WarriorCharacter->ItemsToEquip[i]->Destroy();
+						WarriorCharacter->ItemsToEquip.RemoveAt(i);
 					}
-				
+				}
+
+				if (Item.ItemTypes == EItemTypes::Weapon)
+				{
+
+					WarriorCharacter->SetCharacterStates(ECharacterStates::ECS_UnEquipped);
+					WarriorCharacter->EquippedWeapon->Destroy();
+					WarriorCharacter->EquippedWeapon = nullptr;
+
+				}
+				if (Item.ItemTypes == EItemTypes::Shield)
+				{
+					WarriorCharacter->EquippedShield->Destroy();
+					WarriorCharacter->EquippedShield = nullptr;
+				}
+
 			}
-		
+
 		}
-		
+
 	}
 }
 
@@ -408,7 +424,8 @@ void UInventoryComponent::UnEquipItem(FInventoryStruct& Item, ABaseItem* Equippe
 void UInventoryComponent::RemoveFormInventory(const FInventoryStruct& Item)
 {
 	
-	InventoryItems.RemoveSingle(Item);
+	//InventoryItems.RemoveSingle(Item);
+
 	if (InventoryWidget)
 	{
 		InventoryWidget->UpdateInventoryDisplay(InventoryItems);

@@ -114,7 +114,7 @@ private:
 	FTimerHandle ItemTextAnimTimer;
 
 	//APlayerController* PlayerController;
-	AWarriorCharacter* MainCharacter;
+	//AWarriorCharacter* MainCharacter;
 	//APlayerHUD* PlayerHUD;
 	//UCharacterHUD* PlayerOverlay;
 

@@ -194,7 +194,7 @@ bool UInventorySlotWidget::NativeOnDrop(const FGeometry& Geometry, const FDragDr
 				 int32 OldIndex = Warrior->GetInventoryComponent()->FindItemIndex(Item);
 				 Warrior->GetInventoryComponent()->UnEquipItem(DraggedItem->EquippedItem, DraggedItem->EquippedItemActor);
 				 Warrior->GetInventoryComponent()->AddItemWithIndex(DraggedItem->EquippedItem,OldIndex);
-				 Warrior->GetInventoryComponent()->RemoveFormInventory(Item);
+				// Warrior->GetInventoryComponent()->RemoveFormInventory(Item);
 				 Warrior->GetInventoryComponent()->InventoryWidget->UpdateInventoryDisplay(Warrior->GetInventoryComponent()->InventoryItems);
 
 
