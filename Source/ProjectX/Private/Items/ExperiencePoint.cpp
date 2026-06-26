@@ -3,13 +3,38 @@
 
 #include "Items/ExperiencePoint.h"
 #include"Interfaces\PickUpInterface.h"
-
+#include"../WarriorCharacter.h"
+#include "Kismet/GameplayStatics.h"
 #include "SaveGames/EternaSaveGame.h"
+
+
+
 
 
 AExperiencePoint::AExperiencePoint()
 {
 }
+
+void AExperiencePoint::Tick(float DeltaTime)
+{
+
+	if (!TargetPlayer)
+	{
+		TargetPlayer = Cast<AWarriorCharacter>(UGameplayStatics::GetPlayerCharacter(this, 0));
+
+		if (!TargetPlayer) return;
+	}
+
+	const float Distance = FVector::DistSquared(GetActorLocation(), TargetPlayer->GetActorLocation());
+	constexpr float MagnetRadius = 600.f;
+	if (Distance <= FMath::Square(MagnetRadius))
+	{
+		const FVector NewLocation = FMath::VInterpTo(GetActorLocation(), 
+			TargetPlayer->GetActorLocation(),DeltaTime,6.f);
+		SetActorLocation(NewLocation);
+	}
+}
+
 void AExperiencePoint::BeginPlay()
 {
 	Super::BeginPlay();
