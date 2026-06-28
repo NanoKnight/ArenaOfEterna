@@ -260,7 +260,9 @@ bool AEnemy::CanAttack()
 		IsInsideAttackRadius() &&
 		!IsAttacking() &&
 		!IsEngaged() &&
+		EnemyState != EEnemyState::EAS_Freezed &&
 		!IsDead();
+
 	  
 
 	return bCanAttack;
@@ -409,9 +411,18 @@ void AEnemy::SetStun()
 
 void AEnemy::SetEnemyFreeze()
 {
-	Freezed = true;
-	UE_LOG(LogTemp, Warning, TEXT("EnemyFrezed"));
+	EnemyState = EEnemyState::EAS_Freezed;
+	OldMat = GetMesh()->GetMaterial(0);
+	GetMesh()->SetMaterial(0,FreezeMat);
 	this->GetCharacterMovement()->StopMovementImmediately();
+	GetWorld()->GetTimerManager().SetTimer(OutFreezeTimer, this, &AEnemy::OutFreeze, 3.f);
+}
+
+void AEnemy::OutFreeze()
+{
+	EnemyState = EEnemyState::EES_NoState;
+	GetMesh()->SetMaterial(0,OldMat);
+
 }
 
 void AEnemy::ResetRagdoll()
@@ -639,8 +650,8 @@ void AEnemy::StartPatrolling()
 void AEnemy::ChaseTarget()
 {	
     if (Attributes->GetStamina() <= 0 && EnemyType == EEnemyType::EET_Boss ) EnemyState = EEnemyState::EAS_Stun;
-	if (EnemyState == EEnemyState::EAS_Stun) return;
-	if (Freezed)return;
+	if (EnemyState == EEnemyState::EAS_Stun || EnemyState == EEnemyState::EAS_Freezed) return;
+	
 
 
 
@@ -800,7 +811,7 @@ AActor* AEnemy::ChoosePatrolTarget()
 void AEnemy::PawnSeen(APawn* SeenPawn)
 {
 
-	if (Freezed) return;
+	if (EnemyState == EEnemyState::EAS_Freezed)return;
 
 	SeenPawnRef = SeenPawn;
 	if (!Chased)
