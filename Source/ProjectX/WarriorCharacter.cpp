@@ -30,7 +30,6 @@
 #include"Items\Treasure.h"
 #include"Items\HealthPoint.h"
 #include"Items\EnemySpawner.h"
-#include"Items\SpawnManager.h"
 #include"HUD\InventoryWidget.h"
 #include"Components\InventorySystem\InventoryComponent.h"
 #include "Items\QuestActor.h"
@@ -117,13 +116,24 @@ void AWarriorCharacter::BeginPlay()
 	SpawnDefaultShield();
 	SpawnDefaultWeapon();
 	InitializePlayerOverlay();
+
 	Tags.Add("WarriorCharacter");
-	bCanMoveCamera = true;
+	bCanMoveCamera = false;
 	defaultCameraLoc = ViewCamera->GetRelativeLocation();
+	SetQuestsSettings();
+	CheckEnemySpawner();
 
+	if (AmbientSound)
+	{
+		CombatAudioComponent->SetSound(AmbientSound);
+		CombatAudioComponent->Play();
+		CombatAudioComponent->SetVolumeMultiplier(0.2f);
+	}
+}
 
-	FString Path = TEXT("/Script/Engine.DataTable'/Game/Blueprints/Data/Quest.Quest'");
-	QuestDataTable = LoadObject<UDataTable>(nullptr, *Path);
+void AWarriorCharacter::SetQuestsSettings()
+{
+	SetQuestDataTable();
 
 	if (QuestDataTable)
 	{
@@ -138,22 +148,22 @@ void AWarriorCharacter::BeginPlay()
 
 			}
 		}
-         
 
-		if (ActiveQuests.IsValidIndex(0) && PlayerOverlay &&PlayerOverlay->GetQuestOverlay())
+
+		if (ActiveQuests.IsValidIndex(0) && PlayerOverlay && PlayerOverlay->GetQuestOverlay())
 		{
 			ActiveQuests.Num();
-		    PlayerOverlay->GetQuestOverlay()->SetQuestText(
-			ActiveQuests[0].QuestName,
-			ActiveQuests[0].QuestDescription);
+			PlayerOverlay->GetQuestOverlay()->SetQuestText(
+				ActiveQuests[0].QuestName,
+				ActiveQuests[0].QuestDescription);
 		}
-		if (SpawnManager == nullptr)
-		{
-			TSubclassOf<ASpawnManager> SpawnManagerClass = ASpawnManager::StaticClass();
-			SpawnManager = GetWorld()->SpawnActor<ASpawnManager>(SpawnManagerClass);
-		}
-	}	
+	}
 
+	SpawnQuestActor();
+}
+
+void AWarriorCharacter::SpawnQuestActor()
+{
 	if (QuestActorClass)
 	{
 		UWorld* World = GetWorld();
@@ -163,13 +173,12 @@ void AWarriorCharacter::BeginPlay()
 
 		}
 	}
+}
 
-	if (AmbientSound)
-	{
-		CombatAudioComponent->SetSound(AmbientSound);
-		CombatAudioComponent->Play();
-		CombatAudioComponent->SetVolumeMultiplier(0.2f);
-	}
+void AWarriorCharacter::SetQuestDataTable()
+{
+	FString Path = TEXT("/Script/Engine.DataTable'/Game/Blueprints/Data/Quest.Quest'");
+	QuestDataTable = LoadObject<UDataTable>(nullptr, *Path);
 }
 
 void AWarriorCharacter::Save()
@@ -425,24 +434,32 @@ void AWarriorCharacter::StartNextQuest()
 		
 			if (CurrentQuest.QuestType == EQuestType::PickupItem )
 			{
-				for (FInventoryStruct& ItemRef : InventoryComponent->InventoryItems)
+				if (InventoryComponent)
 				{
-					if (ItemRef.ItemName == CurrentQuest.QuestItemName)
+					for (FInventoryStruct& ItemRef : InventoryComponent->InventoryItems)
 					{
-						CompleteCurrentQuest();
+						if (ItemRef.ItemName == CurrentQuest.QuestItemName)
+						{
+							CompleteCurrentQuest();
+						}
 					}
 				}
 			}
-			 if (CurrentQuest.QuestType == EQuestType::PickupItem || CurrentQuest.QuestType == EQuestType::WearItem)
+
+			if (InventoryComponent)
 			{
-				for (FInventoryStruct& ItemRef : InventoryComponent->EquippedItems)
+				if (CurrentQuest.QuestType == EQuestType::PickupItem || CurrentQuest.QuestType == EQuestType::WearItem)
 				{
-					if (ItemRef.ItemName == CurrentQuest.QuestItemName)
+					for (FInventoryStruct& ItemRef : InventoryComponent->EquippedItems)
 					{
-						CompleteCurrentQuest();
+						if (ItemRef.ItemName == CurrentQuest.QuestItemName)
+						{
+							CompleteCurrentQuest();
+						}
 					}
 				}
 			}
+		
 
 			if (PlayerOverlay)
 			{
@@ -450,6 +467,14 @@ void AWarriorCharacter::StartNextQuest()
 			}
 		}
 
+	}
+}
+
+void AWarriorCharacter::CheckEnemySpawner()
+{
+	if (CurrentQuest.QuestType == EQuestType::KillEnemies || CurrentQuest.QuestType == EQuestType::DestroyBoss)
+	{
+		SpawnEnemy(CurrentQuest.TargetKillCount, CurrentQuest.TargetLocation);
 	}
 }
 
@@ -1233,10 +1258,7 @@ void AWarriorCharacter::CompleteCurrentQuest()
 		}
 		NextQuestRowName = FName(FString::Printf(TEXT("%s_%d"), *BaseName, QuestNumber));
 		StartNextQuest();
-		if (CurrentQuest.QuestType == EQuestType::KillEnemies || CurrentQuest.QuestType == EQuestType::DestroyBoss)
-		{
-			SpawnEnemy(CurrentQuest.TargetKillCount,CurrentQuest.TargetLocation);
-		}
+		CheckEnemySpawner();
 
 		if (PlayerOverlay->GetQuestCompleteWidget())
 		{
@@ -1392,7 +1414,8 @@ void AWarriorCharacter::SkillEnd()
 void AWarriorCharacter::Shield()
 {
 	
-	if (ActionState == EActionState::EAS_UsingSkill)return;
+	if (ActionState == EActionState::EAS_UsingSkill || CharacterStates == ECharacterStates::ECS_UnEquipped || 
+		!ShieldClass)return;
 	
 	if (CharacterStates == ECharacterStates::ECS_UnEquipped)return;
 

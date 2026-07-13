@@ -2,7 +2,9 @@
 #include "Enemy/Enemy.h"
 #include "Kismet/GameplayStatics.h"
 #include "Components/TextRenderComponent.h"
+#include"../WarriorCharacter.h"
 #include"Components\CapsuleComponent.h"
+#include"Components\BoxComponent.h"
 #include"Interfaces/RespawnEnemyInterface.h"
 #include "Engine/World.h"
 
@@ -13,12 +15,15 @@ AEnemySpawner::AEnemySpawner()
     PrimaryActorTick.bCanEverTick = true;
     RootSceneComponent = CreateDefaultSubobject<USceneComponent>(TEXT("RootSceneComponent"));
     RootComponent = RootSceneComponent;
+    TriggerSpawner = CreateDefaultSubobject<UBoxComponent>(TEXT("TriggerBoxComponent"));
+    TriggerSpawner->SetupAttachment(RootComponent);
+    BlockBox = CreateDefaultSubobject<UBoxComponent>(TEXT("BlockBox"));
+    BlockBox->SetupAttachment(RootComponent);
     SpawnerIDText = CreateDefaultSubobject<UTextRenderComponent>(TEXT("SpawnerID"));
     SpawnerIDText->SetupAttachment(RootSceneComponent);
-
     CapsuleComponent = CreateDefaultSubobject<UCapsuleComponent>(TEXT("CapsuleComponent"));
     CapsuleComponent->SetupAttachment(GetRootComponent());
-
+  
 }
 
 
@@ -38,18 +43,53 @@ void AEnemySpawner::OnConstruction(const FTransform& Transform)
     }
 
 }
+void AEnemySpawner::TriggerSpawnerCollisionBeginOverlap(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult)
+{
+
+    if (bSpawned)return; 
+
+    AWarriorCharacter* Warrior = Cast<AWarriorCharacter>(OtherActor);
+    if (Warrior)
+    {
+        if (bSpawned == false)
+        {
+            bSpawned = true;
+            SpawnEnemy(EnemySpawnCount);
+            UE_LOG(LogTemp, Warning, TEXT("OtherComp: %s"), *GetNameSafe(OtherComp));
+
+        }
+    
+    }
+}
+void AEnemySpawner::TriggerSpawnerCollisionEndOverlap(UPrimitiveComponent* OverlappedComp, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex)
+{
+
+
+}
 // Called when the game starts or when spawned
 void AEnemySpawner::BeginPlay()
 {
 
     Super::BeginPlay();
+    TriggerSpawner->OnComponentBeginOverlap.AddDynamic(this, &AEnemySpawner::TriggerSpawnerCollisionBeginOverlap);
+    TriggerSpawner->OnComponentEndOverlap.AddDynamic(this, &AEnemySpawner::TriggerSpawnerCollisionEndOverlap);
+    GetComponents<UBoxComponent>(CollisionBoxes);
+    
+    for (UBoxComponent* Box : CollisionBoxes)
+    {
+       if(BlockBox && Box->GetName().Contains(TEXT("BlockBox")))
+       {
 
+           Box->SetCollisionResponseToAllChannels(ECR_Ignore);
+           BlockBoxes.Add(Box);
+
+       }
+    }
+
+    SpawnDelegate.BindUObject(this, &AEnemySpawner::SpawnEnemy, EnemySpawnCount);
 }
 
-void AEnemySpawner::RespawnEnemyStart_Implementation()
-{
- 
-}
+
 
 // Called every frame
 void AEnemySpawner::Tick(float DeltaTime)
@@ -59,19 +99,14 @@ void AEnemySpawner::Tick(float DeltaTime)
 
 void AEnemySpawner::SpawnEnemy(int32 NumbwerOfEnemies)
 {
-    if (Loop)
-    {
-        EnemyAliveForLoop++;
 
-    }
-    
     if (SpawnEnemiesLoc.IsZero())
     {
         FVector SpawnLocation = GetActorLocation();
 
-        float offset = 300.f;
-        float Radius = 100.f;
-        float AngelStep = 260.f / NumbwerOfEnemies;
+        float offset = 50.f;
+        float Radius = 50.f;
+        float AngelStep = 50.f / NumbwerOfEnemies;
 
         for (int32 i = 0; i < NumbwerOfEnemies; i++)
         {
@@ -85,11 +120,14 @@ void AEnemySpawner::SpawnEnemy(int32 NumbwerOfEnemies)
             SpawnLocation.Y += 50.f;
 
             AEnemy* SpawnedEnemy = GetWorld()->SpawnActor<AEnemy>(EnemyClass, NewspawnLocation, FRotator::ZeroRotator);
-            if (SpawnedEnemy && !Loop)
-            {
+            EnemyAliveForLoop++;
+            
 
-                SetLifeSpan(1.0f);
-            }
+        }
+        if (WaveCount > 0)
+        {
+            WaveCount--;
+
         }
     }
    
@@ -111,24 +149,49 @@ void AEnemySpawner::SpawnEnemy(int32 NumbwerOfEnemies)
 
             FVector NewspawnLocation(x, y, SpawnLocation.Z);
             FVector NearestSpawnerLoc = GetActorLocation();
-            SpawnLocation.X += 100.f;
-            SpawnLocation.Y += 50.f;
-
             AEnemy* SpawnedEnemy = GetWorld()->SpawnActor<AEnemy>(EnemyClass, NewspawnLocation, FRotator::ZeroRotator);
-            if (SpawnedEnemy && !Loop)
-            {
+            EnemyAliveForLoop++;
 
-                SetLifeSpan(1.0f);
-            }
         }
     }
   
    
+
+
+    for (UBoxComponent* Box : CollisionBoxes)
+    {
+        if (BlockBox && Box->GetName().Contains(TEXT("BlockBox")))
+        {
+
+            Box->SetCollisionResponseToAllChannels(ECR_Block);
+
+        }
+    }
 }
 
 void AEnemySpawner::OnEnemyKilled()
 {
     EnemyAliveForLoop--;
+
+    if (EnemyAliveForLoop <= 0 && WaveCount > 0)
+    {
+        GetWorld()->GetTimerManager().SetTimer(SpawnTimer, SpawnDelegate,SpawnTime,false);
+    }
+
+    if (EnemyAliveForLoop <= 0 ) 
+    {
+        for (UBoxComponent* Box : CollisionBoxes)
+        {
+            if (BlockBox && Box->GetName().Contains(TEXT("BlockBox")))
+            {
+
+                Box->SetCollisionResponseToAllChannels(ECR_Ignore);
+            }
+
+        }
+
+    }
+
 }
 
 
