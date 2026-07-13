@@ -120,7 +120,7 @@ void AEnemySpawner::SpawnEnemy(int32 NumbwerOfEnemies)
             SpawnLocation.Y += 50.f;
 
             AEnemy* SpawnedEnemy = GetWorld()->SpawnActor<AEnemy>(EnemyClass, NewspawnLocation, FRotator::ZeroRotator);
-            EnemyAliveForLoop++;
+            EnemyAlive++;
             
 
         }
@@ -150,7 +150,7 @@ void AEnemySpawner::SpawnEnemy(int32 NumbwerOfEnemies)
             FVector NewspawnLocation(x, y, SpawnLocation.Z);
             FVector NearestSpawnerLoc = GetActorLocation();
             AEnemy* SpawnedEnemy = GetWorld()->SpawnActor<AEnemy>(EnemyClass, NewspawnLocation, FRotator::ZeroRotator);
-            EnemyAliveForLoop++;
+            EnemyAlive++;
 
         }
     }
@@ -171,14 +171,14 @@ void AEnemySpawner::SpawnEnemy(int32 NumbwerOfEnemies)
 
 void AEnemySpawner::OnEnemyKilled()
 {
-    EnemyAliveForLoop--;
+    EnemyAlive--;
 
-    if (EnemyAliveForLoop <= 0 && WaveCount > 0)
+    if (EnemyAlive <= 0 && WaveCount > 0)
     {
         GetWorld()->GetTimerManager().SetTimer(SpawnTimer, SpawnDelegate,SpawnTime,false);
     }
 
-    if (EnemyAliveForLoop <= 0 ) 
+    if (EnemyAlive <= 0 ) 
     {
         for (UBoxComponent* Box : CollisionBoxes)
         {

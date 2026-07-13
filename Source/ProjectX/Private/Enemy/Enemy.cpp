@@ -93,6 +93,7 @@ void AEnemy::Die()
 	if (IsDead()) return;
 	Super::Die();
 	SetRagdoll();
+	GetCapsuleComponent()->SetCollisionResponseToChannel(ECC_Visibility, ECR_Ignore);
 	AddKilledEnemy();
     SetEnemyDead();
 	ClearAttackTimer();
@@ -174,7 +175,7 @@ void AEnemy::DestroyEquipItems()
 
 void AEnemy::RespawnInfiniteEnemy(AEnemySpawner* SpawnerActor)
 {
-	if (SpawnerActor->Loop && SpawnerActor->EnemyAliveForLoop == 0)
+	if (SpawnerActor->Loop && SpawnerActor->EnemyAlive == 0)
 	{
 		SpawnerActor->SpawnEnemy(SpawnerActor->EnemySpawnCount);
 	}

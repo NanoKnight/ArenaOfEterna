@@ -86,8 +86,7 @@ public:
 	UPROPERTY(EditAnywhere, Category = "Default")
 	FVector SpawnEnemiesLoc;
 
-	UPROPERTY(EditAnywhere, Category = "Default")
-	int32 EnemyAliveForLoop;
+	int32 EnemyAlive;
 
 	FTimerHandle SpawnTimer;
 
