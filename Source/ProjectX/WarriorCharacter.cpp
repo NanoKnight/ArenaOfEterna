@@ -116,7 +116,11 @@ void AWarriorCharacter::BeginPlay()
 	SpawnDefaultShield();
 	SpawnDefaultWeapon();
 	InitializePlayerOverlay();
-
+	GetCharacterMovement()->bOrientRotationToMovement = true;
+	GetCharacterMovement()->bUseControllerDesiredRotation = false;
+	bUseControllerRotationYaw = false;
+	bUseControllerRotationRoll = false;
+	bUseControllerRotationPitch = false;
 	Tags.Add("WarriorCharacter");
 	bCanMoveCamera = false;
 	defaultCameraLoc = ViewCamera->GetRelativeLocation();
@@ -1245,7 +1249,7 @@ void AWarriorCharacter::SkillCanDamageF(float SphereRadiusFloat, float SkillDama
 void AWarriorCharacter::CompleteCurrentQuest()
 {
 
-	if (!CurrentQuest.QuestName.IsEmpty()) 
+	if (!CurrentQuest.QuestName.IsEmpty() && QuestDataTable && PlayerOverlay) 
 	{
 		CurrentQuestIndex += 1;
 		FString CurrentRowName = NextQuestRowName.ToString();
@@ -1260,6 +1264,7 @@ void AWarriorCharacter::CompleteCurrentQuest()
 		StartNextQuest();
 		CheckEnemySpawner();
 
+		
 		if (PlayerOverlay->GetQuestCompleteWidget())
 		{
 		PlayerOverlay->GetQuestCompleteWidget()->SetQuestText(CurrentQuest.QuestName);
@@ -1271,16 +1276,19 @@ void AWarriorCharacter::CompleteCurrentQuest()
 
 		}
 	}
-	if (QuestActorClass && !QuestActor)
-	{
-		QuestActor = GetWorld()->SpawnActor<AQuestActor>(QuestActorClass, CurrentQuest.TargetLocation, FRotator::ZeroRotator);
-	}
-	else if(QuestActor)
-	{
-		QuestActor->SetActorLocation(CurrentQuest.TargetLocation);
-		QuestActor->HiddenQuestTracker(true);
+	
+		if (QuestActorClass && !QuestActor)
+		{
+			QuestActor = GetWorld()->SpawnActor<AQuestActor>(QuestActorClass, CurrentQuest.TargetLocation, FRotator::ZeroRotator);
+		}
+		else if (QuestActor)
+		{
+			QuestActor->SetActorLocation(CurrentQuest.TargetLocation);
+			QuestActor->HiddenQuestTracker(true);
 
-	}
+		}
+	
+	
 
 }
 
@@ -1417,29 +1425,18 @@ void AWarriorCharacter::Shield()
 	if (ActionState == EActionState::EAS_UsingSkill || CharacterStates == ECharacterStates::ECS_UnEquipped || 
 		!ShieldClass)return;
 	
-	if (CharacterStates == ECharacterStates::ECS_UnEquipped)return;
-
-	for (int32 i = 0; i < GetInventoryComponent()->EquippedItems.Num(); i++)
+	if (ShieldAlive() && ActionState != EActionState::EAS_Dead && ActionState != EActionState::EAS_UsingSkill)
 	{
-		FInventoryStruct& Item = GetInventoryComponent()->EquippedItems[i];
-		if (Item.ItemTypes == EItemTypes::Shield)
+		UAnimInstance* AnimInstance = GetMesh()->GetAnimInstance();
+		if (AnimInstance && ShieldMontage)
 		{
-			
-			if (ShieldAlive() && ActionState != EActionState::EAS_Dead && ActionState != EActionState::EAS_UsingSkill)
-			{
-				UAnimInstance* AnimInstance = GetMesh()->GetAnimInstance();
-				if (AnimInstance && ShieldMontage)
-				{
-					AnimInstance->Montage_Play(ShieldMontage);
-				}
-				BShieldOn = true;
-				CharacterStates = ECharacterStates::ECS_EquippedShield;
-				ActionState = EActionState::EAS_Unoccupied;
-				GetCharacterMovement()->MaxWalkSpeed = CharacterWalkSpeed;
-			}
+			AnimInstance->Montage_Play(ShieldMontage);
 		}
+		BShieldOn = true;
+		CharacterStates = ECharacterStates::ECS_EquippedShield;
+		ActionState = EActionState::EAS_Unoccupied;
+		GetCharacterMovement()->MaxWalkSpeed = CharacterWalkSpeed;
 	}
-
 
 	
 }
@@ -1672,7 +1669,11 @@ void AWarriorCharacter::SphereCollisionEndOverlap(UPrimitiveComponent* Overlappe
 			ABaseItem* ItemRef = Cast<ABaseItem>(OtherActor);
 			if (ItemRef)
 			{
-				ItemRef->SetInteractionVisibility(false);
+				if (ItemRef->GetItemInteractionWidget())
+				{
+					ItemRef->SetInteractionVisibility(false);
+
+				}
 			}
 		
 		

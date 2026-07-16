@@ -7,8 +7,8 @@
 #include"../Enemy/Enemy.h"
 #include "EnemySpawner.generated.h"
 class AEnemy;
-class UCapsuleComponent;
 class UBoxComponent;
+class UWidgetComponent;
 class AWarriorCharacter;
 
 UCLASS()
@@ -27,14 +27,18 @@ protected:
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Components")
 	class USceneComponent* RootSceneComponent;
 
-	UPROPERTY(VisibleAnywhere, Category = "Components")
-	class UCapsuleComponent* CapsuleComponent;
+	UPROPERTY(EditAnywhere)
+	UStaticMeshComponent* SpawnerLocation;
+
+	UPROPERTY(EditAnywhere)
+	TArray<UStaticMeshComponent*> SpawnerLocations;
 
     UPROPERTY(EditAnywhere)
 	class UBoxComponent* TriggerSpawner;
 
 	UPROPERTY(EditAnywhere)
 	class UBoxComponent* BlockBox;
+
 	TArray<UBoxComponent*>CollisionBoxes;
 
 	UPROPERTY(EditAnywhere)
@@ -94,6 +98,9 @@ public:
 
 	UPROPERTY(EditAnywhere,Category = "Default")
 	float SpawnTime = 0.5f;
+
+	UPROPERTY(EditAnywhere)
+	UWidgetComponent* SpawnerImage;
 
 	void OnEnemyKilled();
 

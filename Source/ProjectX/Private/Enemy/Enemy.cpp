@@ -63,8 +63,17 @@ void AEnemy::BeginPlay()
 
 	GetWorld()->GetTimerManager().SetTimer(RandomMoveTimer, this, &AEnemy::MoveToRandomLocation, 2.f, true);
 	AGameModeBase* GameMode = GetWorld()->GetAuthGameMode();
-	AArenaGameMode* ArenaGameMode = Cast<AArenaGameMode>(GameMode);
-	ArenaGameMode->IncrementEnemyAlive();
+	if (GameMode)
+	{
+		AArenaGameMode* ArenaGameMode = Cast<AArenaGameMode>(GameMode);
+		if (ArenaGameMode)
+		{
+			ArenaGameMode->IncrementEnemyAlive();
+
+		}
+
+	}
+	
 	
 	APlayerController* PlayerController = GetWorld()->GetFirstPlayerController();
 	if (PlayerController)

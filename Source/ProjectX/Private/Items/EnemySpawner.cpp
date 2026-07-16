@@ -3,6 +3,7 @@
 #include "Kismet/GameplayStatics.h"
 #include "Components/TextRenderComponent.h"
 #include"../WarriorCharacter.h"
+#include "Components\WidgetComponent.h"
 #include"Components\CapsuleComponent.h"
 #include"Components\BoxComponent.h"
 #include"Interfaces/RespawnEnemyInterface.h"
@@ -15,14 +16,17 @@ AEnemySpawner::AEnemySpawner()
     PrimaryActorTick.bCanEverTick = true;
     RootSceneComponent = CreateDefaultSubobject<USceneComponent>(TEXT("RootSceneComponent"));
     RootComponent = RootSceneComponent;
+    SpawnerLocation = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("SpawnerLocation"));
+    SpawnerLocation->SetupAttachment(RootComponent);
+    SpawnerImage = CreateDefaultSubobject<UWidgetComponent>(TEXT("SpawnerImage"));
+    SpawnerImage->SetupAttachment(RootComponent);
     TriggerSpawner = CreateDefaultSubobject<UBoxComponent>(TEXT("TriggerBoxComponent"));
     TriggerSpawner->SetupAttachment(RootComponent);
     BlockBox = CreateDefaultSubobject<UBoxComponent>(TEXT("BlockBox"));
     BlockBox->SetupAttachment(RootComponent);
     SpawnerIDText = CreateDefaultSubobject<UTextRenderComponent>(TEXT("SpawnerID"));
     SpawnerIDText->SetupAttachment(RootSceneComponent);
-    CapsuleComponent = CreateDefaultSubobject<UCapsuleComponent>(TEXT("CapsuleComponent"));
-    CapsuleComponent->SetupAttachment(GetRootComponent());
+
   
 }
 
@@ -74,7 +78,6 @@ void AEnemySpawner::BeginPlay()
     TriggerSpawner->OnComponentBeginOverlap.AddDynamic(this, &AEnemySpawner::TriggerSpawnerCollisionBeginOverlap);
     TriggerSpawner->OnComponentEndOverlap.AddDynamic(this, &AEnemySpawner::TriggerSpawnerCollisionEndOverlap);
     GetComponents<UBoxComponent>(CollisionBoxes);
-    
     for (UBoxComponent* Box : CollisionBoxes)
     {
        if(BlockBox && Box->GetName().Contains(TEXT("BlockBox")))
@@ -85,6 +88,16 @@ void AEnemySpawner::BeginPlay()
 
        }
     }
+
+     GetComponents<UStaticMeshComponent>(SpawnerLocations);
+        for (UStaticMeshComponent* SpawnerLoc : SpawnerLocations)
+        {
+            if (SpawnerLocation && SpawnerLoc->GetName().Contains(TEXT("SpawnerLoc")))
+            {
+                SpawnerLocations.Add(SpawnerLoc);
+            }
+        }
+
 
     SpawnDelegate.BindUObject(this, &AEnemySpawner::SpawnEnemy, EnemySpawnCount);
 }
@@ -102,24 +115,26 @@ void AEnemySpawner::SpawnEnemy(int32 NumbwerOfEnemies)
 
     if (SpawnEnemiesLoc.IsZero())
     {
-        FVector SpawnLocation = GetActorLocation();
+     
 
         float offset = 50.f;
         float Radius = 50.f;
-        float AngelStep = 50.f / NumbwerOfEnemies;
+        float AngelStep = 5.f / NumbwerOfEnemies;
 
         for (int32 i = 0; i < NumbwerOfEnemies; i++)
         {
-            float Angle = i * AngelStep;
-            float x = SpawnLocation.X + Radius * FMath::Cos(FMath::DegreesToRadians(Angle));
-            float y = SpawnLocation.Y + Radius * FMath::Sin(FMath::DegreesToRadians(Angle));
+            //float Angle = i * AngelStep;
+            //float x = SpawnLocation.X + Radius * FMath::Cos(FMath::DegreesToRadians(Angle));
+            //float y = SpawnLocation.Y + Radius * FMath::Sin(FMath::DegreesToRadians(Angle));
 
-            FVector NewspawnLocation(x, y, SpawnLocation.Z);
-            FVector NearestSpawnerLoc = GetActorLocation();
-            SpawnLocation.X += 100.f;
-            SpawnLocation.Y += 50.f;
-
-            AEnemy* SpawnedEnemy = GetWorld()->SpawnActor<AEnemy>(EnemyClass, NewspawnLocation, FRotator::ZeroRotator);
+           // FVector NewspawnLocation(x, y, SpawnLocation.Z);
+            //FVector NearestSpawnerLoc = GetActorLocation();
+            //SpawnLocation.X += 100.f;
+            //SpawnLocation.Y += 50.f;
+            int32 MaxSpawnPointCount = SpawnerLocations.Num() - 1;
+            int32 SelectedSpawnPoint = FMath::RandRange(0, MaxSpawnPointCount);
+            FVector SpawnLocation = SpawnerLocations[SelectedSpawnPoint]->GetComponentLocation();
+            AEnemy* SpawnedEnemy = GetWorld()->SpawnActor<AEnemy>(EnemyClass, SpawnLocation, FRotator::ZeroRotator);
             EnemyAlive++;
             
 
@@ -134,8 +149,9 @@ void AEnemySpawner::SpawnEnemy(int32 NumbwerOfEnemies)
 
     if (!SpawnEnemiesLoc.IsZero())
     {
-
-        FVector SpawnLocation = SpawnEnemiesLoc;
+        int32 MaxSpawnPointCount = SpawnerLocations.Num() - 1;
+        int32 SelectedSpawnPoint = FMath::RandRange(0, MaxSpawnPointCount);
+        FVector SpawnLocation = SpawnerLocations[SelectedSpawnPoint]->GetComponentLocation();
 
         float offset = 300.f;
         float Radius = 400.f;
@@ -143,13 +159,13 @@ void AEnemySpawner::SpawnEnemy(int32 NumbwerOfEnemies)
 
         for (int32 i = 0; i < NumbwerOfEnemies; i++)
         {
-            float Angle = i * AngelStep;
-            float x = SpawnLocation.X + Radius * FMath::Cos(FMath::DegreesToRadians(Angle));
-            float y = SpawnLocation.Y + Radius * FMath::Sin(FMath::DegreesToRadians(Angle));
+            //float Angle = i * AngelStep;
+            //float x = SpawnLocation.X + Radius * FMath::Cos(FMath::DegreesToRadians(Angle));
+            //float y = SpawnLocation.Y + Radius * FMath::Sin(FMath::DegreesToRadians(Angle));
 
-            FVector NewspawnLocation(x, y, SpawnLocation.Z);
-            FVector NearestSpawnerLoc = GetActorLocation();
-            AEnemy* SpawnedEnemy = GetWorld()->SpawnActor<AEnemy>(EnemyClass, NewspawnLocation, FRotator::ZeroRotator);
+            //FVector NewspawnLocation(x, y, SpawnLocation.Z);
+            //FVector NearestSpawnerLoc = GetActorLocation();
+            AEnemy* SpawnedEnemy = GetWorld()->SpawnActor<AEnemy>(EnemyClass, SpawnLocation, FRotator::ZeroRotator);
             EnemyAlive++;
 
         }
@@ -171,26 +187,30 @@ void AEnemySpawner::SpawnEnemy(int32 NumbwerOfEnemies)
 
 void AEnemySpawner::OnEnemyKilled()
 {
-    EnemyAlive--;
-
-    if (EnemyAlive <= 0 && WaveCount > 0)
+    if (bSpawned)
     {
-        GetWorld()->GetTimerManager().SetTimer(SpawnTimer, SpawnDelegate,SpawnTime,false);
-    }
+        EnemyAlive--;
 
-    if (EnemyAlive <= 0 ) 
-    {
-        for (UBoxComponent* Box : CollisionBoxes)
+        if (EnemyAlive <= 0 && WaveCount > 0)
         {
-            if (BlockBox && Box->GetName().Contains(TEXT("BlockBox")))
-            {
+            GetWorld()->GetTimerManager().SetTimer(SpawnTimer, SpawnDelegate, SpawnTime, false);
+        }
 
-                Box->SetCollisionResponseToAllChannels(ECR_Ignore);
+        if (EnemyAlive <= 0)
+        {
+            for (UBoxComponent* Box : CollisionBoxes)
+            {
+                if (BlockBox && Box->GetName().Contains(TEXT("BlockBox")))
+                {
+
+                    Box->SetCollisionResponseToAllChannels(ECR_Ignore);
+                }
+
             }
 
         }
-
     }
+ 
 
 }
 
