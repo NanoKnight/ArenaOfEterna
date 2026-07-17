@@ -9,6 +9,7 @@
 
 
 class UHealthBarComponent;
+class UWidgetComponent;
 class AWarriorCharacter;
 class UPawnSensingComponent;
 class AEnemySpawner;
@@ -36,6 +37,7 @@ protected:
 	UFUNCTION()
 	void RespawnInfiniteEnemy(AEnemySpawner* SpawnerActor);
 	virtual void Attack() override;
+	void CantPerry();
 	virtual void AttackEnd() override;
 	virtual bool CanAttack() override;
 	virtual void ChaseTarget();
@@ -90,6 +92,8 @@ public:
 	UPROPERTY(Editanywhere)
 	bool IgnoreEnemyCount;
 
+	UPROPERTY(EditAnywhere)
+	bool CanPerry;
 
 
 
@@ -126,6 +130,9 @@ private:
 	void PawnHeard(APawn* SeenPawn,const FVector& Location, float Volume);
 
 	UPROPERTY(VisibleAnywhere)
+	UWidgetComponent* PerryWidget;
+
+	UPROPERTY(VisibleAnywhere)
 	UHealthBarComponent* HealthBarWidget;
 
 	UPROPERTY(VisibleAnywhere)
@@ -144,10 +151,12 @@ private:
 	UPROPERTY(EditAnywhere)
 	bool InfiniteEnemy;
 
+
 	UPROPERTY(EditAnywhere)
 	double PatrolRadius = 200.f;
 
 	FTimerHandle PatrolTimer;
+	FTimerHandle PerryTimer;
 
 	FTimerHandle SpawnExperienceTimer;
 

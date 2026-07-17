@@ -1427,15 +1427,28 @@ void AWarriorCharacter::Shield()
 	
 	if (ShieldAlive() && ActionState != EActionState::EAS_Dead && ActionState != EActionState::EAS_UsingSkill)
 	{
-		UAnimInstance* AnimInstance = GetMesh()->GetAnimInstance();
-		if (AnimInstance && ShieldMontage)
+		if (CloseEnemy && CloseEnemy->CanPerry)
 		{
-			AnimInstance->Montage_Play(ShieldMontage);
+			CloseEnemy->StopAttackMontage();
+			CloseEnemy->EnemyState = EEnemyState::EAS_Stun;
+			CloseEnemy->GetMovementComponent()->StopMovementImmediately();
+			GEngine->AddOnScreenDebugMessage(-1, 2.f, FColor::Cyan, FString::Printf(TEXT("perry worked")));
+
 		}
-		BShieldOn = true;
-		CharacterStates = ECharacterStates::ECS_EquippedShield;
-		ActionState = EActionState::EAS_Unoccupied;
-		GetCharacterMovement()->MaxWalkSpeed = CharacterWalkSpeed;
+		else
+		{
+			UAnimInstance* AnimInstance = GetMesh()->GetAnimInstance();
+			if (AnimInstance && ShieldMontage)
+			{
+				AnimInstance->Montage_Play(ShieldMontage);
+			}
+			BShieldOn = true;
+
+			CharacterStates = ECharacterStates::ECS_EquippedShield;
+			ActionState = EActionState::EAS_Unoccupied;
+			GetCharacterMovement()->MaxWalkSpeed = CharacterWalkSpeed;
+		}
+		
 	}
 
 	

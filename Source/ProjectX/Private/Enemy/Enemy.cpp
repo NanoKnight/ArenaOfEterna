@@ -36,6 +36,8 @@ AEnemy::AEnemy()
 	HealthBarWidget = CreateDefaultSubobject<UHealthBarComponent>(TEXT("Healthbar"));
 	PawnSensing = CreateDefaultSubobject<UPawnSensingComponent>(TEXT("AISenseComponent"));
 	HealthBarWidget->SetupAttachment(GetRootComponent());
+	PerryWidget = CreateDefaultSubobject<UWidgetComponent>(TEXT("PerryWidget"));
+	PerryWidget->SetupAttachment(GetRootComponent());
 	PawnSensing->SightRadius = 400.f;
 	PawnSensing->SetPeripheralVisionAngle(45.f);
 	GetCharacterMovement()->bOrientRotationToMovement = true;
@@ -241,20 +243,42 @@ void AEnemy::SpawnExperience()
 
 void AEnemy::Attack()
 {
-	
 	if (EnemyState == EEnemyState::EAS_Stun)
 	{
 		CombatTarget = nullptr;
+		return;
+
 	}
+
 	if (CombatTarget->ActorHasTag(FName("Dead")))
 	{
 		CombatTarget = nullptr;
 	}
 
 	if (CombatTarget == nullptr) return;
+
+	CanPerry = true;
+	GetWorld()->GetTimerManager().SetTimer(PerryTimer,this , &AEnemy::CantPerry, 0.5f);
+	if (EnemyState == EEnemyState::EAS_Stun)
+	{
+		CombatTarget = nullptr;
+
+		return;
+	}
 	EnemyState = EEnemyState::EES_Engaged;
+
+	
+
+
 	PlayAttackMontage();
 }
+
+void AEnemy::CantPerry()
+{
+	CanPerry = false;
+}
+
+
 
 void AEnemy::AttackEnd()
 {
