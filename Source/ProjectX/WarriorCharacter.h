@@ -344,6 +344,9 @@ protected:
 
 
 private:
+	void SetQuestsSettings();
+	void SpawnQuestActor();
+	void SetQuestDataTable();
 	void Save();
 	void LoadSaveGame();
 	void SpawnDefaultWeapon();
@@ -359,6 +362,7 @@ private:
 	void Dodge();
 	void CheckQuestProgress();
 	void StartNextQuest();
+	void CheckEnemySpawner();
 	void QuesstCompleteFadeOutAnim();
 	void SetFalseIsFirstSkillVar();
 	void SetFalseIsSecondSkill();

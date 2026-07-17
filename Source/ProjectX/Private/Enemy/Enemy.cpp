@@ -21,7 +21,6 @@
 #include"Items\EnemySpawner.h"
 #include "AIController.h"
 #include"NavigationSystem.h"
-#include "Items\SpawnManager.h"
 #include"Items\ExperiencePoint.h"
 
 
@@ -64,8 +63,17 @@ void AEnemy::BeginPlay()
 
 	GetWorld()->GetTimerManager().SetTimer(RandomMoveTimer, this, &AEnemy::MoveToRandomLocation, 2.f, true);
 	AGameModeBase* GameMode = GetWorld()->GetAuthGameMode();
-	AArenaGameMode* ArenaGameMode = Cast<AArenaGameMode>(GameMode);
-	ArenaGameMode->IncrementEnemyAlive();
+	if (GameMode)
+	{
+		AArenaGameMode* ArenaGameMode = Cast<AArenaGameMode>(GameMode);
+		if (ArenaGameMode)
+		{
+			ArenaGameMode->IncrementEnemyAlive();
+
+		}
+
+	}
+	
 	
 	APlayerController* PlayerController = GetWorld()->GetFirstPlayerController();
 	if (PlayerController)
@@ -94,6 +102,7 @@ void AEnemy::Die()
 	if (IsDead()) return;
 	Super::Die();
 	SetRagdoll();
+	GetCapsuleComponent()->SetCollisionResponseToChannel(ECC_Visibility, ECR_Ignore);
 	AddKilledEnemy();
     SetEnemyDead();
 	ClearAttackTimer();
@@ -175,7 +184,7 @@ void AEnemy::DestroyEquipItems()
 
 void AEnemy::RespawnInfiniteEnemy(AEnemySpawner* SpawnerActor)
 {
-	if (SpawnerActor->Loop && SpawnerActor->EnemyAliveForLoop == 0)
+	if (SpawnerActor->Loop && SpawnerActor->EnemyAlive == 0)
 	{
 		SpawnerActor->SpawnEnemy(SpawnerActor->EnemySpawnCount);
 	}
@@ -260,7 +269,9 @@ bool AEnemy::CanAttack()
 		IsInsideAttackRadius() &&
 		!IsAttacking() &&
 		!IsEngaged() &&
+		EnemyState != EEnemyState::EAS_Freezed &&
 		!IsDead();
+
 	  
 
 	return bCanAttack;
@@ -409,9 +420,18 @@ void AEnemy::SetStun()
 
 void AEnemy::SetEnemyFreeze()
 {
-	Freezed = true;
-	UE_LOG(LogTemp, Warning, TEXT("EnemyFrezed"));
+	EnemyState = EEnemyState::EAS_Freezed;
+	OldMat = GetMesh()->GetMaterial(0);
+	GetMesh()->SetMaterial(0,FreezeMat);
 	this->GetCharacterMovement()->StopMovementImmediately();
+	GetWorld()->GetTimerManager().SetTimer(OutFreezeTimer, this, &AEnemy::OutFreeze, 3.f);
+}
+
+void AEnemy::OutFreeze()
+{
+	EnemyState = EEnemyState::EES_NoState;
+	GetMesh()->SetMaterial(0,OldMat);
+
 }
 
 void AEnemy::ResetRagdoll()
@@ -639,8 +659,8 @@ void AEnemy::StartPatrolling()
 void AEnemy::ChaseTarget()
 {	
     if (Attributes->GetStamina() <= 0 && EnemyType == EEnemyType::EET_Boss ) EnemyState = EEnemyState::EAS_Stun;
-	if (EnemyState == EEnemyState::EAS_Stun) return;
-	if (Freezed)return;
+	if (EnemyState == EEnemyState::EAS_Stun || EnemyState == EEnemyState::EAS_Freezed) return;
+	
 
 
 
@@ -800,7 +820,7 @@ AActor* AEnemy::ChoosePatrolTarget()
 void AEnemy::PawnSeen(APawn* SeenPawn)
 {
 
-	if (Freezed) return;
+	if (EnemyState == EEnemyState::EAS_Freezed)return;
 
 	SeenPawnRef = SeenPawn;
 	if (!Chased)

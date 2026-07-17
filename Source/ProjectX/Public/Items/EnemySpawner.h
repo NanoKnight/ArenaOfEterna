@@ -5,13 +5,15 @@
 #include "CoreMinimal.h"
 #include "GameFramework/Actor.h"
 #include"../Enemy/Enemy.h"
-#include"../Interfaces/RespawnEnemyInterface.h"
 #include "EnemySpawner.generated.h"
 class AEnemy;
-class UCapsuleComponent;
+class UBoxComponent;
+class UWidgetComponent;
+class AWarriorCharacter;
+
 UCLASS()
 
-class PROJECTX_API AEnemySpawner : public AActor, public IRespawnEnemyInterface
+class PROJECTX_API AEnemySpawner : public AActor
 {
 	GENERATED_BODY()
 	
@@ -25,49 +27,86 @@ protected:
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Components")
 	class USceneComponent* RootSceneComponent;
 
-	UPROPERTY(VisibleAnywhere, Category = "Components")
-	class UCapsuleComponent* CapsuleComponent;
+	UPROPERTY(EditAnywhere)
+	UStaticMeshComponent* SpawnerLocation;
+
+	UPROPERTY(EditAnywhere)
+	TArray<UStaticMeshComponent*> SpawnerLocations;
+
+    UPROPERTY(EditAnywhere)
+	class UBoxComponent* TriggerSpawner;
+
+	UPROPERTY(EditAnywhere)
+	class UBoxComponent* BlockBox;
+
+	TArray<UBoxComponent*>CollisionBoxes;
+
+	UPROPERTY(EditAnywhere)
+	TArray<UBoxComponent*>BlockBoxes;
+
 
 	UPROPERTY(VisibleAnywhere, Category = "Components")
 	class UTextRenderComponent* SpawnerIDText;
 
 	virtual void OnConstruction(const FTransform& Transform) override;
 
+
+	UFUNCTION()
+	void TriggerSpawnerCollisionBeginOverlap(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult);
+
+	UFUNCTION()
+	void TriggerSpawnerCollisionEndOverlap(UPrimitiveComponent* OverlappedComp, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex);
+
+
 public:	
 	// Called every frame
 	virtual void Tick(float DeltaTime) override;
 	virtual void BeginPlay() override;
-	virtual void RespawnEnemyStart_Implementation()override;
+	
+	
 	UFUNCTION(BlueprintCallable, Category = "Spawning")
 	void SpawnEnemy(int32 NumberOfEnemies);
 	
 	
-	UPROPERTY(EditAnywhere)
+	UPROPERTY(EditAnywhere,Category ="Default")
 	TSubclassOf<AEnemy>EnemyClass;
 
 
-	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Default")
 	bool WaveMode;
 
-	UPROPERTY(EditAnywhere)
+	UPROPERTY(EditAnywhere, Category = "Default")
 	bool Loop;
 
-	UPROPERTY(EditAnywhere)
+	UPROPERTY(EditAnywhere, Category = "Default")
 	int32 EnemySpawnCount;
 
-	UPROPERTY(EditAnywhere)
+	UPROPERTY(EditAnywhere, Category = "Default")
+	int32 WaveCount;
+
+	UPROPERTY(EditAnywhere, Category = "Default")
 	int32 SpawnerID;
 
-	UPROPERTY(EditAnywhere)
+	UPROPERTY(EditAnywhere, Category = "Default")
 	FVector SpawnEnemiesLoc;
 
-	UPROPERTY()
-	int32 EnemyAliveForLoop;
+	int32 EnemyAlive;
+
+	FTimerHandle SpawnTimer;
+
+	FTimerDelegate SpawnDelegate;
+
+	UPROPERTY(EditAnywhere,Category = "Default")
+	float SpawnTime = 0.5f;
+
+	UPROPERTY(EditAnywhere)
+	UWidgetComponent* SpawnerImage;
 
 	void OnEnemyKilled();
 
 	
 private:
 
+	bool bSpawned = false;
 
 };

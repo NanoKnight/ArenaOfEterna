@@ -11,7 +11,6 @@
 #include "./Items/EnemySpawner.h"
 #include"Components\AudioComponent.h"
 #include"../WarriorCharacter.h"
-#include"Items\SpawnManager.h"
 #include"Items/Weapons/Weapon.h"
 #include"Items\CharacterInteractableItems\PushableObject.h"
 #include"Runtime/Engine/Public/TimerManager.h"
@@ -26,38 +25,12 @@ void AArenaGameMode::BeginPlay()
 	Super::BeginPlay();
 	LoadGame();
  
-	/*
-	if (EnemySpawner)
-	{
-		EnemySpawner = Cast<AEnemySpawner>(UGameplayStatics::GetActorOfClass(GetWorld(), AEnemySpawner::StaticClass()));
-		NextWaveEnemyCount = EnemySpawner->EnemySpawnCount;
-	}
 	
-
-	if (!SpawnManager)
-	{
-		
-		TArray<AActor*> FoundSpawnManagers;
-		UGameplayStatics::GetAllActorsOfClass(GetWorld(), ASpawnManager::StaticClass(), FoundSpawnManagers);
-		
-		if (FoundSpawnManagers.Num() > 0)
-		{
-			SpawnManager = Cast<ASpawnManager>(FoundSpawnManagers[0]);
-		}
-	}
-	if (SpawnManager)
-	{
-		SpawnManager->TriggerSpawnerByID(EnemySpawner->SpawnerID);
-	}
-		else if (EnemySpawner)
-		{
-			EnemySpawner->SpawnEnemy(NextWaveEnemyCount);
-	}
-	*/
 }
 
 void AArenaGameMode::RespawnEnemyStart_Implementation()
 {
+
 	if (EnemySpawner->WaveMode == false) return;
 	WaveStarted = true;
 	GetWorld()->GetTimerManager().SetTimer(WaveStartTimer, this, &AArenaGameMode::RespawnEnemy, 10, false);

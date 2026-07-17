@@ -21,9 +21,13 @@ private:
 	UPROPERTY(EditAnywhere)
 	int32 ExperiencePoints;
 
+	UPROPERTY()
+	AWarriorCharacter* TargetPlayer;
+
 	
 
 public:
+	virtual void Tick(float DeltaTime) override;
 	AExperiencePoint();
 	FORCEINLINE int32 GetExperience() const { return ExperiencePoints; }
 	FORCEINLINE void SetExp(int32 NumberOfExp) { ExperiencePoints = NumberOfExp; }

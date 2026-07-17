@@ -47,10 +47,15 @@ protected:
 
 	FTimerHandle RandomMoveTimer;
 
+	FTimerHandle OutFreezeTimer;
+
 	UFUNCTION()
 	void PawnSeen(APawn* SeenPawn);
 
+	UMaterialInterface* OldMat;
 
+	UPROPERTY(EditAnywhere)
+	UMaterialInterface* FreezeMat;
 	
 public:
     AEnemy();
@@ -64,6 +69,7 @@ public:
 	void SetRagdoll();
 	void SetStun();
 	void SetEnemyFreeze();
+	void OutFreeze();
 	/*</AActor>*/
 
 	/* <IHitInterface> */
@@ -84,7 +90,6 @@ public:
 	UPROPERTY(Editanywhere)
 	bool IgnoreEnemyCount;
 
-	bool Freezed;
 
 
 
