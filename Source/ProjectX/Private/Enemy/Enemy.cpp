@@ -36,8 +36,8 @@ AEnemy::AEnemy()
 	HealthBarWidget = CreateDefaultSubobject<UHealthBarComponent>(TEXT("Healthbar"));
 	PawnSensing = CreateDefaultSubobject<UPawnSensingComponent>(TEXT("AISenseComponent"));
 	HealthBarWidget->SetupAttachment(GetRootComponent());
-	PerryWidget = CreateDefaultSubobject<UWidgetComponent>(TEXT("PerryWidget"));
-	PerryWidget->SetupAttachment(GetRootComponent());
+	ParryWidget = CreateDefaultSubobject<UWidgetComponent>(TEXT("PerryWidget"));
+	ParryWidget->SetupAttachment(GetRootComponent());
 	PawnSensing->SightRadius = 400.f;
 	PawnSensing->SetPeripheralVisionAngle(45.f);
 	GetCharacterMovement()->bOrientRotationToMovement = true;
@@ -213,6 +213,7 @@ void AEnemy::IncreaseQuestKillCount()
 void AEnemy::SetEnemyDead()
 {
 	EnemyState = EEnemyState::EES_Dead;
+	ParryWidget->SetVisibility(false);
 }
 
 void AEnemy::AddKilledEnemy()
@@ -243,11 +244,12 @@ void AEnemy::SpawnExperience()
 
 void AEnemy::Attack()
 {
-	if (EnemyState == EEnemyState::EAS_Stun)
-	{
-		CombatTarget = nullptr;
-		return;
+	AWarriorCharacter* WarChar = Cast<AWarriorCharacter>(CombatTarget);
 
+	if (EnemyState == EEnemyState::EAS_Stun || CombatTarget == nullptr ||
+		WarChar->UnTouchable == true)
+	{
+		return;
 	}
 
 	if (CombatTarget->ActorHasTag(FName("Dead")))
@@ -255,27 +257,16 @@ void AEnemy::Attack()
 		CombatTarget = nullptr;
 	}
 
-	if (CombatTarget == nullptr) return;
-
-	CanPerry = true;
-	GetWorld()->GetTimerManager().SetTimer(PerryTimer,this , &AEnemy::CantPerry, 0.5f);
-	if (EnemyState == EEnemyState::EAS_Stun)
-	{
-		CombatTarget = nullptr;
-
-		return;
-	}
 	EnemyState = EEnemyState::EES_Engaged;
-
-	
-
 
 	PlayAttackMontage();
 }
 
-void AEnemy::CantPerry()
+void AEnemy::PlayerCantParry()
 {
-	CanPerry = false;
+	CanParry = false;
+	ParryWidget->SetVisibility(false);
+
 }
 
 
@@ -307,6 +298,8 @@ void AEnemy::HandleDamage(float DamageAmount)
     if(IsDead()) return;
 	Super::HandleDamage(DamageAmount);
     HealthBarWidget->SetHealthPercent(Attributes->HealthPercent());
+
+	
 
 }
 
@@ -440,7 +433,22 @@ void AEnemy::SetStun()
 	EnemyState = EEnemyState::EAS_Stun;
 	GetWorld()->GetTimerManager().SetTimer(HideHealthBarTimer, this, &AEnemy::HideHealthBar, 1.f);
 	GetWorld()->GetTimerManager().SetTimer(RagdollTimer, this, &AEnemy::ResetRagdoll, 3.f);
+
+
 }
+
+
+
+
+
+void AEnemy::ParryReset()
+{
+	GetWorld()->GetTimerManager().SetTimer(ParryResetTimer, this, &AEnemy::ResetEnemyState, 2.f);
+
+
+}
+
+
 
 void AEnemy::SetEnemyFreeze()
 {
@@ -529,6 +537,7 @@ void AEnemy::GetHit_Implementation(const FVector& ImpactPoint,AActor* Hitter)
 {
 	Super::GetHit_Implementation(ImpactPoint,Hitter);
 	if (!IsDead()) ShowHealthBar();
+	ParryWidget->SetVisibility(false);
 	ClearPatrolTimer();
 	ClearAttackTimer();
 	SetWeaponCollisionEnabled(ECollisionEnabled::NoCollision);
@@ -636,6 +645,8 @@ void AEnemy::CheckCombatTarget()
 	else if(CanAttack())
 	{
 		StartAttackTimer();
+
+	
 	}
 }
 
@@ -755,6 +766,17 @@ void AEnemy::StartAttackTimer()
 	EnemyState = EEnemyState::EES_Attacking;
 	const float AttackTime = FMath::RandRange(AttackMin, AttackMax);
 	GetWorldTimerManager().SetTimer(AttackTimer, this, &AEnemy::Attack, AttackTime);
+	PlayerCanParry();
+	GetWorld()->GetTimerManager().SetTimer(ParryTimer, this, &AEnemy::PlayerCantParry, 0.5f);
+
+
+
+}
+
+void AEnemy::PlayerCanParry()
+{
+	CanParry = true;
+	ParryWidget->SetVisibility(true);
 }
 
 void AEnemy::ClearAttackTimer()

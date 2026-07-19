@@ -37,17 +37,17 @@ protected:
 	UFUNCTION()
 	void RespawnInfiniteEnemy(AEnemySpawner* SpawnerActor);
 	virtual void Attack() override;
-	void CantPerry();
 	virtual void AttackEnd() override;
 	virtual bool CanAttack() override;
 	virtual void ChaseTarget();
 	virtual void HandleDamage(float DamageAmount) override;
 	virtual void PlayHitSound(const FVector& ImpactPoint) ;
 	virtual void MoveToTarget(AActor* Target);
-
 	void MoveToRandomLocation();
 
 	FTimerHandle RandomMoveTimer;
+
+
 
 	FTimerHandle OutFreezeTimer;
 
@@ -58,6 +58,7 @@ protected:
 
 	UPROPERTY(EditAnywhere)
 	UMaterialInterface* FreezeMat;
+
 	
 public:
     AEnemy();
@@ -70,6 +71,8 @@ public:
 	virtual void Destroyed() override;
 	void SetRagdoll();
 	void SetStun();
+	void ParryReset();
+	void ParryReact();
 	void SetEnemyFreeze();
 	void OutFreeze();
 	/*</AActor>*/
@@ -83,6 +86,13 @@ public:
 	UFUNCTION(BlueprintCallable)
 	void ResetEnemyState();
 
+	UFUNCTION(BlueprintCallable)
+	void PlayerCanParry();
+
+	UFUNCTION(BlueprintCallable)
+	void PlayerCantParry();
+
+
 	UPROPERTY(EditAnywhere)
 	EEnemyState EnemyState;
 
@@ -93,7 +103,7 @@ public:
 	bool IgnoreEnemyCount;
 
 	UPROPERTY(EditAnywhere)
-	bool CanPerry;
+	bool CanParry;
 
 
 
@@ -121,6 +131,7 @@ private:
 	bool IsEngaged();
 	void ClearPatrolTimer();
 	void StartAttackTimer();
+
 	void ClearAttackTimer();
 	bool InTargetRange(AActor* Target, double Radius);
 	AActor* ChoosePatrolTarget();
@@ -130,7 +141,7 @@ private:
 	void PawnHeard(APawn* SeenPawn,const FVector& Location, float Volume);
 
 	UPROPERTY(VisibleAnywhere)
-	UWidgetComponent* PerryWidget;
+	UWidgetComponent* ParryWidget;
 
 	UPROPERTY(VisibleAnywhere)
 	UHealthBarComponent* HealthBarWidget;
@@ -156,7 +167,8 @@ private:
 	double PatrolRadius = 200.f;
 
 	FTimerHandle PatrolTimer;
-	FTimerHandle PerryTimer;
+	FTimerHandle ParryTimer;
+	FTimerHandle ParryResetTimer;
 
 	FTimerHandle SpawnExperienceTimer;
 

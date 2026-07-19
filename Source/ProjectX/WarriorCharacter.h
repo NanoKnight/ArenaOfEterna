@@ -114,9 +114,8 @@ public:
 	TSubclassOf<class AQuestActor> QuestActorClass;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "UI")
-
-
 	TSubclassOf<UUserWidget> DeathWidgetClass;
+
 	UUserWidget* DeathWidgetInstance;
 
 	UPROPERTY(EditAnywhere)
@@ -129,6 +128,8 @@ public:
 	USceneComponent* HoldPoint;
 
 	bool bPushing = false;
+
+	bool UnTouchable = false;
 
 	UPROPERTY(EditAnywhere,BlueprintReadWrite , Category= "Quests")
 	UDataTable* QuestDataTable;
@@ -207,6 +208,7 @@ protected:
 	FTimerHandle StaminaRegenerateTimer;
 	FTimerHandle SecondSkillTimer;
 	FTimerHandle AttackTypeCheckTimer;
+	FTimerHandle FalseUnTouhableTimer;
 	FTimerHandle DeathWidgetTimer;
 	FTimerHandle AmbientSoundTimer;
 	FTimerHandle AttackHoldingTimer;
@@ -263,6 +265,11 @@ protected:
 	
 	UFUNCTION(BlueprintCallable)
 	void HitReactEnd();
+
+	UFUNCTION(BlueprintCallable)
+	void ParryHit();
+
+	void FalseUnTouchable();
 
 	UFUNCTION(BlueprintCallable)
 	void ComboCountReset();
@@ -415,10 +422,13 @@ private:
 	UPROPERTY(EditDefaultsOnly,Category = Montages)
 	UAnimMontage* FirstSkillMontage;
 
-
 	UPROPERTY(EditDefaultsOnly, Category = Montages)
 	UAnimMontage* SecondSkillMontage;
 	
+	UPROPERTY(EditDefaultsOnly, Category = Montages)
+	UAnimMontage* ParryMontage;
+
+
 	float DefaultEquippedWeaponDamage;
 
 	UPROPERTY()

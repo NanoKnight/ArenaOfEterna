@@ -610,6 +610,7 @@ void AWarriorCharacter::SpawnDefaultShield()
 	if (World && ShieldClass)
 	{
 		AShield* Shield = World->SpawnActor<AShield>(ShieldClass) ;
+		EquippedShield = Shield;
 		Shield->Equip(GetMesh(), FName("Shield"),this,this);
 
 	}
@@ -1246,6 +1247,68 @@ void AWarriorCharacter::SkillCanDamageF(float SphereRadiusFloat, float SkillDama
 	}
 }
 
+
+void AWarriorCharacter::ParryHit()
+{
+	FHitResult OutHit;
+	const FVector Start = EquippedShield->GetItemMesh()->GetComponentLocation();
+	const FVector End = Start + GetActorForwardVector() * 80.f;
+
+	TArray<AActor*> IgnoredActors;
+	IgnoredActors.Add(this);
+	IgnoredActors.Add(EquippedShield);
+
+	bool bHit = UKismetSystemLibrary::SphereTraceSingle(
+		GetWorld(),
+		Start,
+		End,
+		60.f,
+		UEngineTypes::ConvertToTraceType(ECC_Pawn),
+		false,
+		IgnoredActors,
+		EDrawDebugTrace::None,
+		OutHit,
+		true
+	);
+
+	if (bHit)
+	{
+		AEnemy* Enemy = Cast<AEnemy>(OutHit.GetActor());
+
+		if (Enemy && !Enemy->IsDead())
+		{
+			UGameplayStatics::ApplyDamage(
+				Enemy,
+				5.f,
+				GetController(),
+				this,
+				UDamageType::StaticClass());
+
+			
+			if (Enemy->GetClass()->ImplementsInterface(UHitInterface::StaticClass()))
+			{
+				IHitInterface::Execute_GetHit(
+					Enemy,
+					OutHit.ImpactPoint,
+					this
+				);
+			}
+			Enemy->EnemyState = EEnemyState::EAS_Stun;
+			Enemy->ParryReset();
+			GetWorld()->GetTimerManager().SetTimer(FalseUnTouhableTimer, this, &AWarriorCharacter::FalseUnTouchable, 2.f);
+
+
+
+		}
+	}
+
+}
+
+void AWarriorCharacter::FalseUnTouchable()
+{
+	UnTouchable = false;
+}
+
 void AWarriorCharacter::CompleteCurrentQuest()
 {
 
@@ -1427,12 +1490,17 @@ void AWarriorCharacter::Shield()
 	
 	if (ShieldAlive() && ActionState != EActionState::EAS_Dead && ActionState != EActionState::EAS_UsingSkill)
 	{
-		if (CloseEnemy && CloseEnemy->CanPerry)
+		if (CloseEnemy && CloseEnemy->CanParry)
 		{
 			CloseEnemy->StopAttackMontage();
-			CloseEnemy->EnemyState = EEnemyState::EAS_Stun;
-			CloseEnemy->GetMovementComponent()->StopMovementImmediately();
-			GEngine->AddOnScreenDebugMessage(-1, 2.f, FColor::Cyan, FString::Printf(TEXT("perry worked")));
+			UAnimInstance* AnimInstance = GetMesh()->GetAnimInstance();
+			if (AnimInstance && ParryMontage)
+			{
+				AnimInstance->Montage_Stop(0.1f);
+				AnimInstance->Montage_Play(ParryMontage);
+				UnTouchable = true;
+
+			}
 
 		}
 		else
@@ -1448,6 +1516,9 @@ void AWarriorCharacter::Shield()
 			ActionState = EActionState::EAS_Unoccupied;
 			GetCharacterMovement()->MaxWalkSpeed = CharacterWalkSpeed;
 		}
+		
+			
+		
 		
 	}
 
@@ -1588,6 +1659,7 @@ void AWarriorCharacter::HitReactEnd()
 	APlayerController* PlayerController = Cast<APlayerController>(GetOwner());
 	PlayerController->SetIgnoreMoveInput(false);
 }
+
 void AWarriorCharacter::ComboCountReset()
 {
 	ComboCounts = 0;
