@@ -129,6 +129,7 @@ public:
 
 	bool bPushing = false;
 
+	UPROPERTY(EditAnyWhere, BlueprintReadWrite)
 	bool UnTouchable = false;
 
 	UPROPERTY(EditAnywhere,BlueprintReadWrite , Category= "Quests")
@@ -239,6 +240,10 @@ protected:
 	bool bHoldingAttack;
 
 	bool CombatSoundPlaying;
+
+	UPROPERTY(EditAnywhere)
+	bool bParry;
+
 	bool IsFirstSkill;
 	bool IsSecondSkill;
 	bool FadeoutTimer = false;
@@ -268,6 +273,9 @@ protected:
 
 	UFUNCTION(BlueprintCallable)
 	void ParryHit();
+
+	UFUNCTION(BlueprintCallable)
+	void SetParryFalse();
 
 	void FalseUnTouchable();
 
@@ -473,7 +481,7 @@ private:
 	UPROPERTY(BlueprintReadWrite, meta = (AllowPrivateAccess = "true"))
 	EAttackButtonState AttackButtonStates = EAttackButtonState::EAB_Releassed;
 
-	UPROPERTY(BlueprintReadWrite, meta = (AllowPrivateAccess = "true"))
+	UPROPERTY(BlueprintReadWrite,EditAnywhere, meta = (AllowPrivateAccess = "true"))
 	EActionState ActionState = EActionState::EAS_Unoccupied;
 	UPROPERTY(BlueprintReadWrite, meta = (AllowPrivateAccess = "true"))
 	EMovementState MovementState = EMovementState::EMS_Idle;
@@ -510,5 +518,6 @@ public:
 	FORCEINLINE EActionState GetActionState() const { return ActionState; }
 	FORCEINLINE EMovementState GetMovementState() const { return MovementState; }
 	FORCEINLINE void SetCharacterStates(ECharacterStates NewStates) { CharacterStates = NewStates; }
+	FORCEINLINE void SetActionstate(EActionState NewActionState) { ActionState = NewActionState ; }
 
 };

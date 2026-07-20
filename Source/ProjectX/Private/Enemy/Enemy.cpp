@@ -19,6 +19,7 @@
 #include "Kismet/GameplayStatics.h"
 #include"Components\AudioComponent.h"
 #include"Items\EnemySpawner.h"
+#include"Enemy\CombatDirector.h"
 #include "AIController.h"
 #include"NavigationSystem.h"
 #include"Items\ExperiencePoint.h"
@@ -51,6 +52,18 @@ AEnemy::AEnemy()
 void AEnemy::BeginPlay()
 {
 	Super::BeginPlay();
+
+	CombatDirector = Cast<ACombatDirector>(UGameplayStatics::GetActorOfClass(GetWorld(),
+		ACombatDirector::StaticClass()));
+	if (CombatDirector)
+	{
+		UE_LOG(LogTemp, Warning, TEXT("COMBAT DIRECTORRR"));
+	}
+	else
+	{
+		UE_LOG(LogTemp, Warning, TEXT("NULL"));
+
+	}
 	Tags.Add("Enemy");
 	 InitializeEquipItems();
 	EnemyName = GetName();
@@ -103,6 +116,10 @@ void AEnemy::Die()
 	
 	if (IsDead()) return;
 	Super::Die();
+	if (CombatDirector)
+	{
+		CombatDirector->RegisteredEnemies.Remove(this);
+	}
 	SetRagdoll();
 	GetCapsuleComponent()->SetCollisionResponseToChannel(ECC_Visibility, ECR_Ignore);
 	AddKilledEnemy();
@@ -244,11 +261,32 @@ void AEnemy::SpawnExperience()
 
 void AEnemy::Attack()
 {
-	AWarriorCharacter* WarChar = Cast<AWarriorCharacter>(CombatTarget);
-
-	if (EnemyState == EEnemyState::EAS_Stun || CombatTarget == nullptr ||
-		WarChar->UnTouchable == true)
+	if (IsDead() ||
+		EnemyState == EEnemyState::EAS_Stun ||
+		EnemyState == EEnemyState::EAS_Freezed)
 	{
+		return;
+	}
+
+	if (!IsValid(CombatTarget))
+	{
+		EnemyState = EEnemyState::EES_NoState;
+		return;
+	}
+
+	AWarriorCharacter* WarChar =
+		Cast<AWarriorCharacter>(CombatTarget);
+
+	if (!IsValid(WarChar))
+	{
+		EnemyState = EEnemyState::EES_NoState;
+		return;
+	}
+
+	if (WarChar->UnTouchable)
+	{
+		EnemyState = EEnemyState::EES_NoState;
+		CheckCombatTarget();
 		return;
 	}
 
@@ -281,6 +319,7 @@ void AEnemy::AttackEnd()
 bool AEnemy::CanAttack()
 {
 	bool bCanAttack =
+		bAttackPermission &&
 		IsInsideAttackRadius() &&
 		!IsAttacking() &&
 		!IsEngaged() &&
@@ -324,6 +363,8 @@ void AEnemy::Tick(float DeltaTime)
 	else
 	{
 		CheckPatrolTarget(); 
+	
+
 	}
 
 
@@ -522,6 +563,8 @@ void AEnemy::BackPatrol()
 void AEnemy::ResetEnemyState()
 {
 	EnemyState = EEnemyState::EES_Patrolling;
+
+
 	if (CombatTarget)
 	{
 		ChaseTarget();
@@ -529,6 +572,31 @@ void AEnemy::ResetEnemyState()
 
 
 }
+
+void AEnemy::GetParried()
+{
+	if (IsDead())return;
+	ClearAttackTimer();
+	ClearPatrolTimer();
+	StopAttackMontage();
+	SetWeaponCollisionEnabled(ECollisionEnabled::NoCollision);
+	if (EnemyController)
+	{
+		EnemyController->StopMovement();
+	}
+
+
+	CanParry = false;
+	if (ParryWidget)
+	{
+		ParryWidget->SetVisibility(false);
+	}
+	EnemyState = EEnemyState::EAS_Stun;
+	GetWorldTimerManager().ClearTimer(ParryResetTimer);
+
+	GetWorld()->GetTimerManager().SetTimer(ParryResetTimer, this, &AEnemy::EndParried, 2.f);
+}
+
 
 
 
@@ -613,25 +681,10 @@ void AEnemy::CheckCombatTarget()
 	{
 		ClearAttackTimer();
 		LoseInterest();
-		AGameModeBase* GameMode = GetWorld()->GetAuthGameMode();
-		AArenaGameMode* ArenaGameMod = Cast<AArenaGameMode>(GameMode);
-		if (ArenaGameMod && Chased)
-		{
-			//ArenaGameMod->ChasedEnemies -= 1;
-			//Chased = false;
-			//ArenaGameMod->StopCombatSound();
-
-		}
-
-	
-	
-
 
 		CheckCombatMusic();
 		if (!IsEngaged()) StartPatrolling();
 
-		
-	
 	}
 	else if (IsOutsideAttackRadius() && !IsChasing())
 	{
@@ -644,6 +697,7 @@ void AEnemy::CheckCombatTarget()
 
 	else if(CanAttack())
 	{
+		
 		StartAttackTimer();
 
 	
@@ -681,6 +735,8 @@ void AEnemy::ShowHealthBar()
 void AEnemy::LoseInterest()
 {
 	CombatTarget = nullptr;
+	if (CombatDirector) CombatDirector->RegisteredEnemies.Remove(this);
+	
 	HideHealthBar();
 }
 
@@ -689,6 +745,23 @@ void AEnemy::StartPatrolling()
 	EnemyState = EEnemyState::EES_Patrolling;
 	GetCharacterMovement()->MaxWalkSpeed = WalkSpeed;
 	MoveToTarget(PatrolTarget);
+}
+
+void AEnemy::EndParried()
+{
+
+	if (IsDead())return;
+	CanParry = false;
+	EnemyState = EEnemyState::EES_NoState;
+
+	if (IsValid(CombatTarget))
+	{
+		CheckCombatTarget();
+	}
+	else
+	{
+		StartPatrolling();
+	}
 }
 
 void AEnemy::ChaseTarget()
@@ -766,8 +839,6 @@ void AEnemy::StartAttackTimer()
 	EnemyState = EEnemyState::EES_Attacking;
 	const float AttackTime = FMath::RandRange(AttackMin, AttackMax);
 	GetWorldTimerManager().SetTimer(AttackTimer, this, &AEnemy::Attack, AttackTime);
-	PlayerCanParry();
-	GetWorld()->GetTimerManager().SetTimer(ParryTimer, this, &AEnemy::PlayerCantParry, 0.5f);
 
 
 
@@ -869,6 +940,11 @@ void AEnemy::PawnSeen(APawn* SeenPawn)
 	if (EnemyState == EEnemyState::EAS_Freezed)return;
 
 	SeenPawnRef = SeenPawn;
+	if (CombatDirector)
+	{
+		CombatDirector->RegisteredEnemies.AddUnique(this);
+
+	}
 	if (!Chased)
 	{
 		if (ICombatSoundInterface* CombatInterface = Cast<ICombatSoundInterface>(SeenPawn))
@@ -898,8 +974,11 @@ void AEnemy::PawnSeen(APawn* SeenPawn)
 }
 
 void AEnemy::PawnHeard(APawn* SeenPawn,const FVector& Location, float Volume)
-{
-
+{ 
+	if (CombatDirector)
+	{
+		CombatDirector->RegisteredEnemies.AddUnique(this);
+	}
 	const bool bShouldChaseTarget =
 		EnemyState != EEnemyState::EES_Dead &&
 		EnemyState != EEnemyState::EES_Chasing &&

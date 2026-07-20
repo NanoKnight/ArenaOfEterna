@@ -219,7 +219,12 @@ void AWarriorCharacter::SpawnDefaultWeapon()
 
 void AWarriorCharacter::GetHit_Implementation(const FVector& ImpactPoint, AActor* Hitter)
 {
-	
+
+	if (bParry || UnTouchable)
+	{
+		return;
+	}
+
 	if (CheckShieldClose())
 	{
 		Super::GetHit_Implementation(ImpactPoint, Hitter);
@@ -618,6 +623,18 @@ void AWarriorCharacter::SpawnDefaultShield()
 
 float AWarriorCharacter::TakeDamage(float DamageAmount, FDamageEvent const& DamageEvent, AController* EventInstigator, AActor* DamageCauser)
 {
+
+	if (ActionState == EActionState::EAS_Dead)
+	{
+		return 0.f;
+	}
+
+	if (UnTouchable || bParry)
+	{
+		return 0.f;
+	}
+	;
+
 
    if (!IsEnemyBehindCharacter())
 	{
@@ -1052,10 +1069,10 @@ void AWarriorCharacter::EquipWeapon(AWeapon* Weapon)
 }
 
 void AWarriorCharacter::Attack()
-{
+{       
+	    if (bParry) return;
 		Super::Attack();
 		bHoldingAttack = false;
-
 		AttackButtonStates = EAttackButtonState::EAB_Holding;
 		GetWorld()->GetTimerManager().SetTimer(AttackHoldingTimer, this, &AWarriorCharacter::PlayHoldingAttackAnim, 0.5f, false);
 
@@ -1250,6 +1267,8 @@ void AWarriorCharacter::SkillCanDamageF(float SphereRadiusFloat, float SkillDama
 
 void AWarriorCharacter::ParryHit()
 {
+
+	if (!EquippedShield) return;
 	FHitResult OutHit;
 	const FVector Start = EquippedShield->GetItemMesh()->GetComponentLocation();
 	const FVector End = Start + GetActorForwardVector() * 80.f;
@@ -1293,10 +1312,8 @@ void AWarriorCharacter::ParryHit()
 					this
 				);
 			}
-			Enemy->EnemyState = EEnemyState::EAS_Stun;
-			Enemy->ParryReset();
-			GetWorld()->GetTimerManager().SetTimer(FalseUnTouhableTimer, this, &AWarriorCharacter::FalseUnTouchable, 2.f);
-
+			Enemy->GetParried();
+			bParry = false;
 
 
 		}
@@ -1304,9 +1321,17 @@ void AWarriorCharacter::ParryHit()
 
 }
 
+void AWarriorCharacter::SetParryFalse()
+{
+	bParry = false;
+	ActionState = EActionState::EAS_Unoccupied;
+}
+
 void AWarriorCharacter::FalseUnTouchable()
 {
+	ActionState = EActionState::EAS_Unoccupied;
 	UnTouchable = false;
+	bParry = false;
 }
 
 void AWarriorCharacter::CompleteCurrentQuest()
@@ -1485,22 +1510,43 @@ void AWarriorCharacter::SkillEnd()
 void AWarriorCharacter::Shield()
 {
 	
-	if (ActionState == EActionState::EAS_UsingSkill || CharacterStates == ECharacterStates::ECS_UnEquipped || 
-		!ShieldClass)return;
-	
-	if (ShieldAlive() && ActionState != EActionState::EAS_Dead && ActionState != EActionState::EAS_UsingSkill)
+	if (ActionState == EActionState::EAS_UsingSkill ||
+		ActionState == EActionState::EAS_Dead ||
+		CharacterStates == ECharacterStates::ECS_UnEquipped ||
+		!IsValid(EquippedShield))
 	{
+		return;
+	}
+
+	if (!ShieldAlive() || bParry)
+	{
+		return;
+	}
+	
+	
+
+		
 		if (CloseEnemy && CloseEnemy->CanParry)
 		{
-			CloseEnemy->StopAttackMontage();
+		
 			UAnimInstance* AnimInstance = GetMesh()->GetAnimInstance();
-			if (AnimInstance && ParryMontage)
-			{
+
+			if (!AnimInstance || !ParryMontage)return;
+		
+			    CloseEnemy->GetParried();
 				AnimInstance->Montage_Stop(0.1f);
 				AnimInstance->Montage_Play(ParryMontage);
-				UnTouchable = true;
+				const float MontageLength = AnimInstance->Montage_Play(ParryMontage);
 
-			}
+				if (MontageLength <= 0 )
+				{
+					CloseEnemy->EndParried();
+				}
+				bParry = true;
+				UnTouchable = true;
+				GetWorld()->GetTimerManager().SetTimer(FalseUnTouhableTimer, this, &AWarriorCharacter::FalseUnTouchable, 3.f);
+
+							
 
 		}
 		else
@@ -1515,14 +1561,12 @@ void AWarriorCharacter::Shield()
 			CharacterStates = ECharacterStates::ECS_EquippedShield;
 			ActionState = EActionState::EAS_Unoccupied;
 			GetCharacterMovement()->MaxWalkSpeed = CharacterWalkSpeed;
+			
+
 		}
 		
 			
 		
-		
-	}
-
-	
 }
 
 void AWarriorCharacter::ShieldRealesed()

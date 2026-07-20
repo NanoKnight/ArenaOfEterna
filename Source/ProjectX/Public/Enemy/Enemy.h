@@ -13,6 +13,7 @@ class UWidgetComponent;
 class AWarriorCharacter;
 class UPawnSensingComponent;
 class AEnemySpawner;
+class ACombatDirector;
 
 UCLASS()
 class PROJECTX_API AEnemy : public ABaseCharacter, public ISkillHitInterface
@@ -22,7 +23,6 @@ class PROJECTX_API AEnemy : public ABaseCharacter, public ISkillHitInterface
 protected:
 
 
-	bool Chased;
 	// Called when the game starts or when spawned
 	virtual void BeginPlay() override;
 	void InitializeEnemy();
@@ -48,6 +48,7 @@ protected:
 	FTimerHandle RandomMoveTimer;
 
 
+	bool Chased;
 
 	FTimerHandle OutFreezeTimer;
 
@@ -66,13 +67,11 @@ public:
 	bool IsDead();
     /* <AActor>  */
 	virtual void Tick(float DeltaTime) override;
-	void IfEnemyFallingDie();
 	virtual float TakeDamage(float DamageAmount, struct FDamageEvent const& DamageEvent, class AController* EventInstigator, AActor* DamageCauser) override;
 	virtual void Destroyed() override;
 	void SetRagdoll();
 	void SetStun();
 	void ParryReset();
-	void ParryReact();
 	void SetEnemyFreeze();
 	void OutFreeze();
 	/*</AActor>*/
@@ -85,6 +84,11 @@ public:
 
 	UFUNCTION(BlueprintCallable)
 	void ResetEnemyState();
+
+	void GetParried();
+
+	void EndParried();
+
 
 	UFUNCTION(BlueprintCallable)
 	void PlayerCanParry();
@@ -105,6 +109,8 @@ public:
 	UPROPERTY(EditAnywhere)
 	bool CanParry;
 
+	bool bAttackPermission = false;
+
 
 
 private:
@@ -119,7 +125,6 @@ private:
 	void ShowHealthBar();
 	void LoseInterest();
 	void StartPatrolling();
-
 	void ResetRagdoll();
 	void BackPatrol();
 	bool IsOutsideCombatRadius();
@@ -152,6 +157,8 @@ private:
 	APawn* SeenPawnRef;
 	UPROPERTY(EditAnywhere)
 	TSubclassOf<class AWeapon> WeaponClass;
+
+	ACombatDirector* CombatDirector;
 
 	UPROPERTY(EditAnywhere)
 	double CombatRadius = 1500.f;
