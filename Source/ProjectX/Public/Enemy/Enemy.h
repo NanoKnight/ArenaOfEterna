@@ -40,12 +40,14 @@ protected:
 	virtual void AttackEnd() override;
 	virtual bool CanAttack() override;
 	virtual void ChaseTarget();
+	void deneme();
 	virtual void HandleDamage(float DamageAmount) override;
 	virtual void PlayHitSound(const FVector& ImpactPoint) ;
-	virtual void MoveToTarget(AActor* Target);
 	void MoveToRandomLocation();
 
 	FTimerHandle RandomMoveTimer;
+
+	FTimerHandle UpdateCombatTimer;
 
 
 	bool Chased;
@@ -65,9 +67,13 @@ public:
     AEnemy();
 	FString EnemyName;
 	bool IsDead();
+	void MoveToSurroundLocation(const FVector& Location);
+	bool HasAttackPermission() const;
+
     /* <AActor>  */
 	virtual void Tick(float DeltaTime) override;
 	virtual float TakeDamage(float DamageAmount, struct FDamageEvent const& DamageEvent, class AController* EventInstigator, AActor* DamageCauser) override;
+	virtual void MoveToTarget(AActor* Target);
 	virtual void Destroyed() override;
 	void SetRagdoll();
 	void SetStun();
@@ -78,6 +84,7 @@ public:
 
 	/* <IHitInterface> */
 	virtual void GetHit_Implementation(const FVector& ImpactPoint,AActor* Hitter) override;
+	void EndRecoveryHit();
 	/* </IHitInterface> */
 
 	virtual void SkillHit(const FVector& ImpactPoint, AActor* Hitter) override;
@@ -93,9 +100,11 @@ public:
 	UFUNCTION(BlueprintCallable)
 	void PlayerCanParry();
 
+
 	UFUNCTION(BlueprintCallable)
 	void PlayerCantParry();
 
+	
 
 	UPROPERTY(EditAnywhere)
 	EEnemyState EnemyState;
@@ -109,8 +118,10 @@ public:
 	UPROPERTY(EditAnywhere)
 	bool CanParry;
 
-	bool bAttackPermission = false;
 
+
+	FORCEINLINE AActor* GetCombatTarget() const { return CombatTarget; }
+	FORCEINLINE class AAIController* GetEnemyController() const { return EnemyController;}
 
 
 private:
@@ -136,8 +147,9 @@ private:
 	bool IsEngaged();
 	void ClearPatrolTimer();
 	void StartAttackTimer();
-
 	void ClearAttackTimer();
+	void UpdateCombatMovement();
+	void ResetTakedHit();
 	bool InTargetRange(AActor* Target, double Radius);
 	AActor* ChoosePatrolTarget();
 
@@ -169,7 +181,6 @@ private:
 	UPROPERTY(EditAnywhere)
 	bool InfiniteEnemy;
 
-
 	UPROPERTY(EditAnywhere)
 	double PatrolRadius = 200.f;
 
@@ -184,6 +195,9 @@ private:
 
 	UPROPERTY()
 	int32 ItemSpawnRate = 5;
+
+	UPROPERTY()
+	int32 TakedHit;
 	
 	UPROPERTY(EditAnywhere)
 	bool SpecialCharacter;
@@ -206,9 +220,12 @@ private:
 
 	bool Ragdoll;
 	bool FrontAnim;
+	bool bRecoveringFromHit = false;
 
 	FTimerHandle AttackTimer;
+	FTimerHandle RecoveryHitTimer;
 	FTimerHandle RagdollTimer;
+	FTimerHandle ParryStartTimer;
 	FTimerHandle HideHealthBarTimer;
 	FTimerHandle RespawnInfiniteEnemyTimer;
 	

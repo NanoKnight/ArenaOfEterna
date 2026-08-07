@@ -30,7 +30,7 @@ void AExperiencePoint::Tick(float DeltaTime)
 	if (Distance <= FMath::Square(MagnetRadius))
 	{
 		const FVector NewLocation = FMath::VInterpTo(GetActorLocation(), 
-			TargetPlayer->GetActorLocation(),DeltaTime,6.f);
+			TargetPlayer->GetActorLocation(),DeltaTime,12.f);
 		SetActorLocation(NewLocation);
 	}
 }

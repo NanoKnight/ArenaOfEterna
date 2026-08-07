@@ -32,6 +32,7 @@ class ATreasure;
 class USphereComponent;
 class UPhysicsHandleComponent;
 class AEnemy;
+class ACombatDirector;
 class UCharacterHUD;
 class UQuestUI;
 class AArenaGameMode;
@@ -274,6 +275,8 @@ protected:
 	UFUNCTION(BlueprintCallable)
 	void ParryHit();
 
+	void StopSlowMotion();
+
 	UFUNCTION(BlueprintCallable)
 	void SetParryFalse();
 
@@ -411,6 +414,8 @@ private:
 	UPROPERTY(VisibleInstanceOnly)
 	ABaseItem* OverlappingItem;
 
+	ACombatDirector* CombatDirector;
+
 	UPROPERTY(EditAnywhere)
 	TSubclassOf<class AShield> ShieldClass;
 
@@ -519,5 +524,6 @@ public:
 	FORCEINLINE EMovementState GetMovementState() const { return MovementState; }
 	FORCEINLINE void SetCharacterStates(ECharacterStates NewStates) { CharacterStates = NewStates; }
 	FORCEINLINE void SetActionstate(EActionState NewActionState) { ActionState = NewActionState ; }
+	FORCEINLINE void SetCombatTarget(AActor* NewCombatTarget) { CombatTarget = NewCombatTarget;  }
 
 };

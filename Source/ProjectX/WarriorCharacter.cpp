@@ -18,6 +18,7 @@
 #include"Items\Weapons\Weapon.h"
 #include"Items\Weapons\Shield.h"
 #include"Enemy\Enemy.h"
+#include"Enemy\CombatDirector.h"
 #include "Enemy\Boss.h"
 #include"Breakable\BreakableActor.h"
 #include"Components/AttributeComponent.h"
@@ -74,7 +75,6 @@ AWarriorCharacter::AWarriorCharacter()
 	Sphere->OnComponentEndOverlap.AddDynamic(this, &AWarriorCharacter::SphereCollisionEndOverlap);
 	EnemyDetectionSphere->OnComponentBeginOverlap.AddDynamic(this, &AWarriorCharacter::EnemyDetectionCollisionBeginOverlap);
 	EnemyDetectionSphere->OnComponentEndOverlap.AddDynamic(this, &AWarriorCharacter::EnemyDetectionCollisionEndOverlap);
-
 	CombatAudioComponent = CreateDefaultSubobject<UAudioComponent>(TEXT("CombatAudio"));
 	CombatAudioComponent->bAutoActivate = false;
 	CombatAudioComponent->bAutoDestroy = false;
@@ -116,6 +116,10 @@ void AWarriorCharacter::BeginPlay()
 	SpawnDefaultShield();
 	SpawnDefaultWeapon();
 	InitializePlayerOverlay();
+
+	CombatDirector = Cast<ACombatDirector>
+	(UGameplayStatics::GetActorOfClass(GetWorld(), ACombatDirector::StaticClass()));
+
 	GetCharacterMovement()->bOrientRotationToMovement = true;
 	GetCharacterMovement()->bUseControllerDesiredRotation = false;
 	bUseControllerRotationYaw = false;
@@ -126,6 +130,7 @@ void AWarriorCharacter::BeginPlay()
 	defaultCameraLoc = ViewCamera->GetRelativeLocation();
 	SetQuestsSettings();
 	CheckEnemySpawner();
+
 
 	if (AmbientSound)
 	{
@@ -560,6 +565,8 @@ void AWarriorCharacter::GetClosestEnemy()
 			NewClosestEnemy = Enemy;
 		}			
 	}
+
+
 	if (CloseEnemy != NewClosestEnemy)
 	{
 		if (CloseEnemy) 
@@ -615,8 +622,12 @@ void AWarriorCharacter::SpawnDefaultShield()
 	if (World && ShieldClass)
 	{
 		AShield* Shield = World->SpawnActor<AShield>(ShieldClass) ;
-		EquippedShield = Shield;
-		Shield->Equip(GetMesh(), FName("Shield"),this,this);
+		if (Shield)
+		{
+			EquippedShield = Shield;
+			Shield->Equip(GetMesh(), FName("Shield"), this, this);
+		}
+		
 
 	}
 }
@@ -647,12 +658,15 @@ float AWarriorCharacter::TakeDamage(float DamageAmount, FDamageEvent const& Dama
 
 		}
 	}
+   
 
 	if (!BShieldOn)
 	{
 		HandleDamage(DamageAmount);
 		SetHealthBar();
 	}
+
+	CombatTarget = DamageCauser->GetOwner();
 	return DamageAmount;
 }
  
@@ -1290,6 +1304,12 @@ void AWarriorCharacter::ParryHit()
 		true
 	);
 
+	UGameplayStatics::SetGlobalTimeDilation(this, 0.15f);
+	FTimerHandle ParrySlowmoTimer;
+
+	GetWorld()->GetTimerManager().SetTimer(ParrySlowmoTimer, this,
+		&AWarriorCharacter::StopSlowMotion,0.15f,false);
+
 	if (bHit)
 	{
 		AEnemy* Enemy = Cast<AEnemy>(OutHit.GetActor());
@@ -1319,6 +1339,11 @@ void AWarriorCharacter::ParryHit()
 		}
 	}
 
+}
+
+void AWarriorCharacter::StopSlowMotion()
+{
+	UGameplayStatics::SetGlobalTimeDilation(this, 1.f);
 }
 
 void AWarriorCharacter::SetParryFalse()
@@ -1526,14 +1551,12 @@ void AWarriorCharacter::Shield()
 	
 
 		
-		if (CloseEnemy && CloseEnemy->CanParry)
+		if (CombatDirector->CurrentAttacker && CombatDirector->CurrentAttacker->CanParry)
 		{
 		
 			UAnimInstance* AnimInstance = GetMesh()->GetAnimInstance();
 
 			if (!AnimInstance || !ParryMontage)return;
-		
-			    CloseEnemy->GetParried();
 				AnimInstance->Montage_Stop(0.1f);
 				AnimInstance->Montage_Play(ParryMontage);
 				const float MontageLength = AnimInstance->Montage_Play(ParryMontage);
@@ -1952,6 +1975,7 @@ void AWarriorCharacter::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
 	GetClosestEnemy();
+	//CombatTarget = CombatDirector->CurrentAttacker;
 	ComboCountTimer(DeltaTime);
 	SetStaminaBar();
 	ResetCameraPosition();
