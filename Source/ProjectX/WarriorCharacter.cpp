@@ -18,6 +18,7 @@
 #include"Items\Weapons\Weapon.h"
 #include"Items\Weapons\Shield.h"
 #include"Enemy\Enemy.h"
+#include"Enemy\CombatDirector.h"
 #include "Enemy\Boss.h"
 #include"Breakable\BreakableActor.h"
 #include"Components/AttributeComponent.h"
@@ -74,7 +75,6 @@ AWarriorCharacter::AWarriorCharacter()
 	Sphere->OnComponentEndOverlap.AddDynamic(this, &AWarriorCharacter::SphereCollisionEndOverlap);
 	EnemyDetectionSphere->OnComponentBeginOverlap.AddDynamic(this, &AWarriorCharacter::EnemyDetectionCollisionBeginOverlap);
 	EnemyDetectionSphere->OnComponentEndOverlap.AddDynamic(this, &AWarriorCharacter::EnemyDetectionCollisionEndOverlap);
-
 	CombatAudioComponent = CreateDefaultSubobject<UAudioComponent>(TEXT("CombatAudio"));
 	CombatAudioComponent->bAutoActivate = false;
 	CombatAudioComponent->bAutoDestroy = false;
@@ -116,6 +116,10 @@ void AWarriorCharacter::BeginPlay()
 	SpawnDefaultShield();
 	SpawnDefaultWeapon();
 	InitializePlayerOverlay();
+
+	CombatDirector = Cast<ACombatDirector>
+	(UGameplayStatics::GetActorOfClass(GetWorld(), ACombatDirector::StaticClass()));
+
 	GetCharacterMovement()->bOrientRotationToMovement = true;
 	GetCharacterMovement()->bUseControllerDesiredRotation = false;
 	bUseControllerRotationYaw = false;
@@ -126,6 +130,7 @@ void AWarriorCharacter::BeginPlay()
 	defaultCameraLoc = ViewCamera->GetRelativeLocation();
 	SetQuestsSettings();
 	CheckEnemySpawner();
+
 
 	if (AmbientSound)
 	{
@@ -219,7 +224,12 @@ void AWarriorCharacter::SpawnDefaultWeapon()
 
 void AWarriorCharacter::GetHit_Implementation(const FVector& ImpactPoint, AActor* Hitter)
 {
-	
+
+	if (bParry || UnTouchable)
+	{
+		return;
+	}
+
 	if (CheckShieldClose())
 	{
 		Super::GetHit_Implementation(ImpactPoint, Hitter);
@@ -555,6 +565,8 @@ void AWarriorCharacter::GetClosestEnemy()
 			NewClosestEnemy = Enemy;
 		}			
 	}
+
+
 	if (CloseEnemy != NewClosestEnemy)
 	{
 		if (CloseEnemy) 
@@ -610,13 +622,30 @@ void AWarriorCharacter::SpawnDefaultShield()
 	if (World && ShieldClass)
 	{
 		AShield* Shield = World->SpawnActor<AShield>(ShieldClass) ;
-		Shield->Equip(GetMesh(), FName("Shield"),this,this);
+		if (Shield)
+		{
+			EquippedShield = Shield;
+			Shield->Equip(GetMesh(), FName("Shield"), this, this);
+		}
+		
 
 	}
 }
 
 float AWarriorCharacter::TakeDamage(float DamageAmount, FDamageEvent const& DamageEvent, AController* EventInstigator, AActor* DamageCauser)
 {
+
+	if (ActionState == EActionState::EAS_Dead)
+	{
+		return 0.f;
+	}
+
+	if (UnTouchable || bParry)
+	{
+		return 0.f;
+	}
+	;
+
 
    if (!IsEnemyBehindCharacter())
 	{
@@ -629,12 +658,15 @@ float AWarriorCharacter::TakeDamage(float DamageAmount, FDamageEvent const& Dama
 
 		}
 	}
+   
 
 	if (!BShieldOn)
 	{
 		HandleDamage(DamageAmount);
 		SetHealthBar();
 	}
+
+	CombatTarget = DamageCauser->GetOwner();
 	return DamageAmount;
 }
  
@@ -1051,10 +1083,10 @@ void AWarriorCharacter::EquipWeapon(AWeapon* Weapon)
 }
 
 void AWarriorCharacter::Attack()
-{
+{       
+	    if (bParry) return;
 		Super::Attack();
 		bHoldingAttack = false;
-
 		AttackButtonStates = EAttackButtonState::EAB_Holding;
 		GetWorld()->GetTimerManager().SetTimer(AttackHoldingTimer, this, &AWarriorCharacter::PlayHoldingAttackAnim, 0.5f, false);
 
@@ -1246,6 +1278,87 @@ void AWarriorCharacter::SkillCanDamageF(float SphereRadiusFloat, float SkillDama
 	}
 }
 
+
+void AWarriorCharacter::ParryHit()
+{
+
+	if (!EquippedShield) return;
+	FHitResult OutHit;
+	const FVector Start = EquippedShield->GetItemMesh()->GetComponentLocation();
+	const FVector End = Start + GetActorForwardVector() * 80.f;
+
+	TArray<AActor*> IgnoredActors;
+	IgnoredActors.Add(this);
+	IgnoredActors.Add(EquippedShield);
+
+	bool bHit = UKismetSystemLibrary::SphereTraceSingle(
+		GetWorld(),
+		Start,
+		End,
+		60.f,
+		UEngineTypes::ConvertToTraceType(ECC_Pawn),
+		false,
+		IgnoredActors,
+		EDrawDebugTrace::None,
+		OutHit,
+		true
+	);
+
+	UGameplayStatics::SetGlobalTimeDilation(this, 0.15f);
+	FTimerHandle ParrySlowmoTimer;
+
+	GetWorld()->GetTimerManager().SetTimer(ParrySlowmoTimer, this,
+		&AWarriorCharacter::StopSlowMotion,0.15f,false);
+
+	if (bHit)
+	{
+		AEnemy* Enemy = Cast<AEnemy>(OutHit.GetActor());
+
+		if (Enemy && !Enemy->IsDead())
+		{
+			UGameplayStatics::ApplyDamage(
+				Enemy,
+				5.f,
+				GetController(),
+				this,
+				UDamageType::StaticClass());
+
+			
+			if (Enemy->GetClass()->ImplementsInterface(UHitInterface::StaticClass()))
+			{
+				IHitInterface::Execute_GetHit(
+					Enemy,
+					OutHit.ImpactPoint,
+					this
+				);
+			}
+			Enemy->GetParried();
+			bParry = false;
+
+
+		}
+	}
+
+}
+
+void AWarriorCharacter::StopSlowMotion()
+{
+	UGameplayStatics::SetGlobalTimeDilation(this, 1.f);
+}
+
+void AWarriorCharacter::SetParryFalse()
+{
+	bParry = false;
+	ActionState = EActionState::EAS_Unoccupied;
+}
+
+void AWarriorCharacter::FalseUnTouchable()
+{
+	ActionState = EActionState::EAS_Unoccupied;
+	UnTouchable = false;
+	bParry = false;
+}
+
 void AWarriorCharacter::CompleteCurrentQuest()
 {
 
@@ -1422,23 +1535,61 @@ void AWarriorCharacter::SkillEnd()
 void AWarriorCharacter::Shield()
 {
 	
-	if (ActionState == EActionState::EAS_UsingSkill || CharacterStates == ECharacterStates::ECS_UnEquipped || 
-		!ShieldClass)return;
-	
-	if (ShieldAlive() && ActionState != EActionState::EAS_Dead && ActionState != EActionState::EAS_UsingSkill)
+	if (ActionState == EActionState::EAS_UsingSkill ||
+		ActionState == EActionState::EAS_Dead ||
+		CharacterStates == ECharacterStates::ECS_UnEquipped ||
+		!IsValid(EquippedShield))
 	{
-		UAnimInstance* AnimInstance = GetMesh()->GetAnimInstance();
-		if (AnimInstance && ShieldMontage)
-		{
-			AnimInstance->Montage_Play(ShieldMontage);
-		}
-		BShieldOn = true;
-		CharacterStates = ECharacterStates::ECS_EquippedShield;
-		ActionState = EActionState::EAS_Unoccupied;
-		GetCharacterMovement()->MaxWalkSpeed = CharacterWalkSpeed;
+		return;
 	}
 
+	if (!ShieldAlive() || bParry)
+	{
+		return;
+	}
 	
+	
+
+		
+		if (CombatDirector->CurrentAttacker && CombatDirector->CurrentAttacker->CanParry)
+		{
+		
+			UAnimInstance* AnimInstance = GetMesh()->GetAnimInstance();
+
+			if (!AnimInstance || !ParryMontage)return;
+				AnimInstance->Montage_Stop(0.1f);
+				AnimInstance->Montage_Play(ParryMontage);
+				const float MontageLength = AnimInstance->Montage_Play(ParryMontage);
+
+				if (MontageLength <= 0 )
+				{
+					CloseEnemy->EndParried();
+				}
+				bParry = true;
+				UnTouchable = true;
+				GetWorld()->GetTimerManager().SetTimer(FalseUnTouhableTimer, this, &AWarriorCharacter::FalseUnTouchable, 3.f);
+
+							
+
+		}
+		else
+		{
+			UAnimInstance* AnimInstance = GetMesh()->GetAnimInstance();
+			if (AnimInstance && ShieldMontage)
+			{
+				AnimInstance->Montage_Play(ShieldMontage);
+			}
+			BShieldOn = true;
+
+			CharacterStates = ECharacterStates::ECS_EquippedShield;
+			ActionState = EActionState::EAS_Unoccupied;
+			GetCharacterMovement()->MaxWalkSpeed = CharacterWalkSpeed;
+			
+
+		}
+		
+			
+		
 }
 
 void AWarriorCharacter::ShieldRealesed()
@@ -1575,6 +1726,7 @@ void AWarriorCharacter::HitReactEnd()
 	APlayerController* PlayerController = Cast<APlayerController>(GetOwner());
 	PlayerController->SetIgnoreMoveInput(false);
 }
+
 void AWarriorCharacter::ComboCountReset()
 {
 	ComboCounts = 0;
@@ -1823,6 +1975,7 @@ void AWarriorCharacter::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
 	GetClosestEnemy();
+	//CombatTarget = CombatDirector->CurrentAttacker;
 	ComboCountTimer(DeltaTime);
 	SetStaminaBar();
 	ResetCameraPosition();

@@ -9,9 +9,11 @@
 
 
 class UHealthBarComponent;
+class UWidgetComponent;
 class AWarriorCharacter;
 class UPawnSensingComponent;
 class AEnemySpawner;
+class ACombatDirector;
 
 UCLASS()
 class PROJECTX_API AEnemy : public ABaseCharacter, public ISkillHitInterface
@@ -21,7 +23,6 @@ class PROJECTX_API AEnemy : public ABaseCharacter, public ISkillHitInterface
 protected:
 
 
-	bool Chased;
 	// Called when the game starts or when spawned
 	virtual void BeginPlay() override;
 	void InitializeEnemy();
@@ -39,13 +40,17 @@ protected:
 	virtual void AttackEnd() override;
 	virtual bool CanAttack() override;
 	virtual void ChaseTarget();
+	void deneme();
 	virtual void HandleDamage(float DamageAmount) override;
 	virtual void PlayHitSound(const FVector& ImpactPoint) ;
-	virtual void MoveToTarget(AActor* Target);
-
 	void MoveToRandomLocation();
 
 	FTimerHandle RandomMoveTimer;
+
+	FTimerHandle UpdateCombatTimer;
+
+
+	bool Chased;
 
 	FTimerHandle OutFreezeTimer;
 
@@ -56,30 +61,50 @@ protected:
 
 	UPROPERTY(EditAnywhere)
 	UMaterialInterface* FreezeMat;
+
 	
 public:
     AEnemy();
 	FString EnemyName;
 	bool IsDead();
+	void MoveToSurroundLocation(const FVector& Location);
+	bool HasAttackPermission() const;
+
     /* <AActor>  */
 	virtual void Tick(float DeltaTime) override;
-	void IfEnemyFallingDie();
 	virtual float TakeDamage(float DamageAmount, struct FDamageEvent const& DamageEvent, class AController* EventInstigator, AActor* DamageCauser) override;
+	virtual void MoveToTarget(AActor* Target);
 	virtual void Destroyed() override;
 	void SetRagdoll();
 	void SetStun();
+	void ParryReset();
 	void SetEnemyFreeze();
 	void OutFreeze();
 	/*</AActor>*/
 
 	/* <IHitInterface> */
 	virtual void GetHit_Implementation(const FVector& ImpactPoint,AActor* Hitter) override;
+	void EndRecoveryHit();
 	/* </IHitInterface> */
 
 	virtual void SkillHit(const FVector& ImpactPoint, AActor* Hitter) override;
 
 	UFUNCTION(BlueprintCallable)
 	void ResetEnemyState();
+
+	void GetParried();
+
+	void EndParried();
+
+
+	UFUNCTION(BlueprintCallable)
+	void PlayerCanParry();
+
+
+	UFUNCTION(BlueprintCallable)
+	void PlayerCantParry();
+
+	
 
 	UPROPERTY(EditAnywhere)
 	EEnemyState EnemyState;
@@ -90,7 +115,13 @@ public:
 	UPROPERTY(Editanywhere)
 	bool IgnoreEnemyCount;
 
+	UPROPERTY(EditAnywhere)
+	bool CanParry;
 
+
+
+	FORCEINLINE AActor* GetCombatTarget() const { return CombatTarget; }
+	FORCEINLINE class AAIController* GetEnemyController() const { return EnemyController;}
 
 
 private:
@@ -105,7 +136,6 @@ private:
 	void ShowHealthBar();
 	void LoseInterest();
 	void StartPatrolling();
-
 	void ResetRagdoll();
 	void BackPatrol();
 	bool IsOutsideCombatRadius();
@@ -118,12 +148,17 @@ private:
 	void ClearPatrolTimer();
 	void StartAttackTimer();
 	void ClearAttackTimer();
+	void UpdateCombatMovement();
+	void ResetTakedHit();
 	bool InTargetRange(AActor* Target, double Radius);
 	AActor* ChoosePatrolTarget();
 
 
 	UFUNCTION()
 	void PawnHeard(APawn* SeenPawn,const FVector& Location, float Volume);
+
+	UPROPERTY(VisibleAnywhere)
+	UWidgetComponent* ParryWidget;
 
 	UPROPERTY(VisibleAnywhere)
 	UHealthBarComponent* HealthBarWidget;
@@ -134,6 +169,8 @@ private:
 	APawn* SeenPawnRef;
 	UPROPERTY(EditAnywhere)
 	TSubclassOf<class AWeapon> WeaponClass;
+
+	ACombatDirector* CombatDirector;
 
 	UPROPERTY(EditAnywhere)
 	double CombatRadius = 1500.f;
@@ -148,6 +185,8 @@ private:
 	double PatrolRadius = 200.f;
 
 	FTimerHandle PatrolTimer;
+	FTimerHandle ParryTimer;
+	FTimerHandle ParryResetTimer;
 
 	FTimerHandle SpawnExperienceTimer;
 
@@ -156,6 +195,9 @@ private:
 
 	UPROPERTY()
 	int32 ItemSpawnRate = 5;
+
+	UPROPERTY()
+	int32 TakedHit;
 	
 	UPROPERTY(EditAnywhere)
 	bool SpecialCharacter;
@@ -178,9 +220,12 @@ private:
 
 	bool Ragdoll;
 	bool FrontAnim;
+	bool bRecoveringFromHit = false;
 
 	FTimerHandle AttackTimer;
+	FTimerHandle RecoveryHitTimer;
 	FTimerHandle RagdollTimer;
+	FTimerHandle ParryStartTimer;
 	FTimerHandle HideHealthBarTimer;
 	FTimerHandle RespawnInfiniteEnemyTimer;
 	

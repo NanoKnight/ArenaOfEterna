@@ -24,6 +24,7 @@ class PROJECTX_API ABaseCharacter : public ACharacter, public IHitInterface
 public:
 	ABaseCharacter();
   virtual void Tick(float DeltaTime) override;
+  void StopAttackMontage();
 
   FORCEINLINE UInventoryComponent* GetInventoryComponent() const { return InventoryComponent; }
   FORCEINLINE TEnumAsByte<EDeadPose> GetDeathPose() const { return DeadPose; }
@@ -62,7 +63,6 @@ protected:
 	virtual int32 WarriorSpecialAttackMontage();
     virtual int32 PlayDeathMontage();	
 	virtual void PlayDodgeMontage();
-	void StopAttackMontage();
     void DisableCapsule();
 	UFUNCTION(BlueprintCallable)
 	FVector GetTranslationWarpTarget(AActor* Target);

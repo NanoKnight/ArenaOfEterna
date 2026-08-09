@@ -32,6 +32,7 @@ class ATreasure;
 class USphereComponent;
 class UPhysicsHandleComponent;
 class AEnemy;
+class ACombatDirector;
 class UCharacterHUD;
 class UQuestUI;
 class AArenaGameMode;
@@ -114,9 +115,8 @@ public:
 	TSubclassOf<class AQuestActor> QuestActorClass;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "UI")
-
-
 	TSubclassOf<UUserWidget> DeathWidgetClass;
+
 	UUserWidget* DeathWidgetInstance;
 
 	UPROPERTY(EditAnywhere)
@@ -129,6 +129,9 @@ public:
 	USceneComponent* HoldPoint;
 
 	bool bPushing = false;
+
+	UPROPERTY(EditAnyWhere, BlueprintReadWrite)
+	bool UnTouchable = false;
 
 	UPROPERTY(EditAnywhere,BlueprintReadWrite , Category= "Quests")
 	UDataTable* QuestDataTable;
@@ -207,6 +210,7 @@ protected:
 	FTimerHandle StaminaRegenerateTimer;
 	FTimerHandle SecondSkillTimer;
 	FTimerHandle AttackTypeCheckTimer;
+	FTimerHandle FalseUnTouhableTimer;
 	FTimerHandle DeathWidgetTimer;
 	FTimerHandle AmbientSoundTimer;
 	FTimerHandle AttackHoldingTimer;
@@ -237,6 +241,10 @@ protected:
 	bool bHoldingAttack;
 
 	bool CombatSoundPlaying;
+
+	UPROPERTY(EditAnywhere)
+	bool bParry;
+
 	bool IsFirstSkill;
 	bool IsSecondSkill;
 	bool FadeoutTimer = false;
@@ -263,6 +271,16 @@ protected:
 	
 	UFUNCTION(BlueprintCallable)
 	void HitReactEnd();
+
+	UFUNCTION(BlueprintCallable)
+	void ParryHit();
+
+	void StopSlowMotion();
+
+	UFUNCTION(BlueprintCallable)
+	void SetParryFalse();
+
+	void FalseUnTouchable();
 
 	UFUNCTION(BlueprintCallable)
 	void ComboCountReset();
@@ -396,6 +414,8 @@ private:
 	UPROPERTY(VisibleInstanceOnly)
 	ABaseItem* OverlappingItem;
 
+	ACombatDirector* CombatDirector;
+
 	UPROPERTY(EditAnywhere)
 	TSubclassOf<class AShield> ShieldClass;
 
@@ -415,10 +435,13 @@ private:
 	UPROPERTY(EditDefaultsOnly,Category = Montages)
 	UAnimMontage* FirstSkillMontage;
 
-
 	UPROPERTY(EditDefaultsOnly, Category = Montages)
 	UAnimMontage* SecondSkillMontage;
 	
+	UPROPERTY(EditDefaultsOnly, Category = Montages)
+	UAnimMontage* ParryMontage;
+
+
 	float DefaultEquippedWeaponDamage;
 
 	UPROPERTY()
@@ -463,7 +486,7 @@ private:
 	UPROPERTY(BlueprintReadWrite, meta = (AllowPrivateAccess = "true"))
 	EAttackButtonState AttackButtonStates = EAttackButtonState::EAB_Releassed;
 
-	UPROPERTY(BlueprintReadWrite, meta = (AllowPrivateAccess = "true"))
+	UPROPERTY(BlueprintReadWrite,EditAnywhere, meta = (AllowPrivateAccess = "true"))
 	EActionState ActionState = EActionState::EAS_Unoccupied;
 	UPROPERTY(BlueprintReadWrite, meta = (AllowPrivateAccess = "true"))
 	EMovementState MovementState = EMovementState::EMS_Idle;
@@ -500,5 +523,7 @@ public:
 	FORCEINLINE EActionState GetActionState() const { return ActionState; }
 	FORCEINLINE EMovementState GetMovementState() const { return MovementState; }
 	FORCEINLINE void SetCharacterStates(ECharacterStates NewStates) { CharacterStates = NewStates; }
+	FORCEINLINE void SetActionstate(EActionState NewActionState) { ActionState = NewActionState ; }
+	FORCEINLINE void SetCombatTarget(AActor* NewCombatTarget) { CombatTarget = NewCombatTarget;  }
 
 };
