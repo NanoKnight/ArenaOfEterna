@@ -1548,6 +1548,12 @@ void AWarriorCharacter::Shield()
 		return;
 	}
 	
+	
+
+		
+		if (CombatDirector->CurrentAttacker && CombatDirector->CurrentAttacker->CanParry)
+		{
+		
 			UAnimInstance* AnimInstance = GetMesh()->GetAnimInstance();
 
 			if (!AnimInstance || !ParryMontage)return;
@@ -1565,9 +1571,10 @@ void AWarriorCharacter::Shield()
 
 							
 
-		
-		
-			
+		}
+		else
+		{
+			UAnimInstance* AnimInstance = GetMesh()->GetAnimInstance();
 			if (AnimInstance && ShieldMontage)
 			{
 				AnimInstance->Montage_Play(ShieldMontage);
@@ -1578,6 +1585,9 @@ void AWarriorCharacter::Shield()
 			ActionState = EActionState::EAS_Unoccupied;
 			GetCharacterMovement()->MaxWalkSpeed = CharacterWalkSpeed;
 			
+
+		}
+		
 			
 		
 }

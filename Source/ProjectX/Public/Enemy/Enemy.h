@@ -36,15 +36,9 @@ protected:
 	void SpawnExperience();
 	UFUNCTION()
 	void RespawnInfiniteEnemy(AEnemySpawner* SpawnerActor);
-
-	UFUNCTION(BlueprintCallable)
 	virtual void Attack() override;
-
 	virtual void AttackEnd() override;
-
-
 	virtual bool CanAttack() override;
-
 	virtual void ChaseTarget();
 	void deneme();
 	virtual void HandleDamage(float DamageAmount) override;
@@ -57,9 +51,6 @@ protected:
 
 
 	bool Chased;
-
-	UPROPERTY(BluePrintReadWrite,EditAnywhere)
-	bool bAttackM;
 
 	FTimerHandle OutFreezeTimer;
 
@@ -113,11 +104,6 @@ public:
 	UFUNCTION(BlueprintCallable)
 	void PlayerCantParry();
 
-	UPROPERTY(BluePrintReadWrite, EditAnywhere, Category = "Movement")
-	float RunSpeed = 300.f;
-
-	UPROPERTY(BluePrintReadWrite,EditAnywhere, Category = "Movement")
-	float WalkSpeed = 125.f;
 	
 
 	UPROPERTY(EditAnywhere)
@@ -230,7 +216,7 @@ private:
 	
 	UPROPERTY(EditAnywhere, Category = "Combat")
 	
-	
+	float WalkSpeed = 125.f;
 
 	bool Ragdoll;
 	bool FrontAnim;
@@ -249,6 +235,8 @@ private:
 	UPROPERTY(EditAnywhere, Category = "Combat")
 	float AttackMax = 1.f;
 	
+	UPROPERTY(EditAnywhere,Category="Combat")
+	float RunSpeed = 300.f;
 	
 	UPROPERTY(EditAnywhere, Category = Combat)
 	float DeathLifeSpan = 3.f;
@@ -265,7 +253,6 @@ private:
 	UAnimMontage* SkillDamageMontage;
 
 	AWarriorCharacter* WarriorCharacter;
-
-	UFUNCTION(BlueprintPure)
-	FORCEINLINE EEnemyState GetEnemyState() const { return EnemyState; }
+	
+	
 };
