@@ -1,6 +1,7 @@
 #include "Enemy/CombatDirector.h"
 #include "Enemy/Enemy.h"
 #include "../WarriorCharacter.h"
+#include "GameFramework/CharacterMovementComponent.h"
 
 ACombatDirector::ACombatDirector()
 {
@@ -34,25 +35,154 @@ void ACombatDirector::RegisterEnemy(AEnemy* Enemy)
 
 	RegisteredEnemies.AddUnique(Enemy);
 
-	SelectAttacker();
-	
-
-
+	SelectAttackers();
 }
 
-void ACombatDirector::SelectAttacker()
+void ACombatDirector::SelectAttackers()
 {
-	if (IsValid(CurrentAttacker) &&
-		!CurrentAttacker->IsDead() &&
-		IsValid(CurrentAttacker->GetCombatTarget()))
+	RegisteredEnemies.RemoveAll(
+		[](AEnemy* Enemy)
+		{
+			return !IsValid(Enemy) ||
+				Enemy->IsDead() ||
+				!IsValid(Enemy->GetCombatTarget());
+		}
+	);
+
+	if (RegisteredEnemies.IsEmpty())
+	{
+		ActiveAttackers.Empty();
+		nextAttackerIndex = 0;
+		return;
+	}
+
+	ActiveAttackers.RemoveAll(
+		[this](AEnemy* Enemy)
+		{
+			return !IsValid(Enemy) ||
+				Enemy->IsDead() ||
+				!RegisteredEnemies.Contains(Enemy) ||
+				!IsValid(Enemy->GetCombatTarget());
+		}
+	);
+
+	// Hâlâ saldýran biri varsa yeni tur baþlatma.
+	if (!ActiveAttackers.IsEmpty())
 	{
 		return;
 	}
 
-	CurrentAttacker = nullptr;
+	int32 AttackCount = 1;
+
+	// Normalde 1 kiþi, bazen 2 kiþi saldýrýr.
+	if (RegisteredEnemies.Num() >= 2 &&
+		FMath::FRand() <= DoubleAttackChance)
+	{
+		AttackCount = 2;
+	}
+
+	AttackCount = FMath::Min(AttackCount, MaxAttackers);
+	AttackCount = FMath::Min(AttackCount, RegisteredEnemies.Num());
+
+	for (int32 i = 0; i < AttackCount; i++)
+	{
+		if (RegisteredEnemies.IsEmpty())
+		{
+			break;
+		}
+
+		if (nextAttackerIndex >= RegisteredEnemies.Num())
+		{
+			nextAttackerIndex = 0;
+		}
+
+		AEnemy* Enemy = RegisteredEnemies[nextAttackerIndex];
+
+		if (IsValid(Enemy) &&
+			!Enemy->IsDead() &&
+			!ActiveAttackers.Contains(Enemy))
+		{
+			ActiveAttackers.Add(Enemy);
+		}
+
+		nextAttackerIndex++;
+	}
+}
+
+void ACombatDirector::ReleaseAttackSlot(AEnemy* Enemy)
+{
+	if (!IsValid(Enemy))
+	{
+		return;
+	}
+
+	ActiveAttackers.Remove(Enemy);
+
+	// Ayný turda iki attacker varsa,
+	// diðer attacker'ýn saldýrýsýnýn bitmesini bekle.
+	if (!ActiveAttackers.IsEmpty())
+	{
+		return;
+	}
+
+	SelectAttackers();
+}
+
+void ACombatDirector::ReleaseAttacker(AEnemy* Enemy)
+{
+	if (!IsValid(Enemy))
+	{
+		return;
+	}
+
+	RegisteredEnemies.Remove(Enemy);
+	ActiveAttackers.Remove(Enemy);
+
+	if (nextAttackerIndex >= RegisteredEnemies.Num())
+	{
+		nextAttackerIndex = 0;
+	}
+
+	SelectAttackers();
+}
+
+bool ACombatDirector::HasAttackPermission(const AEnemy* Enemy) const
+{
+	return IsValid(Enemy) &&
+		ActiveAttackers.Contains(Enemy);
+}
+
+void ACombatDirector::UpdateCombat()
+{
 
 
-	float ClosestDistanceSquared = TNumericLimits<float>::Max();
+	RegisteredEnemies.RemoveAll(
+		[](AEnemy* Enemy)
+		{
+			return !IsValid(Enemy) ||
+				Enemy->IsDead() ||
+				!IsValid(Enemy->GetCombatTarget());
+		}
+	);
+
+	ActiveAttackers.RemoveAll(
+		[this](AEnemy* Enemy)
+		{
+			return !IsValid(Enemy) ||
+				Enemy->IsDead() ||
+				!RegisteredEnemies.Contains(Enemy) ||
+				!IsValid(Enemy->GetCombatTarget());
+		}
+	);
+
+	if (RegisteredEnemies.IsEmpty())
+	{
+		ActiveAttackers.Empty();
+		nextAttackerIndex = 0;
+		return;
+	}
+
+	SelectAttackers();
 
 	for (AEnemy* Enemy : RegisteredEnemies)
 	{
@@ -68,155 +198,25 @@ void ACombatDirector::SelectAttacker()
 			continue;
 		}
 
-		const float DistanceSquared = FVector::DistSquared(
-			Enemy->GetActorLocation(),
-			Target->GetActorLocation()
-		);
-
-		if (DistanceSquared < ClosestDistanceSquared)
+		if (ActiveAttackers.Contains(Enemy))
 		{
-			ClosestDistanceSquared = DistanceSquared;
-			if (CurrentAttacker == nullptr)
+			Enemy->GetCharacterMovement()->bOrientRotationToMovement = true;
+		}
+		else
+		{
+			Enemy->GetCharacterMovement()->bOrientRotationToMovement = false;
+
+
+			FVector SurroundLocation = GetSurroundLocation(Enemy);
+
+			if (!SurroundLocation.IsNearlyZero())
 			{
-				OldAttacker = Enemy;
-				WarriorRef = Cast<AWarriorCharacter>(GetWorld()->GetFirstPlayerController()->GetPawn());
-				if (WarriorRef)
-				{
-					WarriorRef->SetCombatTarget(OldAttacker);
-
-				}
+				Enemy->MoveToSurroundLocation(SurroundLocation);
 			}
-
-			CurrentAttacker = Enemy;
 		}
-
+		
 		
 	}
-}
-
-void ACombatDirector::SelectNextAttacker()
-{
-
-	int32 CurrentIndex = RegisteredEnemies.IndexOfByKey(CurrentAttacker);
-
-	if (CurrentIndex != INDEX_NONE && RegisteredEnemies.Num() <= 1)return;
-
-		int32 NextIndex = CurrentIndex + AttackerDirection;
-
-		if (NextIndex >= RegisteredEnemies.Num())
-		{
-			AttackerDirection = -1;
-			NextIndex = CurrentIndex - 1;
-			
-
-		}
-		else if(NextIndex < 0)
-		{
-			AttackerDirection = 1 ;
-			NextIndex = CurrentIndex +1;
-		}
-		CurrentAttacker = RegisteredEnemies[NextIndex];
-		//CurrentAttacker->MoveToTarget(CurrentAttacker->GetCombatTarget());
-
-}
-
-void ACombatDirector::ReleaseAttacker(AEnemy* Enemy)
-{
-	if (!IsValid(Enemy))
-	{
-		return;
-	}
-
-
-	RegisteredEnemies.Remove(Enemy);
-
-	if (CurrentAttacker == Enemy)
-	{
-		CurrentAttacker = nullptr;
-	}
-
-	SelectAttacker();
-}
-
-void ACombatDirector::ReleaseAttackPermission(AEnemy* Enemy)
-{
-	if (!IsValid(Enemy) || CurrentAttacker != Enemy)
-	{
-		return;
-	}
-
-	CurrentAttacker = nullptr;
-
-	
-	RegisteredEnemies.Remove(Enemy);
-
-	if (!Enemy->IsDead() && IsValid(Enemy->GetCombatTarget()))
-	{
-		RegisteredEnemies.Add(Enemy);
-	}
-
-	SelectAttacker();
-}
-
-void ACombatDirector::UpdateCombat()
-{
-
-	for (AEnemy* Enemy : RegisteredEnemies)
-	{
-		
-		/*
-		FVector TargetLoc = Enemy->GetCombatTarget()->GetActorLocation() - 
-			Enemy->GetCombatTarget()->GetActorForwardVector() * 300;
-		if (Enemy != CurrentAttacker)
-		{
-			Enemy->MoveToSurroundLocation(TargetLoc);
-
-		}*/
-			
-	}
-
-
-	/*
-	RegisteredEnemies.RemoveAll(
-		[](AEnemy* Enemy)
-		{
-			return !IsValid(Enemy) || Enemy->IsDead();
-		}
-	);
-
-	if (RegisteredEnemies.IsEmpty())
-	{
-		CurrentAttacker = nullptr;
-		return;
-	}
-
-	SelectAttacker();
-
-	SurroundAngleOffset +=
-		SurroundRotationSpeed * CombatUpdateInterval;
-
-	SurroundAngleOffset =
-		FMath::Fmod(SurroundAngleOffset, 360.f);
-
-	for (AEnemy* Enemy : RegisteredEnemies)
-	{
-		if (!IsValid(Enemy) ||
-			Enemy->IsDead() ||
-			Enemy == CurrentAttacker)
-		{
-			continue;
-		}
-
-		const FVector SurroundLocation = GetSurroundLocation(Enemy);
-
-		if (!SurroundLocation.IsNearlyZero())
-		{
-			Enemy->MoveToSurroundLocation(SurroundLocation);
-		}
-	}*/
-
-
-
 }
 
 FVector ACombatDirector::GetSurroundLocation(AEnemy* Enemy) const
@@ -244,21 +244,20 @@ FVector ACombatDirector::GetSurroundLocation(AEnemy* Enemy) const
 	const int32 EnemyCount =
 		RegisteredEnemies.Num();
 
+	if (EnemyCount <= 0)
+	{
+		return FVector::ZeroVector;
+	}
+
 	const float AngleStep =
 		360.f / static_cast<float>(EnemyCount);
 
-	const float Angle =
-		EnemyIndex * AngleStep + SurroundAngleOffset;
+	const float Angle = 	EnemyIndex * AngleStep;
 
-	const FVector Direction =
-		FVector::ForwardVector.RotateAngleAxis(
-			Angle,
-			FVector::UpVector
-		);
+	const FVector Direction = FVector::ForwardVector.RotateAngleAxis
+	(Angle,FVector::UpVector);
 
-	FVector Result =
-		Target->GetActorLocation() +
-		Direction * SurroundRadius;
+	FVector Result = Target->GetActorLocation() + Direction * SurroundRadius;
 
 	Result.Z = Enemy->GetActorLocation().Z;
 

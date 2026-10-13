@@ -449,6 +449,7 @@ void ABaseCharacter::HandleDamage(float DamageAmount)
 	if (Attributes )
 	{
 		Attributes->ReciveDamage(DamageAmount);
+		
 	}
 }
 
@@ -459,6 +460,7 @@ void ABaseCharacter::PlayMontageSection(UAnimMontage* Montage, const FName& Sect
 		{
 			AnimInstance->Montage_Play(Montage);
 			AnimInstance->Montage_JumpToSection(SectionName, Montage);
+
 			
 		}	
 }
@@ -469,6 +471,7 @@ int32 ABaseCharacter::PlayRandomMontageSection(UAnimMontage* Montage, const TArr
 	int32 MaxSectionIndex = SectionNames.Num() - 1;
 	int32 Selection = FMath::RandRange(0, MaxSectionIndex);
 	PlayMontageSection(Montage, SectionNames[Selection]);
+	
 	return Selection;
 }
 

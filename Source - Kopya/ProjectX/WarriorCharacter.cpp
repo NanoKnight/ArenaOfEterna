@@ -1,0 +1,2052 @@
+// Fill out your copyright notice in the Description page of Project Settings.
+
+
+#include "WarriorCharacter.h"
+#include "GameFramework/SpringArmComponent.h"
+#include "Camera/CameraComponent.h"
+#include "Kismet/GameplayStatics.h"
+#include"Kismet/KismetSystemLibrary.h"
+#include "NiagaraFunctionLibrary.h"
+#include"NiagaraComponent.h"
+#include "GameFramework/CharacterMovementComponent.h"
+#include "Components\SphereComponent.h"
+#include "PhysicsEngine/PhysicsHandleComponent.h"
+#include "Components/PawnNoiseEmitterComponent.h"
+#include "Items\BaseItem.h"
+#include "./HUD/ItemInteractionWidget.h"
+#include "Items\CharacterInteractableItems\PushableObject.h"
+#include"Items\Weapons\Weapon.h"
+#include"Items\Weapons\Shield.h"
+#include"Enemy\Enemy.h"
+#include"Enemy\CombatDirector.h"
+#include "Enemy\Boss.h"
+#include"Breakable\BreakableActor.h"
+#include"Components/AttributeComponent.h"
+#include "Animation/AnimMontage.h"
+#include"Interfaces\HitInterface.h"
+#include"HUD/PlayerHUD.h"
+#include "HUD\CharacterHUD.h"
+#include "SaveGames/EternaSaveGame.h"
+#include "Items\ExperiencePoint.h"
+#include"Items\Treasure.h"
+#include"Items\HealthPoint.h"
+#include"Items\EnemySpawner.h"
+#include"HUD\InventoryWidget.h"
+#include"Components\InventorySystem\InventoryComponent.h"
+#include "Items\QuestActor.h"
+#include "EngineUtils.h"
+#include "UMG.h"
+#include"Components\WidgetComponent.h"
+#include "Public\QuestStruct.h"
+#include"GameMode\ArenaGameMode.h"
+#include"Runtime/Engine/Public/TimerManager.h"
+
+
+// Sets default values
+AWarriorCharacter::AWarriorCharacter()
+{	
+	// Set this character to call Tick() every frame.  You can turn this off to improve performance if you don't need it.
+	PrimaryActorTick.bCanEverTick = true;
+	bUseControllerRotationPitch = false;
+	bUseControllerRotationRoll = false;
+	bUseControllerRotationYaw = false;
+	GetCharacterMovement()->bOrientRotationToMovement = true;
+	GetCharacterMovement()->RotationRate = FRotator(0.f, 400.f, 0.f);
+	GetMesh()->SetCollisionObjectType(ECollisionChannel::ECC_WorldDynamic);
+	GetMesh()->SetCollisionResponseToAllChannels(ECollisionResponse::ECR_Ignore);
+	GetMesh()->SetCollisionResponseToChannel(ECollisionChannel::ECC_Visibility, ECollisionResponse::ECR_Block);
+	GetMesh()->SetCollisionResponseToChannel(ECollisionChannel::ECC_WorldDynamic, ECollisionResponse::ECR_Block),
+	GetMesh()->SetGenerateOverlapEvents(true);
+	CameraBoom = CreateDefaultSubobject<USpringArmComponent>(TEXT("CameraBoom"));
+	CameraBoom->SetupAttachment(GetRootComponent());
+	CameraBoom->TargetArmLength = 300.f;
+	ViewCamera = CreateDefaultSubobject<UCameraComponent>(TEXT("ViewCamera"));
+	ViewCamera->SetupAttachment(CameraBoom);
+	Sphere = CreateDefaultSubobject<USphereComponent>(TEXT("Sphere"));
+	EnemyDetectionSphere = CreateDefaultSubobject<USphereComponent>(TEXT("EnemyDetectionSphere"));
+	PhysicsHandle = CreateDefaultSubobject<UPhysicsHandleComponent>(TEXT("PhysicsHandle"));
+	HoldPoint = CreateDefaultSubobject<USceneComponent>(TEXT("HoldingPoint"));
+	HoldPoint->SetupAttachment(RootComponent);
+	NoiseEmitter = CreateDefaultSubobject<UPawnNoiseEmitterComponent>(TEXT("NoiseEmitter"));
+	Sphere->SetupAttachment(GetRootComponent());
+	EnemyDetectionSphere->SetupAttachment(GetRootComponent());
+	EnemyDetectionSphere->SetGenerateOverlapEvents(true);
+	Sphere->OnComponentBeginOverlap.AddDynamic(this, &AWarriorCharacter::SphereCollisionBeginOverlap);
+	Sphere->OnComponentEndOverlap.AddDynamic(this, &AWarriorCharacter::SphereCollisionEndOverlap);
+	EnemyDetectionSphere->OnComponentBeginOverlap.AddDynamic(this, &AWarriorCharacter::EnemyDetectionCollisionBeginOverlap);
+	EnemyDetectionSphere->OnComponentEndOverlap.AddDynamic(this, &AWarriorCharacter::EnemyDetectionCollisionEndOverlap);
+	CombatAudioComponent = CreateDefaultSubobject<UAudioComponent>(TEXT("CombatAudio"));
+	CombatAudioComponent->bAutoActivate = false;
+	CombatAudioComponent->bAutoDestroy = false;
+}
+void AWarriorCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputComponent)
+{
+	Super::SetupPlayerInputComponent(PlayerInputComponent);
+
+	PlayerInputComponent->BindAxis(FName("MoveForward"), this, &AWarriorCharacter::MoveForward);
+	PlayerInputComponent->BindAxis(FName("MoveRight"), this, &AWarriorCharacter::MoveRight);
+	//PlayerInputComponent->BindAxis(FName("Turn"), this, & AWarriorCharacter::Turn);
+	//PlayerInputComponent->BindAxis(FName("LookUp"), this, &AWarriorCharacter::LookUp);
+	PlayerInputComponent->BindAxis(FName("CameraForward"), this, &AWarriorCharacter::CameraForward);
+	PlayerInputComponent->BindAxis(FName("CameraRight"), this, &AWarriorCharacter::CameraRight);
+	PlayerInputComponent->BindAction(FName("MoveCamera"), IE_Pressed, this, &AWarriorCharacter::MoveCamera);
+	PlayerInputComponent->BindAction(FName("MoveCamera"), IE_Released, this, &AWarriorCharacter::MoveCameraReleased);
+	PlayerInputComponent->BindAction(FName("Jump"), IE_Pressed, this, &ACharacter::Jump);
+	PlayerInputComponent->BindAction(FName("Use"), IE_Pressed, this, &AWarriorCharacter::Interact);
+	PlayerInputComponent->BindAction(FName("Inventory"), IE_Pressed, this, &AWarriorCharacter::OpenInventory);
+	PlayerInputComponent->BindAction(FName("Attack"), IE_Pressed, this, &AWarriorCharacter::Attack);
+	PlayerInputComponent->BindAction(FName("Attack"), IE_Released, this, &AWarriorCharacter::AttackReleassed);
+	PlayerInputComponent->BindAction(FName("SpecialSwordAttack"), IE_Pressed,this,&AWarriorCharacter::SpecialSwordAttack);
+	PlayerInputComponent->BindAction(FName("SpecialSwordAttack"), IE_Released,this,&AWarriorCharacter::SpecialSwordAttackReleassed);
+	PlayerInputComponent->BindAction(FName("Shield"), IE_Pressed, this, &AWarriorCharacter::Shield);
+	PlayerInputComponent->BindAction(FName("Shield"), IE_Released, this, &AWarriorCharacter::ShieldRealesed);
+	PlayerInputComponent->BindAction(FName("Dodge"), IE_Pressed, this, &AWarriorCharacter::Dodge);
+	PlayerInputComponent->BindAction(FName("SaveGame"), IE_Pressed, this, &AWarriorCharacter::Save);
+	PlayerInputComponent->BindAction(FName("FirstSkill"), IE_Pressed, this, &AWarriorCharacter::FirstSkill);
+	PlayerInputComponent->BindAction(FName("SecondSkill"), IE_Pressed, this, &AWarriorCharacter::SecondSkill);
+	PlayerInputComponent->BindAction(FName("CompleteQuest"), IE_Pressed, this, &AWarriorCharacter::CompleteCurrentQuest);
+	PlayerInputComponent->BindAction(FName("UsePot"), IE_Pressed, this, &AWarriorCharacter::UsetPot);
+
+
+}
+
+void AWarriorCharacter::BeginPlay()
+{
+	Super::BeginPlay();
+	SpawnDefaultShield();
+	SpawnDefaultWeapon();
+	InitializePlayerOverlay();
+
+	CombatDirector = Cast<ACombatDirector>
+	(UGameplayStatics::GetActorOfClass(GetWorld(), ACombatDirector::StaticClass()));
+
+	GetCharacterMovement()->bOrientRotationToMovement = true;
+	GetCharacterMovement()->bUseControllerDesiredRotation = false;
+	bUseControllerRotationYaw = false;
+	bUseControllerRotationRoll = false;
+	bUseControllerRotationPitch = false;
+	Tags.Add("WarriorCharacter");
+	bCanMoveCamera = false;
+	defaultCameraLoc = ViewCamera->GetRelativeLocation();
+	SetQuestsSettings();
+	CheckEnemySpawner();
+
+
+	if (AmbientSound)
+	{
+		CombatAudioComponent->SetSound(AmbientSound);
+		CombatAudioComponent->Play();
+		CombatAudioComponent->SetVolumeMultiplier(0.2f);
+	}
+}
+
+void AWarriorCharacter::SetQuestsSettings()
+{
+	SetQuestDataTable();
+
+	if (QuestDataTable)
+	{
+		TArray<FName> RowNames = QuestDataTable->GetRowNames();
+		for (int32 i = CurrentQuestIndex; i < RowNames.Num(); i++)
+		{
+			FQuestStruct* Quest = QuestDataTable->FindRow<FQuestStruct>(RowNames[i], "");
+			if (Quest)
+			{
+				ActiveQuests.Add(*Quest);
+				CurrentQuest = ActiveQuests[0];
+
+			}
+		}
+
+
+		if (ActiveQuests.IsValidIndex(0) && PlayerOverlay && PlayerOverlay->GetQuestOverlay())
+		{
+			ActiveQuests.Num();
+			PlayerOverlay->GetQuestOverlay()->SetQuestText(
+				ActiveQuests[0].QuestName,
+				ActiveQuests[0].QuestDescription);
+		}
+	}
+
+	SpawnQuestActor();
+}
+
+void AWarriorCharacter::SpawnQuestActor()
+{
+	if (QuestActorClass)
+	{
+		UWorld* World = GetWorld();
+		if (World)
+		{
+			QuestActor = GetWorld()->SpawnActor<AQuestActor>(QuestActorClass, CurrentQuest.TargetLocation, FRotator::ZeroRotator);
+
+		}
+	}
+}
+
+void AWarriorCharacter::SetQuestDataTable()
+{
+	FString Path = TEXT("/Script/Engine.DataTable'/Game/Blueprints/Data/Quest.Quest'");
+	QuestDataTable = LoadObject<UDataTable>(nullptr, *Path);
+}
+
+void AWarriorCharacter::Save()
+{
+	
+	GameMode = GetWorld()->GetAuthGameMode();
+	ArenaGameMode = Cast<AArenaGameMode>(GameMode);
+	if (ArenaGameMode) ArenaGameMode->SaveGame();
+	
+}
+
+void AWarriorCharacter::LoadSaveGame()
+{
+	 GameMode = GetWorld()->GetAuthGameMode();
+	ArenaGameMode = Cast<AArenaGameMode>(GameMode);
+	if (ArenaGameMode)ArenaGameMode->LoadGame();	
+}
+
+void AWarriorCharacter::SpawnDefaultWeapon()
+{
+	
+	UWorld* World = GetWorld();
+	if (World && WeaponClass)
+	{
+		AWeapon* DefaultWeapon = World->SpawnActor<AWeapon>(WeaponClass);
+		DefaultWeapon->Equip(GetMesh(), FName("Sword"), this, this);
+		EquippedWeapon = DefaultWeapon;
+		CharacterStates = ECharacterStates::ECS_EquippedOnehand;
+		OverlappingItem = nullptr;
+	}
+}
+
+
+
+void AWarriorCharacter::GetHit_Implementation(const FVector& ImpactPoint, AActor* Hitter)
+{
+
+	if (bParry || UnTouchable)
+	{
+		return;
+	}
+
+	if (CheckShieldClose())
+	{
+		Super::GetHit_Implementation(ImpactPoint, Hitter);
+		SetWeaponCollisionEnabled(ECollisionEnabled::NoCollision);
+		if (Attributes && Attributes->HealthPercent() > 0.f)
+		{
+			ActionState = EActionState::EAS_HitReaction;
+		}
+
+	}
+	else if (CheckShieldOpen() && ShieldAlive())
+	{
+		SpawnShieldHitParticles(ImpactPoint);
+		PLayShieldHitSound(ImpactPoint);
+		PlayShieldReactMontage();
+		StartShieldRegenerateTimer(4);
+		ClearShieldRegenerateTimer();
+
+	}
+	 if (!ShieldAlive())
+	 {
+		 if (BShieldOn == true)
+		 {
+			 PlayShieldBreakMontage();
+			 PlayShieldBreakSound(ImpactPoint);
+			 SpawnShieldHitParticles(ImpactPoint);
+		 }
+		BShieldOn = false;
+		CharacterStates = ECharacterStates::ECS_EquippedOnehand;
+		SetWeaponCollisionEnabled(ECollisionEnabled::NoCollision);
+		GetCharacterMovement()->MaxWalkSpeed = CharacterRunSpeed;
+		ComboCountReset();
+		StartShieldRegenerateTimer(4);
+		ClearShieldRegenerateTimer();
+	  
+	 }
+
+}
+
+void AWarriorCharacter::EnemyStartChasing()
+{
+	if(!CombatAudioComponent) return;
+	
+	if (CombatSound)
+	{
+		if (!CombatAudioComponent->IsPlaying())
+		{
+			CombatAudioComponent->FadeOut(2.f, 0.2f);
+			if (CombatAudioComponent->GetSound() != CombatSound)
+			{
+				CombatAudioComponent->SetSound(CombatSound);
+
+			}
+			CombatAudioComponent->SetVolumeMultiplier(0.5f);
+			CombatSoundPlaying = true;
+		}
+
+		if (CombatAudioComponent->IsPlaying() && ChasedEnemies == 0)
+		{
+			//CombatAudioComponent->FadeOut(2.f,0.2f);
+			if (CombatAudioComponent->GetSound() != CombatSound)
+			{
+				CombatAudioComponent->SetSound(CombatSound);
+
+			}
+	    }
+	    
+		ChasedEnemies++;
+		CombatAudioComponent->SetVolumeMultiplier(0.5f);
+
+		
+	}
+	
+
+}
+
+void AWarriorCharacter::EnemyStoppedChasing()
+{
+	if (ChasedEnemies >= 0 )
+	{
+		ChasedEnemies--;
+
+	}
+
+	if (CombatSound && ChasedEnemies <= 0 && CombatAudioComponent && CombatAudioComponent->IsPlaying())
+	{
+		CombatAudioComponent->SetVolumeMultiplier(0.1);
+	}
+
+
+
+
+
+
+}
+
+
+void AWarriorCharacter::Jump()
+{
+	if (IsUnoccupied())
+	{
+	Super::Jump();
+	}
+
+}
+
+bool AWarriorCharacter::IsUnoccupied()
+{
+	return ActionState == EActionState::EAS_Unoccupied;
+}
+
+void AWarriorCharacter::Dodge()
+{
+	StaminaClearTime();
+	StaminaRegenerateTime();
+	
+
+	if (ActionState != EActionState::EAS_Unoccupied || !HasEnoughStamina()) return;
+
+	if (CharacterSide ==  ECharacterSide::EMS_Forward)
+	{
+		SetActorRotation(FRotator(0,180,0));
+	}
+	else if(CharacterSide == ECharacterSide::EMS_Backward)
+	{
+		SetActorRotation(FRotator(0, 0, 0));
+
+	}
+	else if(CharacterSide == ECharacterSide::EMS_LeftSide)
+	{
+		SetActorRotation(FRotator(0, 90, 0));
+
+	}
+	else if (CharacterSide == ECharacterSide::EMS_RightSide)
+	{
+		SetActorRotation(FRotator(0, -90, 0));
+
+	}
+
+
+		PlayDodgeMontage();
+		ActionState = EActionState::EAS_Dodge;
+		if (Attributes && PlayerOverlay)
+	    {
+		Attributes->ReciveStamina(Attributes->GetStaminaCost());
+	    }
+		
+}
+
+void AWarriorCharacter::CheckQuestProgress()
+{
+	if (CurrentQuest.QuestType == EQuestType::GoToLocation)
+	{
+		FVector PlayerLocation = GetActorLocation();
+		float Distance = FVector::Dist(PlayerLocation, CurrentQuest.TargetLocation);
+		if (Distance < 350.f)
+		{
+			CompleteCurrentQuest();
+			QuestActor->HiddenQuestTracker(false);
+		}
+
+	}
+	 if(CurrentQuest.QuestType == EQuestType::KillEnemies || CurrentQuest.QuestType == EQuestType::DestroyBoss)
+	{
+
+
+		 FVector PlayerLocation = GetActorLocation();
+		 float Distance = FVector::Dist(PlayerLocation, CurrentQuest.TargetLocation);
+
+		 if (QuestActor && Distance < 350.f)
+		 {
+			QuestActor->HiddenQuestTracker(false);
+		 }
+		 
+		 if (CurrentQuest.CurrentKillCount >= CurrentQuest.TargetKillCount) 
+		 {
+			 CompleteCurrentQuest();
+
+		}
+
+
+
+
+
+	  /*	if (CurrentQuest.CurrentKillCount >= CurrentQuest.TargetKillCount)
+		{
+
+
+			if (SpawnManager)
+			{
+				AEnemySpawner* NextSpawner = SpawnManager->GetNextSpawn();
+				if (NextSpawner)
+				{
+					NextSpawner->SpawnEnemy(NextSpawner->EnemySpawnCount);
+				}
+
+			}
+			
+			
+			
+		}*/
+	}
+
+}
+
+void AWarriorCharacter::StartNextQuest()
+{
+	if (QuestDataTable)
+	{
+		static const FString ContextString(TEXT("Quest"));
+		FQuestStruct* NextQuest = QuestDataTable->FindRow<FQuestStruct>(NextQuestRowName, ContextString);
+		
+		 if (NextQuest)
+		 {
+			CurrentQuest = *NextQuest;
+		
+			if (CurrentQuest.QuestType == EQuestType::PickupItem )
+			{
+				if (InventoryComponent)
+				{
+					for (FInventoryStruct& ItemRef : InventoryComponent->InventoryItems)
+					{
+						if (ItemRef.ItemName == CurrentQuest.QuestItemName)
+						{
+							CompleteCurrentQuest();
+						}
+					}
+				}
+			}
+
+			if (InventoryComponent)
+			{
+				if (CurrentQuest.QuestType == EQuestType::PickupItem || CurrentQuest.QuestType == EQuestType::WearItem)
+				{
+					for (FInventoryStruct& ItemRef : InventoryComponent->EquippedItems)
+					{
+						if (ItemRef.ItemName == CurrentQuest.QuestItemName)
+						{
+							CompleteCurrentQuest();
+						}
+					}
+				}
+			}
+		
+
+			if (PlayerOverlay)
+			{
+				PlayerOverlay->GetQuestOverlay()->SetQuestText(CurrentQuest.QuestName, CurrentQuest.QuestDescription);
+			}
+		}
+
+	}
+}
+
+void AWarriorCharacter::CheckEnemySpawner()
+{
+	if (CurrentQuest.QuestType == EQuestType::KillEnemies || CurrentQuest.QuestType == EQuestType::DestroyBoss)
+	{
+		SpawnEnemy(CurrentQuest.TargetKillCount, CurrentQuest.TargetLocation);
+	}
+}
+
+void AWarriorCharacter::QuesstCompleteFadeOutAnim()
+{
+	if (PlayerOverlay)
+	{
+		PlayerOverlay->PlayAnimation(PlayerOverlay->QuestCompleteFadeOut);
+	}
+}
+
+
+
+bool AWarriorCharacter::HasEnoughStamina()
+{
+	return Attributes->GetStamina() > Attributes->GetStaminaCost();
+}
+
+void AWarriorCharacter::SetFalseIsSecondSkill()
+{
+	RageMode = false;
+}
+
+
+
+
+
+void AWarriorCharacter::SetFalseIsFirstSkillVar()
+{
+	IsFirstSkill = false;
+}
+
+
+
+bool AWarriorCharacter::CheckShieldClose()
+{
+	return !BShieldOn;
+}
+
+bool AWarriorCharacter::CheckShieldOpen()
+{
+	return BShieldOn || !IsEnemyBehindCharacter() || ShieldAlive();
+}
+
+void AWarriorCharacter::RegenerateShield()
+{
+	Attributes->RegenerateShield();
+}
+
+void AWarriorCharacter::ClearShieldRegenerateTimer()
+{
+	GetWorld()->GetTimerManager().ClearTimer(Attributes->Timer);
+}
+
+void AWarriorCharacter::StartShieldRegenerateTimer(float Time)
+{
+	GetWorld()->GetTimerManager().SetTimer(shieldRegenerateTime, this, &AWarriorCharacter::RegenerateShield, Time, false);
+}
+
+
+void AWarriorCharacter::GetClosestEnemy()
+{
+	
+  
+    AEnemy* NewClosestEnemy = nullptr;
+	float MinDistance = FLT_MAX;
+	for (AEnemy* Enemy : EnemiesInRange)
+	{
+	
+		float Distance = FVector::Dist(this->GetActorLocation(), Enemy->GetActorLocation());
+		if (Distance < MinDistance)
+		{
+			MinDistance = Distance;
+			NewClosestEnemy = Enemy;
+		}			
+	}
+
+
+	if (CloseEnemy != NewClosestEnemy)
+	{
+		if (CloseEnemy) 
+		
+	    {
+
+			USkeletalMeshComponent* EnemyMesh = CloseEnemy->GetMesh();
+			if (EnemyMesh)
+			{
+				;
+				EnemyMesh->SetOverlayMaterial(nullptr);
+				
+			}
+		}
+		if (NewClosestEnemy && NewClosestEnemy->EnemyState != EEnemyState::EAS_Stun)
+		{
+			USkeletalMeshComponent* EnemyMesh = NewClosestEnemy->GetMesh();
+			if (EnemyMesh)
+			{
+				EnemyMesh->SetOverlayMaterial(EnemyOutlineMaterial);
+			}
+		}
+	}
+	CloseEnemy = NewClosestEnemy;
+	
+
+	if (!CloseEnemy)
+	{
+		ABreakableActor* NewBreakable;
+		float BminDistance = FLT_MAX;
+
+		for (ABreakableActor* Breakable : BreakablesRange)
+		{
+			float Distance = FVector::Dist(this->GetActorLocation(), Breakable->GetActorLocation());
+			if (Distance < MinDistance)
+			{
+				MinDistance = Distance;
+				NewBreakable = Breakable;
+				CloseBreakable = NewBreakable;
+				if (CloseBreakable->bBroken == true)
+				{
+					CloseBreakable = nullptr;
+				}
+			}
+		}
+	}
+
+	}
+
+void AWarriorCharacter::SpawnDefaultShield()
+{
+	UWorld* World = GetWorld();
+	if (World && ShieldClass)
+	{
+		AShield* Shield = World->SpawnActor<AShield>(ShieldClass) ;
+		if (Shield)
+		{
+			EquippedShield = Shield;
+			Shield->Equip(GetMesh(), FName("Shield"), this, this);
+		}
+		
+
+	}
+}
+
+float AWarriorCharacter::TakeDamage(float DamageAmount, FDamageEvent const& DamageEvent, AController* EventInstigator, AActor* DamageCauser)
+{
+
+	if (ActionState == EActionState::EAS_Dead)
+	{
+		return 0.f;
+	}
+
+	if (UnTouchable || bParry)
+	{
+		return 0.f;
+	}
+	;
+
+
+   if (!IsEnemyBehindCharacter())
+	{
+		if (BShieldOn)
+		{
+			
+			HandleDamage(DamageAmount);
+
+
+
+		}
+	}
+   
+
+	if (!BShieldOn)
+	{
+		HandleDamage(DamageAmount);
+		SetHealthBar();
+	}
+
+	CombatTarget = DamageCauser->GetOwner();
+	return DamageAmount;
+}
+ 
+void AWarriorCharacter::SetHealthBar()
+{
+	if (PlayerOverlay && Attributes)
+	{
+		PlayerOverlay->SetHealthBarPercent(Attributes->HealthPercent());
+	}
+}
+
+
+
+void AWarriorCharacter::SetStaminaBar()
+{
+	if (PlayerOverlay && Attributes)
+	{
+		PlayerOverlay->SetStaminaBarPercent(Attributes->StaminaPercent());
+	}
+}
+
+void AWarriorCharacter::SetLevelBar()
+{
+	if (PlayerOverlay && Attributes)
+	{
+		PlayerOverlay->SetLevelBarPercent(Attributes->LevelBarPercent());
+	}
+}
+
+void AWarriorCharacter::PrintQuest()
+{
+	for (const FQuestStruct& Quest: ActiveQuests)
+	{
+
+	}
+}
+
+bool AWarriorCharacter::IsEnemyBehindCharacter()
+{
+
+   if (CloseEnemy)
+   {
+	   FVector WarriorCharacterLocation = GetActorLocation();
+	   FVector EnemyLocation = CloseEnemy->GetActorLocation();
+	   FVector WarriorForwardVector = GetActorForwardVector();
+	   FVector DirectionToEnemy = EnemyLocation - WarriorCharacterLocation;
+	   DirectionToEnemy.Normalize();
+	   float DotProduct = FVector::DotProduct(WarriorForwardVector, DirectionToEnemy);
+	   return DotProduct < 0;
+   }
+   else
+   {
+	   return false;
+   }
+ 
+	
+}
+
+void AWarriorCharacter::AddKilledEnemyID(FString EnemName)
+{
+	if (KilledEnemiesNames.Contains(EnemName))
+	{
+		KilledEnemiesNames.Add(EnemName);
+	}
+
+}
+
+void AWarriorCharacter::AddQuest(const FQuestStruct& NewQuest)
+{
+	ActiveQuests.Add(NewQuest);  
+}
+
+
+void AWarriorCharacter::UpdateQuest(FName QuestRowName)
+{
+	if (QuestDataTable)
+	{
+		static const FString ContextString(TEXT("Quest Lookup"));
+		FQuestStruct* Quest = QuestDataTable->FindRow<FQuestStruct>(QuestRowName, ContextString);
+
+		if (Quest)
+		{
+			CurrentQuest = *Quest;
+			CurrentQuestRowName = QuestRowName;
+		}
+	}
+
+}
+
+
+void AWarriorCharacter::InitializePlayerOverlay()
+{
+	APlayerController* PlayerController = Cast<APlayerController>(GetController());
+	if (PlayerController)
+	{
+		APlayerHUD* PlayerHUD = Cast<APlayerHUD>(PlayerController->GetHUD());
+
+		if (PlayerHUD)
+		{
+			PlayerOverlay = PlayerHUD->GetPlayerOverlay();
+			if (PlayerOverlay && Attributes)
+			{
+				PlayerOverlay->SetStaminaBarPercent(Attributes->StaminaPercent());
+				PlayerOverlay->SetHealthBarPercent(Attributes->HealthPercent());
+				PlayerOverlay->SetLevelBarPercent(Attributes->LevelBarPercent());
+				PlayerOverlay->SetGoldText(Attributes->GetGold());
+				PlayerOverlay->SetXpText(Attributes->GetExperience());
+				PlayerOverlay->SetLevelText(Attributes->GetLevel());
+				PlayerOverlay->SetMaxXpText(Attributes->GetMaxExperience());
+
+			}
+		}
+	}
+}
+
+void AWarriorCharacter::PlayItemPickupNameAnim(FString ItemName)
+{
+
+	APlayerController* PlayerController = Cast<APlayerController>(this->GetController());
+	if (PlayerController)
+	{
+			if (PlayerOverlay)
+			{
+				PlayerOverlay->SetReceivedItemText(ItemName);
+				PlayerOverlay->PlayItemReceivedTextAnimationFadeIn();
+				//GetOwner()->GetWorld()->GetTimerManager().SetTimer(ItemTextAnimTimer, FTimerDelegate::CreateUObject(this, &UInventoryComponent::PlayItemTextFadeOutAnim, PlayerOverlay), 1.f, false);
+			}
+	}
+}
+
+
+
+void AWarriorCharacter::MoveForward(float value)
+{
+	if (ActionState != EActionState::EAS_Unoccupied && ActionState != EActionState::EAS_Pushing) return;
+	if(Controller && (value != 0.f))
+
+	{
+		const FRotator ControlRotation = GetControlRotation();
+		const FRotator YawRotation(0.f, ControlRotation.Yaw, 0.f);
+		const FVector Direction = FRotationMatrix(YawRotation).GetUnitAxis(EAxis::X);
+		AddMovementInput(Direction, value);
+		MovementState = EMovementState::EMS_Run;
+		if (value == 1)
+		{
+			CharacterSide = ECharacterSide::EMS_Forward;
+		}
+		else if(value == -1)
+		{
+			CharacterSide = ECharacterSide::EMS_Backward;
+
+		}
+	}
+	else
+	{
+		MovementState = EMovementState::EMS_Idle;
+	}
+}
+
+
+
+void AWarriorCharacter::MoveRight(float value)
+{
+	if (ActionState != EActionState::EAS_Unoccupied && ActionState != EActionState::EAS_Pushing) return;
+	if (Controller && (value != 0.f))
+	{
+		const FRotator ControlRotation = GetControlRotation();
+		const FRotator YawRotation(0.f, ControlRotation.Yaw, 0.f);
+		const FVector Direction = FRotationMatrix(YawRotation).GetUnitAxis(EAxis::Y);
+		AddMovementInput(Direction, value);
+		MovementState = EMovementState::EMS_Run;
+
+		if (value == 1)
+		{
+			CharacterSide = ECharacterSide::EMS_RightSide;
+		}
+		else if (value == -1)
+		{
+			CharacterSide = ECharacterSide::EMS_LeftSide;
+
+		}
+
+	}
+	
+
+}
+
+
+void AWarriorCharacter::CameraForward(float Value)
+{
+	if (Controller && (Value != 0.f) && bCanMoveCamera)
+	{ 
+		FVector NewLocation = ViewCamera->GetRelativeLocation();
+		NewLocation.X += Value * CameraMoveSpeed;
+		NewLocation.X = FMath::Clamp(NewLocation.X, MinX, MaxX);
+		ViewCamera->SetRelativeLocation(NewLocation);
+		
+	}
+}
+
+void AWarriorCharacter::CameraRight(float Value)
+{
+	if (Controller && (Value != 0.f) && bCanMoveCamera)
+	{
+		FVector NewLocation = ViewCamera->GetRelativeLocation();
+		NewLocation.Y += Value * CameraMoveSpeed;
+		NewLocation.Y = FMath::Clamp(NewLocation.Y, MinY, MaxY);
+		ViewCamera->SetRelativeLocation(NewLocation);
+		
+	}
+}
+
+/*void AWarriorCharacter::LookUp(float Value)
+{
+	AddControllerPitchInput(Value);
+}
+*/
+void AWarriorCharacter::EKeyPressed()
+{
+
+	AWeapon* OverlappingWeapon = Cast<AWeapon>(OverlappingItem);
+	if (OverlappingWeapon)
+	{
+		EquipWeapon(OverlappingWeapon);
+	}
+
+	else
+	{
+		if (CanDisarm())
+		{
+			DisArm();
+
+		}
+		else if (CanArm())
+		{
+			Arm();
+		}
+
+	}
+	 
+
+}
+
+void AWarriorCharacter::Interact()
+{
+	ABaseItem* OverlappingWeapon = Cast<ABaseItem>(OverlappingItem);
+	if (OverlappingWeapon)
+	{
+		OverlappingWeapon->PickUp(this);
+	}
+	PushInteract();
+	   
+}
+
+void AWarriorCharacter::PushInteract()
+{
+	UAnimInstance* OriginalAnimInstance = GetMesh()->GetAnimInstance();
+	if (bPushing == false)
+	{
+
+		if (PushableObject)
+		{
+			ActionState = EActionState::EAS_Pushing;
+			OldRotationRate = GetCharacterMovement()->RotationRate;
+			bPushing = true;
+			yedekpush = PushableObject;
+			PushableObject->Mesh->SetSimulatePhysics(true);
+			PushableObject->Mesh->SetCollisionResponseToChannel(ECC_Pawn, ECR_Ignore);
+			GetCharacterMovement()->MaxWalkSpeed = 50;
+			GetMesh()->SetAnimInstanceClass(PushingAnimInstance);
+
+			PhysicsHandle->GrabComponentAtLocationWithRotation(PushableObject->Mesh,
+				FName("NULL"), PushableObject->Mesh->GetComponentLocation(),
+				GetActorRotation());
+			GetCharacterMovement()->RotationRate = FRotator(0, 50, 0);
+			PhysicsHandle->bRotationConstrained = true;
+			PhysicsHandle->LinearStiffness = 4000.f;
+			PhysicsHandle->LinearDamping = 300.f;
+			PhysicsHandle->AngularStiffness = 3000.f;
+			PhysicsHandle->AngularDamping = 300.f;
+			PhysicsHandle->bSoftLinearConstraint = true;
+			PhysicsHandle->bSoftAngularConstraint = true;
+		}
+	}
+	else
+	{
+		GetCharacterMovement()->RotationRate = OldRotationRate;
+		bPushing = false;
+		ActionState = EActionState::EAS_Unoccupied;
+		PushableObject->Mesh->SetSimulatePhysics(false);
+		PushableObject->Mesh->SetCollisionResponseToChannel(ECC_Pawn, ECR_Block);
+		GetMesh()->SetAnimInstanceClass(OldAnimInstance);
+		PhysicsHandle->ReleaseComponent();
+		GetCharacterMovement()->MaxWalkSpeed = CharacterRunSpeed;
+	}
+}
+
+void AWarriorCharacter::OpenInventory()
+{
+	InventoryComponent->OpenInventory();
+
+
+}
+
+
+
+void AWarriorCharacter::EquipItem(const FInventoryStruct& Item)
+{
+	if (InventoryComponent)
+	{
+		InventoryComponent->EquipItem(Item);
+
+	}
+}
+
+void AWarriorCharacter::MoveCamera()
+{
+	bCanMoveCamera = true;
+}
+
+void AWarriorCharacter::MoveCameraReleased()
+{
+	bCanMoveCamera = false;
+
+}
+
+
+void AWarriorCharacter::Die()
+{
+	Super::Die();
+	ActionState = EActionState::EAS_Dead;
+	GetWorld()->GetTimerManager().SetTimer(DeathWidgetTimer, this, &AWarriorCharacter::CreateDeathWidget, 2.f, false);
+
+}
+
+
+
+void AWarriorCharacter::CreateDeathWidget()
+{
+	if (DeathWidgetClass)
+	{
+		DeathWidgetInstance = CreateWidget<UUserWidget>(GetWorld(), DeathWidgetClass);
+		if (DeathWidgetInstance)
+		{
+			DeathWidgetInstance->AddToViewport();
+
+			APlayerController* PlayerController = GetWorld()->GetFirstPlayerController();
+
+			if (PlayerController)
+			{
+
+				PlayerController->bShowMouseCursor = true;
+				FInputModeUIOnly InputMode;
+				InputMode.SetWidgetToFocus(DeathWidgetInstance->TakeWidget());
+				PlayerController->SetInputMode(InputMode);
+				PlayerController->Pause();
+			}
+
+		}
+	}
+}
+
+void AWarriorCharacter::CombatSoundFadeOut()
+{
+	if (NearbyEnemies.IsEmpty())
+	{
+		CombatAudioComponent->FadeOut(2.f, 0.2f);
+		GetWorld()->GetTimerManager().SetTimer(AmbientSoundTimer, this, &AWarriorCharacter::FadeInAmbientSound, 2.f);	
+	}
+}
+
+void AWarriorCharacter::FadeInAmbientSound()
+{
+	if (ChasedEnemies >= 0)
+	{
+		CombatAudioComponent->SetSound(AmbientSound);
+		CombatAudioComponent->SetVolumeMultiplier(0.2f);
+		CombatAudioComponent->Play();
+		UE_LOG(LogTemp, Warning, TEXT("helelo"));
+		//->FadeIn(2.f, 0.2);
+	}
+	
+}
+
+void AWarriorCharacter::DisArm()
+{
+	PlayEquipMontage(FName("Unequip"));
+	CharacterStates = ECharacterStates::ECS_UnEquipped;
+	ActionState = EActionState::EAS_EquippingWeapon;
+}
+
+void AWarriorCharacter::Arm()
+{
+	PlayEquipMontage(FName("Equip"));
+	CharacterStates = ECharacterStates::ECS_EquippedOnehand;
+	ActionState = EActionState::EAS_EquippingWeapon;
+}
+
+void AWarriorCharacter::PlayShieldReactMontage()
+{
+	UAnimInstance* AnimInstance = GetMesh()->GetAnimInstance();
+	if (ShieldReactMontage && AnimInstance)
+	{
+		AnimInstance->Montage_Play(ShieldReactMontage);
+	}
+}
+
+void AWarriorCharacter::EquipWeapon(AWeapon* Weapon)
+{
+	Weapon->Equip(GetMesh(), FName("Sword"), this, this);
+	CharacterStates = ECharacterStates::ECS_EquippedOnehand;
+	OverlappingItem = nullptr;
+	EquippedWeapon = Weapon;
+}
+
+void AWarriorCharacter::Attack()
+{       
+	    if (bParry) return;
+		Super::Attack();
+		bHoldingAttack = false;
+		AttackButtonStates = EAttackButtonState::EAB_Holding;
+		GetWorld()->GetTimerManager().SetTimer(AttackHoldingTimer, this, &AWarriorCharacter::PlayHoldingAttackAnim, 0.5f, false);
+
+		
+}
+
+void AWarriorCharacter::AttackReleassed()
+{
+	if (bHoldingAttack)
+	{
+		return;
+	}
+
+	else
+	{
+		AttackButtonStates = EAttackButtonState::EAB_Releassed;
+		const bool bCanAttack = (ActionState == EActionState::EAS_Unoccupied && CharacterStates != ECharacterStates::ECS_UnEquipped);
+		if (bCanAttack)
+		{
+		 
+			if (BSpecialAttack)
+			{
+				WarriorSpecialAttackMontage();
+			}
+
+			else
+			{
+				WarriorAttackMontage();
+				if (PlayerOverlay)
+				{
+					PlayerOverlay->PlayAnimation(PlayerOverlay->NormalAttackAnim);
+				}
+				bAttackTimerOpen = true;
+			}
+
+			
+			ActionState = EActionState::EAS_Attacking;
+		}
+	}
+
+	
+
+}
+
+
+void AWarriorCharacter::AttackEnd()
+{
+	ActionState = EActionState::EAS_Unoccupied;
+
+}
+
+void AWarriorCharacter::SpecialSwordAttack()
+{
+	if (EquippedWeapon)
+	{
+		ComboCountReset();
+		WeaponClass = EquippedWeapon->GetClass();
+		BSpecialAttack = true;
+		AWeapon* SpecialWeaponRef = GetWorld()->SpawnActor<AWeapon>(SpecialWeapon);
+		EquippedWeapon->Destroy();
+		EquipWeapon(SpecialWeaponRef);
+	}
+	
+
+}
+
+void AWarriorCharacter::SpecialSwordAttackReleassed()
+{
+
+	if (EquippedWeapon)
+	{
+		BSpecialAttack = false;
+		EquippedWeapon->Destroy();
+		EquippedWeapon = GetWorld()->SpawnActor<AWeapon>(WeaponClass);
+		EquipWeapon(EquippedWeapon);
+	}
+
+
+}
+
+void AWarriorCharacter::UsingSkill()
+{
+	ActionState = EActionState::EAS_UsingSkill;
+}
+
+
+void AWarriorCharacter::FirstSkill()
+{
+	if (ActionState == EActionState::EAS_UsingSkill || IsFirstSkill == true  ) return;
+	if (!EquippedShield)return;
+	
+	 
+	if (PlayerOverlay)
+	{
+		PlayerOverlay->PlayAnimation(PlayerOverlay->FirstSkillAnim);
+	}
+
+	UAnimInstance* AnimInstance = GetMesh()->GetAnimInstance();
+	if (AnimInstance)
+	{
+		UsingSkill();
+		AnimInstance->Montage_Play(FirstSkillMontage);
+		
+	}
+	GetWorld()->GetTimerManager().SetTimer(FirstSkillResetTimer,this,&AWarriorCharacter::SetFalseIsFirstSkillVar, 10, false);
+
+
+}
+
+void AWarriorCharacter::SecondSkill()
+{
+	if (ActionState == EActionState::EAS_UsingSkill || RageMode == true) return;
+	if (!WeaponClass)return;
+
+	if (PlayerOverlay)
+	{
+		PlayerOverlay->PlayAnimation(PlayerOverlay->SecondSkillAnim);
+	}
+	UAnimInstance* AnimInstance = GetMesh()->GetAnimInstance();
+	RageMode = true;
+	UsingSkill();
+	if (AnimInstance)
+	{
+		AnimInstance->Montage_Play(SecondSkillMontage);
+	}
+	DefaultEquippedWeaponDamage = EquippedWeapon->GetDamage();
+	EquippedWeapon->SetDamage(EquippedWeapon->GetDamage() * 5);
+	GetCharacterMovement()->MaxWalkSpeed = 800.f;
+	GetWorld()->GetTimerManager().SetTimer(SecondSkillTimer, this, &AWarriorCharacter::DefaultVar, Ragetime, false);
+	GetWorld()->GetTimerManager().SetTimer(SecondSkillResetTimer, this, &AWarriorCharacter::SetFalseIsSecondSkill, 120, false);
+}
+
+
+void AWarriorCharacter::SkillCanDamageF(float SphereRadiusFloat, float SkillDamageFloat, float TraceEnd)
+{
+	TArray<FHitResult> OutHits;
+	FVector Start = GetActorLocation();
+	FVector End = Start + GetActorForwardVector() * TraceEnd;
+	float SphereRadius = SphereRadiusFloat;
+	float SkillDamage = SkillDamageFloat;
+	FCollisionQueryParams TraceParams;
+	TraceParams.AddIgnoredActor(this);
+	TArray<AActor*> IgnoredActors;
+	IgnoredActors.Add(this);
+	IgnoredActors.Add(EquippedWeapon);
+	ECollisionChannel TraceChannel = ECC_WorldDynamic;
+	ETraceTypeQuery TraceType = UEngineTypes::ConvertToTraceType(TraceChannel);
+
+	bool bHit = UKismetSystemLibrary::SphereTraceMulti(
+		GetWorld(),
+		Start,
+		End,
+		SphereRadius,
+		TraceType,
+		false,
+		IgnoredActors,
+		EDrawDebugTrace::None,
+		OutHits,
+		true
+	);
+
+	TSet<AActor*> DamagedEnemies;
+
+	if (bHit)
+	{
+		for (auto& hit : OutHits)
+		{
+			AActor* HitActor = hit.GetActor();
+			if (HitActor && HitActor->IsA(AEnemy::StaticClass()))
+			{
+				
+				if (!DamagedEnemies.Contains(HitActor))
+				{
+					DamagedEnemies.Add(HitActor);
+					AEnemy* Enemy = Cast<AEnemy>(hit.GetActor());
+					if (!Enemy->IsDead())
+					{
+						if (Enemy->EnemyType == EEnemyType::EET_Enemy) Enemy->SetRagdoll();
+						if (Enemy->EnemyType == EEnemyType::EET_Enemy) Enemy->SetStun();
+						if (Enemy->EnemyType == EEnemyType::EET_Boss) SkillDamage /= 3;
+										        
+						UGameplayStatics::ApplyDamage(HitActor, SkillDamage, GetInstigator()->GetController(), this, UDamageType::StaticClass());
+						GetSkillHit(hit);
+					}
+					
+				}
+			}
+		}
+	}
+}
+
+
+void AWarriorCharacter::ParryHit()
+{
+
+	if (!EquippedShield) return;
+	FHitResult OutHit;
+	const FVector Start = EquippedShield->GetItemMesh()->GetComponentLocation();
+	const FVector End = Start + GetActorForwardVector() * 80.f;
+
+	TArray<AActor*> IgnoredActors;
+	IgnoredActors.Add(this);
+	IgnoredActors.Add(EquippedShield);
+
+	bool bHit = UKismetSystemLibrary::SphereTraceSingle(
+		GetWorld(),
+		Start,
+		End,
+		60.f,
+		UEngineTypes::ConvertToTraceType(ECC_Pawn),
+		false,
+		IgnoredActors,
+		EDrawDebugTrace::None,
+		OutHit,
+		true
+	);
+
+	UGameplayStatics::SetGlobalTimeDilation(this, 0.15f);
+	FTimerHandle ParrySlowmoTimer;
+
+	GetWorld()->GetTimerManager().SetTimer(ParrySlowmoTimer, this,
+		&AWarriorCharacter::StopSlowMotion,0.15f,false);
+
+	if (bHit)
+	{
+		AEnemy* Enemy = Cast<AEnemy>(OutHit.GetActor());
+
+		if (Enemy && !Enemy->IsDead())
+		{
+			UGameplayStatics::ApplyDamage(
+				Enemy,
+				5.f,
+				GetController(),
+				this,
+				UDamageType::StaticClass());
+
+			
+			if (Enemy->GetClass()->ImplementsInterface(UHitInterface::StaticClass()))
+			{
+				IHitInterface::Execute_GetHit(
+					Enemy,
+					OutHit.ImpactPoint,
+					this
+				);
+			}
+			Enemy->GetParried();
+			bParry = false;
+
+
+		}
+	}
+
+}
+
+void AWarriorCharacter::StopSlowMotion()
+{
+	UGameplayStatics::SetGlobalTimeDilation(this, 1.f);
+}
+
+void AWarriorCharacter::SetParryFalse()
+{
+	bParry = false;
+	ActionState = EActionState::EAS_Unoccupied;
+}
+
+void AWarriorCharacter::FalseUnTouchable()
+{
+	ActionState = EActionState::EAS_Unoccupied;
+	UnTouchable = false;
+	bParry = false;
+}
+
+void AWarriorCharacter::CompleteCurrentQuest()
+{
+
+	if (!CurrentQuest.QuestName.IsEmpty() && QuestDataTable && PlayerOverlay) 
+	{
+		CurrentQuestIndex += 1;
+		FString CurrentRowName = NextQuestRowName.ToString();
+		FString BaseName = "Quest";
+		int32 QuestNumber = 2;
+		if (CurrentRowName.Split(TEXT("_"),&BaseName, &CurrentRowName))
+		{
+			QuestNumber = FCString::Atoi(*CurrentRowName);
+			QuestNumber++;
+		}
+		NextQuestRowName = FName(FString::Printf(TEXT("%s_%d"), *BaseName, QuestNumber));
+		StartNextQuest();
+		CheckEnemySpawner();
+
+		
+		if (PlayerOverlay->GetQuestCompleteWidget())
+		{
+		PlayerOverlay->GetQuestCompleteWidget()->SetQuestText(CurrentQuest.QuestName);
+		PlayerOverlay->GetQuestCompleteWidget()->PlayFadeInAnimation();
+		
+
+		PlayerOverlay->PlayAnimation(PlayerOverlay->QuestCompleteFadeIn);
+		GetWorld()->GetTimerManager().SetTimer(QuestCompleteUITimer, this, &AWarriorCharacter::QuesstCompleteFadeOutAnim, 3, false);		
+
+		}
+	}
+	
+		if (QuestActorClass && !QuestActor)
+		{
+			QuestActor = GetWorld()->SpawnActor<AQuestActor>(QuestActorClass, CurrentQuest.TargetLocation, FRotator::ZeroRotator);
+		}
+		else if (QuestActor)
+		{
+			QuestActor->SetActorLocation(CurrentQuest.TargetLocation);
+			QuestActor->HiddenQuestTracker(true);
+
+		}
+	
+	
+
+}
+
+void AWarriorCharacter::SpawnEnemy(int32 NumbwerOfEnemies, FVector EnemyLocation)
+{
+
+
+	
+	FVector SpawnLocation = EnemyLocation;
+
+	float offset = 200.f;
+	float Radius = 200;
+	float AngelStep = 160.f / NumbwerOfEnemies;
+
+	
+	if (CurrentQuest.QuestType == EQuestType::KillEnemies)
+	{
+		for (int32 i = 0; i < NumbwerOfEnemies; i++)
+		{
+			float Angle = i * AngelStep;
+			float x = SpawnLocation.X + Radius * FMath::Cos(FMath::DegreesToRadians(Angle));
+			float y = SpawnLocation.Y + Radius * FMath::Sin(FMath::DegreesToRadians(Angle));
+
+			FVector NewspawnLocation(x, y, SpawnLocation.Z);
+			FVector NearestSpawnerLoc = GetActorLocation();
+
+			if (CurrentQuest.EnemyClass)
+			{
+				AEnemy* SpawnedEnemy = GetWorld()->SpawnActor<AEnemy>(CurrentQuest.EnemyClass, NewspawnLocation, FRotator::ZeroRotator);
+
+			}
+
+		}
+	}
+	
+	 if (CurrentQuest.QuestType == EQuestType::DestroyBoss)
+	{
+
+		for (int32 i = 0; i < NumbwerOfEnemies; i++)
+		{
+			float Angle = i * AngelStep;
+			float x = SpawnLocation.X + Radius;
+			float y = SpawnLocation.Y + Radius;
+
+			FVector NewspawnLocation(x, y, SpawnLocation.Z);
+			FVector NearestSpawnerLoc = GetActorLocation();
+
+
+			ABoss* SpawnedEnemy = GetWorld()->SpawnActor<ABoss>(CurrentQuest.BossClass, NewspawnLocation, FRotator::ZeroRotator);
+
+		}
+
+	 }
+	
+}
+
+void AWarriorCharacter::UsetPot()
+{
+
+	for (FInventoryStruct& ItemL : InventoryComponent->InventoryItems)
+	{
+	    
+		if (ItemL.ItemTypes == EItemTypes::Pot && ItemL.StackCounter > 0)
+		{
+			ItemL.StackCounter -= 1;
+			Attributes->PotStack -=1 ;
+			GetAttributesComponent()->AddHealth(Attributes->GetPotHealth());
+			InitializePlayerOverlay();
+			
+			if (HealthPotEffect && GetWorld())
+			{
+				if (HealthPotionSound)
+				{
+					UGameplayStatics::PlaySoundAtLocation(this, HealthPotionSound, GetActorLocation());
+				}
+			
+
+				UNiagaraComponent* NiagaraComp = UNiagaraFunctionLibrary::SpawnSystemAttached(
+					HealthPotEffect,
+					GetRootComponent(),
+					NAME_None,
+					FVector::ZeroVector,
+					FRotator::ZeroRotator,
+					EAttachLocation::KeepRelativeOffset,
+					true
+				);
+
+				if (NiagaraComp)
+				{
+					NiagaraComp->SetAutoDestroy(true);
+					FTimerHandle TimerHandle;
+					GetWorld()->GetTimerManager().SetTimer(
+						TimerHandle,
+						[NiagaraComp]()
+						{
+							if (NiagaraComp)
+							{
+								NiagaraComp->DestroyComponent();
+							}
+						},
+						1.0f,
+						false
+					);
+				}
+
+
+				
+			}
+
+		}
+		if (ItemL.ItemTypes == EItemTypes::Pot && ItemL.StackCounter <= 0)
+		{
+			InventoryComponent->SetDefaultItemValue(ItemL);
+		}
+	}
+
+
+
+
+}
+	
+void AWarriorCharacter::SkillEnd()
+{
+
+
+	ActionState = EActionState::EAS_Unoccupied;
+
+}
+
+
+void AWarriorCharacter::Shield()
+{
+	
+	if (ActionState == EActionState::EAS_UsingSkill ||
+		ActionState == EActionState::EAS_Dead ||
+		CharacterStates == ECharacterStates::ECS_UnEquipped ||
+		!IsValid(EquippedShield))
+	{
+		return;
+	}
+
+	if (!ShieldAlive() || bParry)
+	{
+		return;
+	}
+	
+	
+
+		
+		if (CombatDirector->CurrentAttacker && CombatDirector->CurrentAttacker->CanParry)
+		{
+		
+			UAnimInstance* AnimInstance = GetMesh()->GetAnimInstance();
+
+			if (!AnimInstance || !ParryMontage)return;
+				AnimInstance->Montage_Stop(0.1f);
+				AnimInstance->Montage_Play(ParryMontage);
+				const float MontageLength = AnimInstance->Montage_Play(ParryMontage);
+
+				if (MontageLength <= 0 )
+				{
+					CloseEnemy->EndParried();
+				}
+				bParry = true;
+				UnTouchable = true;
+				GetWorld()->GetTimerManager().SetTimer(FalseUnTouhableTimer, this, &AWarriorCharacter::FalseUnTouchable, 3.f);
+
+							
+
+		}
+		else
+		{
+			UAnimInstance* AnimInstance = GetMesh()->GetAnimInstance();
+			if (AnimInstance && ShieldMontage)
+			{
+				AnimInstance->Montage_Play(ShieldMontage);
+			}
+			BShieldOn = true;
+
+			CharacterStates = ECharacterStates::ECS_EquippedShield;
+			ActionState = EActionState::EAS_Unoccupied;
+			GetCharacterMovement()->MaxWalkSpeed = CharacterWalkSpeed;
+			
+
+		}
+		
+			
+		
+}
+
+void AWarriorCharacter::ShieldRealesed()
+{
+	if (CharacterStates == ECharacterStates::ECS_UnEquipped) return;
+	CharacterStates = ECharacterStates::ECS_EquippedOnehand;
+	BShieldOn = false;
+	GetCharacterMovement()->MaxWalkSpeed = CharacterRunSpeed;
+	StartShieldRegenerateTimer(2);
+
+
+
+	
+}
+
+void AWarriorCharacter::PlayEquipMontage(const FName& SectionName)
+{
+	UAnimInstance* AnimInstance = GetMesh()->GetAnimInstance();
+	if (AnimInstance && EquipMontage)
+	{
+		AnimInstance->Montage_Play(EquipMontage);
+		AnimInstance->Montage_JumpToSection(SectionName, EquipMontage);
+	}
+}
+
+bool AWarriorCharacter::CanDisarm()
+{
+	return ActionState == EActionState::EAS_Unoccupied &&
+		CharacterStates != ECharacterStates::ECS_UnEquipped;
+		
+}
+
+bool AWarriorCharacter::CanArm()
+{
+	return ActionState == EActionState::EAS_Unoccupied&&
+		CharacterStates == ECharacterStates::ECS_UnEquipped&&
+	    EquippedWeapon;
+}
+
+void AWarriorCharacter::HandleDamage(float DamageAmount)
+{
+	if (Attributes && BShieldOn)
+	{
+		Attributes->ReciveShieldDamage(DamageAmount);
+	}
+	
+    if (Attributes && !BShieldOn)
+	{
+		Attributes->ReciveDamage(DamageAmount);
+	}
+}
+
+
+
+bool AWarriorCharacter::ShieldAlive()
+{
+	return Attributes && Attributes->IsShieldAlive();
+}
+
+void AWarriorCharacter::DefaultVar()
+{
+	EquippedWeapon->SetDamage(DefaultEquippedWeaponDamage);
+	GetCharacterMovement()->MaxWalkSpeed = CharacterRunSpeed;
+}
+
+void AWarriorCharacter::ChangeAttackType()
+{
+	AttackButtonStates = EAttackButtonState::EAB_Holding;
+}
+
+void AWarriorCharacter::PlayHoldingAttackAnim()
+{
+	if (AttackButtonStates == EAttackButtonState::EAB_Holding)
+	{
+		bHoldingAttack = true;
+
+		if (PlayerOverlay)
+		{
+			PlayerOverlay->PlayAnimation(PlayerOverlay->HoldingAttackAnim);
+		}
+
+		PlayHoldingAttackMontage();
+		
+
+		bAttackTimerOpen = true;
+		
+	}	
+}
+
+void AWarriorCharacter::PlayShieldBreakMontage()
+{
+	UAnimInstance* AnimInstance = GetMesh()->GetAnimInstance();
+	if (AnimInstance && ShieldBreakMontage)
+	{
+		AnimInstance->Montage_Play(ShieldBreakMontage);
+	}
+}
+
+void AWarriorCharacter::StaminaRegenerateTime()
+{
+	GetWorld()->GetTimerManager().SetTimer(StaminaRegenerateTimer, this, &AWarriorCharacter::StaminaRegen, 3, false);
+	
+}
+
+void AWarriorCharacter::StaminaClearTime()
+{
+	GetWorld()->GetTimerManager().ClearTimer(Attributes->StaminaTimers);
+}
+
+void AWarriorCharacter::AttachWeaponToBack()
+{
+	if (EquippedWeapon)
+	{
+		EquippedWeapon->AttachMeshToSocket(GetMesh(), FName("BackSword"));
+	}
+}
+
+void AWarriorCharacter::AttachWeaponToHand()
+{
+	if (EquippedWeapon) 
+	{
+		EquippedWeapon->AttachMeshToSocket(GetMesh(), FName("Sword"));
+		ActionState = EActionState::EAS_EquippingWeapon;
+	
+	}
+}
+void AWarriorCharacter::FinishEquipping()
+{
+	ActionState = EActionState::EAS_Unoccupied;
+}
+void AWarriorCharacter::HitReactEnd()
+{
+	ActionState = EActionState::EAS_Unoccupied;
+	APlayerController* PlayerController = Cast<APlayerController>(GetOwner());
+	PlayerController->SetIgnoreMoveInput(false);
+}
+
+void AWarriorCharacter::ComboCountReset()
+{
+	ComboCounts = 0;
+	HoldingComboCounts = 0;
+	bAttackTimerOpen = false;
+
+}
+
+void AWarriorCharacter::DodgeEnd()
+{
+	ActionState = EActionState::EAS_Unoccupied;
+
+}
+
+void AWarriorCharacter::SphereCollisionBeginOverlap(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult)
+{
+	if (OtherActor && (OtherActor != this)&& OtherComp)
+	{
+		AEnemy* Enemy = Cast<AEnemy>(OtherActor);
+
+		if (Enemy)
+		{		
+			if (Enemy->EnemyState != EEnemyState::EES_Dead)
+			{
+				EnemiesInRange.Add(Enemy);				
+			}
+			else
+			{
+				EnemiesInRange.Remove(Enemy);
+			}		
+		}
+		else 
+		{
+			    ABreakableActor* Breakable = Cast<ABreakableActor>(OtherActor);
+				if (Breakable)
+				{
+					if (Breakable->bBroken == false)
+					{
+						BreakablesRange.Add(Breakable);
+
+					}
+					else if (Breakable->bBroken == true)
+					{
+						BreakablesRange.Remove(Breakable);
+					}
+
+
+				else
+				{
+						BreakablesRange.Remove(Breakable);
+
+				}
+										
+
+		        }
+				
+			
+			
+		}
+		
+		
+	}	
+}
+
+void AWarriorCharacter::SphereCollisionEndOverlap(UPrimitiveComponent* OverlappedComp, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex)
+{
+
+	if (OtherActor && (OtherActor != this)&& OtherComp)
+	{
+
+		AEnemy* Enemy = Cast<AEnemy>(OtherActor);
+		if (Enemy)
+		{
+			EnemiesInRange.Remove(Enemy);
+		}
+		else
+		{
+			ABreakableActor* Breakable = Cast<ABreakableActor>(OtherActor);
+			if (Breakable)
+			{
+				if (CloseBreakable == Breakable)
+				{
+					CloseBreakable = nullptr;
+				}
+				BreakablesRange.Remove(Breakable);
+				
+			}
+		}
+
+
+	
+			ABaseItem* ItemRef = Cast<ABaseItem>(OtherActor);
+			if (ItemRef)
+			{
+				if (ItemRef->GetItemInteractionWidget())
+				{
+					ItemRef->SetInteractionVisibility(false);
+
+				}
+			}
+		
+		
+
+
+	}
+
+}
+
+void AWarriorCharacter::EnemyDetectionCollisionEndOverlap(UPrimitiveComponent* OverlappedComp, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex)
+{
+	if (OtherActor && CombatAudioComponent)
+	{
+		FTimerHandle CombatSoundTimer;
+
+		AEnemy* Enemy = Cast<AEnemy>(OtherActor);
+		if (Enemy)
+		{
+			NearbyEnemies.Remove(Enemy);
+		}
+		GetWorld()->GetTimerManager().SetTimer(CombatSoundTimer, this, &AWarriorCharacter::CombatSoundFadeOut, 2.f);
+	
+	}
+	
+}
+
+void AWarriorCharacter::EnemyDetectionCollisionBeginOverlap(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult)
+{
+
+	if (OtherActor && CombatAudioComponent)
+	{
+		AEnemy* Enemy = Cast<AEnemy>(OtherActor);
+		if (Enemy)
+		{
+			if (Enemy->EnemyState != EEnemyState::EES_Dead)
+			{
+				NearbyEnemies.AddUnique(Enemy);
+			}
+			else
+			{
+				NearbyEnemies.Remove(Enemy);
+			}
+		}
+	}
+}
+
+
+
+
+
+void AWarriorCharacter::SetOverlappingItem(ABaseItem* Item)
+{
+	OverlappingItem = Item;
+}
+
+void AWarriorCharacter::CharacterInteract(AActor* Actor)
+{
+
+	UE_LOG(LogTemp, Warning, TEXT("Interacted"));
+	PushableObject = Cast<APushableObject>(Actor);
+	
+}
+
+
+
+void AWarriorCharacter::AddXp(AExperiencePoint* Xp)
+{
+	if (Attributes && PlayerOverlay)
+	{
+		SetExpPoint(Xp);
+
+		if (ExpGreaterMaxExp())
+		{
+			Attributes->LevelUp();
+			PlayerOverlay->SetXpText(Attributes->GetExperience());
+			PlayerOverlay->SetMaxXpText(Attributes->GetMaxExperience());
+			PlayerOverlay->SetLevelText(Attributes->GetLevel());
+		}
+		SetLevelBar();
+	}
+	
+}
+bool AWarriorCharacter::ExpGreaterMaxExp()
+{
+	return Attributes->GetExperience() >= Attributes->GetMaxExperience();
+}
+void AWarriorCharacter::SetExpPoint(AExperiencePoint* Xp)
+{
+
+	Attributes->AddExperience(Xp->GetExperience());
+	PlayerOverlay->SetXpText(Attributes->GetExperience());
+	PlayerOverlay->SetMaxXpText(Attributes->GetMaxExperience());
+
+}
+void AWarriorCharacter::AddGold(ATreasure* Treasure)
+{	
+	if (Attributes && PlayerOverlay)
+	{
+		Attributes->AddGold(Treasure->GetGold());
+		PlayerOverlay->SetGoldText(Attributes->GetGold());
+	}
+}
+void AWarriorCharacter::AddHealth(AHealthPoint* Health)
+{
+	if (Attributes && PlayerOverlay)
+	{
+		Attributes->AddHealth(Health->GetHealth());
+		SetHealthBar();
+	}
+}
+
+
+void AWarriorCharacter::Noise()
+{
+	NoiseEmitter->MakeNoise(this, 1.f, GetActorLocation());
+
+}
+
+void AWarriorCharacter::ExecuteGetHit(FHitResult& BoxHit)
+{
+	IHitInterface* HitInterface = Cast<IHitInterface>(BoxHit.GetActor());
+
+	if (HitInterface)
+	{
+		HitInterface->Execute_GetHit(BoxHit.GetActor(), BoxHit.ImpactPoint, GetOwner());
+
+		
+	}
+	IgnoreActors.AddUnique(BoxHit.GetActor());
+
+	
+	
+}
+
+void AWarriorCharacter::GetSkillHit(FHitResult& Skillhit)
+{
+
+	ISkillHitInterface* SkillInterface = Cast<ISkillHitInterface>(Skillhit.GetActor());
+
+	if (SkillInterface)
+	{
+		SkillInterface->SkillHit(Skillhit.ImpactPoint, GetOwner());
+	}
+}
+
+void AWarriorCharacter::Tick(float DeltaTime)
+{
+	Super::Tick(DeltaTime);
+	GetClosestEnemy();
+	//CombatTarget = CombatDirector->CurrentAttacker;
+	ComboCountTimer(DeltaTime);
+	SetStaminaBar();
+	ResetCameraPosition();
+	CheckQuestProgress();
+	CheckShieldRotation();
+	if (PhysicsHandle->GrabbedComponent && HoldPoint)
+	{
+		
+		PhysicsHandle->SetTargetLocationAndRotation(HoldPoint->GetComponentLocation(),
+			HoldPoint->GetComponentRotation());
+	
+
+	}
+	
+
+}
+void AWarriorCharacter::CheckShieldRotation()
+{
+	if (BShieldOn)
+	{
+		if (CloseEnemy)
+		{
+			FString EnemyName = CloseEnemy->GetName();
+			FVector EnemyLocation = CloseEnemy->GetActorLocation();
+			FVector CharcterLoCation = GetActorLocation();
+			FRotator TargetRotation = (EnemyLocation - CharcterLoCation).Rotation();
+			FRotator CurrentRot = GetActorRotation();
+			FRotator NewRot = FMath::Lerp(CurrentRot, TargetRotation, 0.3f);
+			SetActorRotation(NewRot);
+		}
+	}
+}
+void AWarriorCharacter::ResetCameraPosition()
+{
+	if (!bCanMoveCamera)
+	{
+		FVector Currentval = ViewCamera->GetRelativeLocation();
+		FVector Newloc = FMath::VInterpTo(Currentval, defaultCameraLoc, GetWorld()->DeltaTimeSeconds, 7.f);
+		ViewCamera->SetRelativeLocation(Newloc);
+	}
+}
+void AWarriorCharacter::ComboCountTimer(float DeltaTime)
+{
+	if (bAttackTimerOpen)
+	{
+
+		if (ActionState != EActionState::EAS_Attacking)
+		{
+			TimeElapsed += DeltaTime;
+		}
+		if (TimeElapsed >= ComboResetTimer)
+		{
+
+			ComboCountReset();
+			TimeElapsed = 0;
+
+		}
+	}
+
+	
+}
+void AWarriorCharacter::StaminaRegen()
+{
+	if (Attributes)
+	{
+		Attributes->RegenerateStamina();
+	}	
+
+}
+
+
+
+
+

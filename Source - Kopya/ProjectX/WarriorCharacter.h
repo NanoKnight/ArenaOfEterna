@@ -1,0 +1,529 @@
+// Fill out your copyright notice in the Description page of Project Settings.
+
+#pragma once
+
+#include "CoreMinimal.h"
+#include "Public\EnumStates.h"
+#include "Public\Characters\BaseCharacter.h"
+#include"Blueprint/UserWidget.h"
+#include"Public\Interfaces\PickUpInterface.h"
+#include"Public\Interfaces\CharacterInteractableInterFace.h"
+#include"Public\Interfaces\CombatSoundInterface.h"
+#include "Public\QuestStruct.h"
+#include"Public\Items\ExperiencePoint.h"
+#include"Public\Items/HealthPoint.h"
+#include"Public\Items/Treasure.h"
+#include"Public\Items\BaseItem.h"
+#include"Public\Items\Collectable.h"
+#include "WarriorCharacter.generated.h"
+
+
+
+class USpringArmComponent;
+class AShield;
+class UCameraComponent;
+class ABaseItem;
+class ABreakableActor;
+class APushableObject;
+class ACollectable;
+class AExperiencePoint;
+class AHealthPoint;
+class ATreasure;
+class USphereComponent;
+class UPhysicsHandleComponent;
+class AEnemy;
+class ACombatDirector;
+class UCharacterHUD;
+class UQuestUI;
+class AArenaGameMode;
+class ASpawnManager;
+class AQuestActor;
+class UInventoryWidget;
+class UPawnNoiseEmitterComponent;
+
+
+
+
+UCLASS()
+class PROJECTX_API AWarriorCharacter : public ABaseCharacter, 
+	public IPickUpInterface , 
+	public ICombatSoundInterface,
+	public ICharacterInteractableInterFace
+{
+	GENERATED_BODY()
+
+	friend class ABaseItem;
+	friend class UInventoryComponent;
+	friend class UEqiupmentSlotWidget;
+
+public:
+
+	AWarriorCharacter();
+	
+	UPROPERTY(EditDefaultsOnly)
+	TSubclassOf<UAnimInstance>PushingAnimInstance;
+
+	UPROPERTY(EditDefaultsOnly)
+	TSubclassOf<UAnimInstance>OldAnimInstance;
+
+	/* <IHitInterface> */
+	virtual void GetHit_Implementation(const FVector& ImpactPoint,AActor* Hitter) override;
+	virtual void EnemyStartChasing() override;
+	virtual void EnemyStoppedChasing() override;
+	virtual void Jump() override;
+	bool CheckShieldClose();
+	bool CheckShieldOpen();
+	void ClearShieldRegenerateTimer();
+	void StartShieldRegenerateTimer(float Time);
+	FORCEINLINE UAttributeComponent* GetAttributesComponent() const { return Attributes; }
+	void StaminaRegenerate(float DeltaTime);
+	/* </IHitInterface> */
+
+	void EquipWeapon(AWeapon* Weapon);
+	
+
+	virtual float TakeDamage(float DamageAmount, struct FDamageEvent const& DamageEvent, class AController* EventInstigator, AActor* DamageCauser) override;
+	bool IsEnemyBehindCharacter();
+	void AddKilledEnemyID(FString EnemyName);
+
+	UFUNCTION(BlueprintCallable, Category = "Quests")
+	void AddQuest(const FQuestStruct& NewQuest);
+
+	void UpdateQuest(FName QuestRowName);
+	FQuestStruct GetCurrentQuest() const { return CurrentQuest; }
+
+	UFUNCTION()
+	void EquipItem(const FInventoryStruct& Item);
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Category = "SaveGame")
+	TArray<FString>KilledEnemiesNames;
+	
+	UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Category = "SaveGame")
+	TArray<FString> AddedItems;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Quests")
+	TArray<FQuestStruct> ActiveQuests;
+
+	UPROPERTY(EditAnywhere, Category = "Combat")
+	TSubclassOf<class AWeapon> WeaponClass;
+
+
+	UPROPERTY(EditAnywhere,Category = "Combat")
+	TSubclassOf<class AWeapon> SpecialWeapon;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Quests")
+	TSubclassOf<class AQuestActor> QuestActorClass;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "UI")
+	TSubclassOf<UUserWidget> DeathWidgetClass;
+
+	UUserWidget* DeathWidgetInstance;
+
+	UPROPERTY(EditAnywhere)
+	APushableObject* PushableObject;
+
+	UPROPERTY()
+	APushableObject* yedekpush;
+
+	UPROPERTY(EditAnyWhere, BlueprintReadWrite)
+	USceneComponent* HoldPoint;
+
+	bool bPushing = false;
+
+	UPROPERTY(EditAnyWhere, BlueprintReadWrite)
+	bool UnTouchable = false;
+
+	UPROPERTY(EditAnywhere,BlueprintReadWrite , Category= "Quests")
+	UDataTable* QuestDataTable;
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Quest")
+	FQuestStruct CurrentQuest;
+
+	UPROPERTY(EditAnywhere,BlueprintReadWrite)
+	int32 CurrentQuestIndex;
+	 
+	FName CurrentQuestRowName;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Quest System")
+	FName NextQuestRowName;
+
+	UPROPERTY(BlueprintReadOnly, Category = "Quest")
+	AQuestActor* QuestActor;
+
+
+	UPROPERTY(EditDefaultsOnly)
+	TSubclassOf<UInventoryWidget> InventoryWidgetClass;
+
+	UInventoryWidget* InventoryWidget;
+
+	
+
+	void InitializePlayerOverlay();
+	void PlayItemPickupNameAnim(FString ItemName);
+
+	FORCEINLINE void SetChasedEnemy(int32 NewChasedEnemy) {  ChasedEnemies = NewChasedEnemy; }
+	FORCEINLINE int32 GetChasedEnemy() const { return ChasedEnemies; }
+	FORCEINLINE UAudioComponent* GetAudioComponent() const { return CombatAudioComponent; }
+protected:
+
+
+	virtual void BeginPlay() override;
+	void MoveForward(float value);
+	void MoveRight(float value);
+	//void Turn(float Value);
+	//void LookUp(float Value);
+	void CameraForward(float Value);
+	void CameraRight(float Value);
+	void EKeyPressed();
+	void Interact();
+	void PushInteract();
+	void OpenInventory();
+
+	//DISPOSBLE FUNC
+	void SpawnEnemy(int32 NumberOfEnemies,FVector EnemyLocation);
+	void MoveCamera();
+	void MoveCameraReleased();
+	/*
+	* Combat
+	*/
+
+
+	virtual void Attack() override;
+	void AttackReleassed();
+	virtual void AttackEnd() override;
+	void SpecialSwordAttack();
+	void SpecialSwordAttackReleassed();
+	void UsingSkill();
+	void Shield();
+	void ShieldRealesed();
+	void PlayEquipMontage(const FName& SectionName);	
+	bool CanDisarm();
+	virtual bool CanArm() override;
+	virtual void HandleDamage(float DamageAmount) override;
+
+   /********************************/
+	bool ShieldAlive();
+	void RegenerateShield();
+	FTimerHandle shieldRegenerateTime;
+	/********************************/
+	
+	FTimerHandle StaminaRegenerateTimer;
+	FTimerHandle SecondSkillTimer;
+	FTimerHandle AttackTypeCheckTimer;
+	FTimerHandle FalseUnTouhableTimer;
+	FTimerHandle DeathWidgetTimer;
+	FTimerHandle AmbientSoundTimer;
+	FTimerHandle AttackHoldingTimer;
+	FTimerHandle QuestCompleteUITimer;
+	FTimerHandle ItemTextAnimTimer;
+	FTimerHandle FirstSkillResetTimer;
+	FTimerHandle SecondSkillResetTimer;
+
+	UPROPERTY(EditAnywhere, Category = "VFX")
+	UNiagaraSystem* HealthPotEffect;
+
+	UPROPERTY(EditAnywhere)
+	USoundBase* CombatSound;
+
+	UPROPERTY(EditAnywhere)
+	USoundBase* AmbientSound;
+
+	UPROPERTY(EditAnywhere,Category = "Sound")
+	USoundBase* HealthPotionSound;
+
+	UPROPERTY()
+	UAudioComponent* CombatAudioComponent;
+
+	UPROPERTY(EditAnywhere,BlueprintReadWrite)
+	int32 ChasedEnemies;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	bool bHoldingAttack;
+
+	bool CombatSoundPlaying;
+
+	UPROPERTY(EditAnywhere)
+	bool bParry;
+
+	bool IsFirstSkill;
+	bool IsSecondSkill;
+	bool FadeoutTimer = false;
+	bool BShieldOn = false;
+	float FadeoutSeconds = 0;
+	
+
+	void DefaultVar();
+	void ChangeAttackType();
+	void PlayHoldingAttackAnim();
+
+	void PlayShieldBreakMontage();
+	void StaminaRegenerateTime();
+	void StaminaClearTime();
+
+	UFUNCTION(BlueprintCallable)
+	void AttachWeaponToBack();
+
+	UFUNCTION(BlueprintCallable)
+	void AttachWeaponToHand();
+
+	UFUNCTION(BlueprintCallable)
+	void FinishEquipping();
+	
+	UFUNCTION(BlueprintCallable)
+	void HitReactEnd();
+
+	UFUNCTION(BlueprintCallable)
+	void ParryHit();
+
+	void StopSlowMotion();
+
+	UFUNCTION(BlueprintCallable)
+	void SetParryFalse();
+
+	void FalseUnTouchable();
+
+	UFUNCTION(BlueprintCallable)
+	void ComboCountReset();
+
+	UFUNCTION(BlueprintCallable)
+	virtual void DodgeEnd() override;
+
+	UFUNCTION(BlueprintCallable)
+	void SkillEnd();
+
+	UFUNCTION(BlueprintCallable)
+	void Noise();
+
+	UFUNCTION(BlueprintCallable)
+	void SkillCanDamageF(float SphereRadiusFloat, float  SkillDamageFloat, float  TraceEnd );
+	
+	UFUNCTION()
+	void CompleteCurrentQuest();
+
+	UFUNCTION()
+	void UsetPot();
+
+	UFUNCTION()
+	void SphereCollisionBeginOverlap(UPrimitiveComponent* OverlappedComponent, AActor*OtherActor, UPrimitiveComponent*OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult);
+	
+	UFUNCTION()
+	void SphereCollisionEndOverlap(UPrimitiveComponent* OverlappedComp, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex);
+
+	UFUNCTION()
+	void EnemyDetectionCollisionBeginOverlap(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult);
+
+	UFUNCTION()
+	void EnemyDetectionCollisionEndOverlap(UPrimitiveComponent* OverlappedComp, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex);
+
+
+
+	virtual void Die() override;
+
+	UPROPERTY()
+	TArray<AEnemy*> EnemiesInRange;
+
+	UPROPERTY()
+	TArray<ABreakableActor*> BreakablesRange;
+
+	UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = "Materials")
+	UMaterialInterface* EnemyOutlineMaterial;
+	
+	UPROPERTY(BlueprintReadWrite)
+	AEnemy* CloseEnemy;
+
+	UPROPERTY(BlueprintReadWrite,EditAnywhere)
+	ABreakableActor* CloseBreakable;
+
+	UPROPERTY(EditAnywhere)
+	TArray<AEnemy*> NearbyEnemies;
+
+
+	UPROPERTY(EditAnywhere, Category = "Settings")
+	float DistanceThreshold ;
+
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Camera")
+	float CameraMoveSpeed = 2.f;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Camera")
+	float MinX = -1.f; 
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Camera")
+	float MaxX = 400.f; 
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Camera")
+	float MinY = -300.f; 
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Camera")
+	float MaxY = 300.f;  
+
+
+
+
+
+private:
+	void SetQuestsSettings();
+	void SpawnQuestActor();
+	void SetQuestDataTable();
+	void Save();
+	void LoadSaveGame();
+	void SpawnDefaultWeapon();
+	void DisArm();
+	void Arm();
+	void FirstSkill();
+	void SecondSkill();
+	void PlayShieldReactMontage();
+	void SetHealthBar();
+	void SetStaminaBar();
+	void SetLevelBar();
+	void PrintQuest();
+	void Dodge();
+	void CheckQuestProgress();
+	void StartNextQuest();
+	void CheckEnemySpawner();
+	void QuesstCompleteFadeOutAnim();
+	void SetFalseIsFirstSkillVar();
+	void SetFalseIsSecondSkill();
+	void CreateDeathWidget();
+	void CombatSoundFadeOut();
+	void FadeInAmbientSound();
+	bool IsUnoccupied();
+	bool HasEnoughStamina();
+	
+
+
+
+	UPROPERTY(VisibleAnywhere)
+	USpringArmComponent* CameraBoom;
+
+	UPROPERTY(VisibleAnywhere)
+	UCameraComponent* ViewCamera;
+
+	UPROPERTY(EditDefaultsOnly)
+	USphereComponent* Sphere;
+
+	UPROPERTY(EditDefaultsOnly)
+	USphereComponent* EnemyDetectionSphere;
+
+	UPROPERTY(EditDefaultsOnly)
+	UPhysicsHandleComponent* PhysicsHandle;
+
+	UPROPERTY(EditAnywhere)
+	UPawnNoiseEmitterComponent* NoiseEmitter;
+
+	UPROPERTY(VisibleInstanceOnly)
+	ABaseItem* OverlappingItem;
+
+	ACombatDirector* CombatDirector;
+
+	UPROPERTY(EditAnywhere)
+	TSubclassOf<class AShield> ShieldClass;
+
+
+	UPROPERTY(EditDefaultsOnly, Category = Montages)
+	UAnimMontage* EquipMontage;
+
+	UPROPERTY(EditDefaultsOnly, Category = Montages)
+	UAnimMontage* ShieldMontage;
+
+	UPROPERTY(EditDefaultsOnly, Category = Montages)
+	UAnimMontage* ShieldReactMontage;
+
+	UPROPERTY(EditDefaultsOnly, Category = Montages)
+	UAnimMontage* ShieldBreakMontage;
+
+	UPROPERTY(EditDefaultsOnly,Category = Montages)
+	UAnimMontage* FirstSkillMontage;
+
+	UPROPERTY(EditDefaultsOnly, Category = Montages)
+	UAnimMontage* SecondSkillMontage;
+	
+	UPROPERTY(EditDefaultsOnly, Category = Montages)
+	UAnimMontage* ParryMontage;
+
+
+	float DefaultEquippedWeaponDamage;
+
+	UPROPERTY()
+	AGameModeBase* GameMode;
+	UPROPERTY()
+	AArenaGameMode* ArenaGameMode;
+
+	//////////////////////////////////
+	/*ComboTimer*/
+	UPROPERTY(EditAnywhere, Category = "Combat")
+	float ComboResetTimer = 2.f;
+	float TimeElapsed = 0.f;
+	bool bAttackTimerOpen = false;
+
+
+
+	///////////////////////////
+	bool bForward = false;
+
+	float StaminaResetTimerCount = 3.f;
+	float StaminaTimeElapsed = 0.f;
+	UPROPERTY(EditAnywhere)
+	float Ragetime = 15.f;
+	FVector defaultCameraLoc;
+	bool bStaminaTimerOpen = false;
+	bool bCanMoveCamera = false;
+	double CombatTargetRadius = 500.f;
+
+	FRotator OldRotationRate;
+
+
+	UPROPERTY(EditAnywhere)
+	float CharacterRunSpeed = 600.f;
+
+	UPROPERTY(EditAnywhere)
+	float CharacterWalkSpeed = 250.f;
+	void GetClosestEnemy();
+	void SpawnDefaultShield();
+	UPROPERTY(meta = (AllowPrivateAccess = "true"))
+	ECharacterStates CharacterStates = ECharacterStates::ECS_UnEquipped;
+
+	UPROPERTY(BlueprintReadWrite, meta = (AllowPrivateAccess = "true"))
+	EAttackButtonState AttackButtonStates = EAttackButtonState::EAB_Releassed;
+
+	UPROPERTY(BlueprintReadWrite,EditAnywhere, meta = (AllowPrivateAccess = "true"))
+	EActionState ActionState = EActionState::EAS_Unoccupied;
+	UPROPERTY(BlueprintReadWrite, meta = (AllowPrivateAccess = "true"))
+	EMovementState MovementState = EMovementState::EMS_Idle;
+
+	UPROPERTY(BlueprintReadWrite, meta = (AllowPrivateAccess = "true"))
+	ECharacterSide CharacterSide;
+
+	UPROPERTY()
+	UCharacterHUD* PlayerOverlay;
+	void ExecuteGetHit(FHitResult& BoxHit);
+	void GetSkillHit(FHitResult& Skillhit);
+	TArray <AActor*> IgnoreActors;
+	bool SkillCanDamage;
+	ASpawnManager* SpawnManager;
+	
+	
+	
+public:
+	virtual void Tick(float DeltaTime) override;	
+	void CheckShieldRotation();
+	void ResetCameraPosition();
+	void ComboCountTimer(float DeltaTime);
+
+	void StaminaRegen();
+	virtual void SetupPlayerInputComponent(class UInputComponent* PlayerInputComponent) override;
+	virtual void SetOverlappingItem(ABaseItem* Item) override;
+	virtual void CharacterInteract(AActor* Actor) override;
+	virtual void AddXp(AExperiencePoint* Xp) override;
+	bool ExpGreaterMaxExp();
+	void SetExpPoint(AExperiencePoint* Xp);
+	virtual void AddGold(ATreasure* Treasure)override;
+	virtual void AddHealth(AHealthPoint* Health)override;
+	FORCEINLINE ECharacterStates GetCharacterStates() const { return CharacterStates; }
+	FORCEINLINE EActionState GetActionState() const { return ActionState; }
+	FORCEINLINE EMovementState GetMovementState() const { return MovementState; }
+	FORCEINLINE void SetCharacterStates(ECharacterStates NewStates) { CharacterStates = NewStates; }
+	FORCEINLINE void SetActionstate(EActionState NewActionState) { ActionState = NewActionState ; }
+	FORCEINLINE void SetCombatTarget(AActor* NewCombatTarget) { CombatTarget = NewCombatTarget;  }
+
+};

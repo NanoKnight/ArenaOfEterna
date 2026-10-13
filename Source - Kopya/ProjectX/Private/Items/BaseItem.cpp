@@ -1,0 +1,254 @@
+// Fill out your copyright notice in the Description page of Project Settings.
+
+
+#include "Items/BaseItem.h"
+#include "Kismet/GameplayStatics.h"
+#include "Components\SphereComponent.h"
+#include"NiagaraComponent.h"
+#include"../DebugMacros.h"
+#include"../WarriorCharacter.h"
+#include "Kismet/KismetSystemLibrary.h"
+#include"Interfaces\HitInterface.h"
+#include"Components\WidgetComponent.h"
+#include"HUD\ItemInteractionWidget.h"
+#include"Components\InventorySystem\InventoryComponent.h"
+#include"Components/AttributeComponent.h"
+#include"GameMode\ArenaGameMode.h"
+
+
+
+// Sets default values
+ABaseItem::ABaseItem()
+{
+ 	// Set this actor to call Tick() every frame.  You can turn this off to improve performance if you don't need it.
+	PrimaryActorTick.bCanEverTick = true;
+	Root = CreateDefaultSubobject<USceneComponent>(TEXT("RootComponent"));
+	SetRootComponent(Root);
+	ItemMesh = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("ItemMeshComponent"));
+	ItemMesh->SetupAttachment(Root);
+	Sphere = CreateDefaultSubobject<USphereComponent>(TEXT("Sphere"));
+	Sphere->SetupAttachment(ItemMesh);
+	ItemEffect = CreateDefaultSubobject<UNiagaraComponent>(TEXT("Niagara"));
+	ItemEffect->SetupAttachment(ItemMesh);
+	ItemInteraction = CreateDefaultSubobject<UWidgetComponent>(TEXT("ItemInteraction"));
+	ItemInteraction->SetupAttachment(ItemMesh);
+
+}
+
+void ABaseItem::Equip(USceneComponent* InParent, FName InSocketName, AActor* NewOwner, APawn* NewInstigator)
+{
+	
+	ItemState = EItemState::EIS_Equipped;
+	SetOwner(NewOwner);
+	SetInstigator(NewInstigator);
+	AttachMeshToSocket(InParent, InSocketName);
+	DisableSphereCollision();
+	PlayEquipSound();
+	DeactivateEmbersEffect();
+}
+
+void ABaseItem::AttachMeshToSocket(USceneComponent* InParent, const FName& InSocketName)
+{
+	if (ItemMesh)
+	{
+		
+
+		FAttachmentTransformRules TransformRules(EAttachmentRule::SnapToTarget, true);
+		ItemMesh->AttachToComponent(InParent, TransformRules, InSocketName);
+		ItemMesh->SetRelativeLocation(FVector::ZeroVector);
+		ItemMesh->SetRelativeRotation(FRotator::ZeroRotator);
+	
+	}
+
+}
+
+void ABaseItem::DeactivateEmbersEffect()
+{
+	if (ItemEffect)
+	{
+		ItemEffect->Deactivate();
+	}
+}
+
+void ABaseItem::DisableSphereCollision()
+{
+	if (Sphere)
+	{
+		Sphere->SetCollisionEnabled(ECollisionEnabled::NoCollision);
+	}
+}
+
+void ABaseItem::PlayEquipSound()
+{
+	if (EquipSound)
+	{
+		UGameplayStatics::PlaySoundAtLocation(
+			this,
+			EquipSound,
+			GetActorLocation()
+		);
+	}
+
+
+}
+
+void ABaseItem::SetInteractionVisibility(bool visiblity)
+{
+	if (ItemState != EItemState::EIS_Equipped)
+	{
+		ItemInteraction->SetVisibility(visiblity, false);
+
+	}
+
+
+}
+
+void ABaseItem::PickUp(AWarriorCharacter* WarriorCharacter)
+{	
+
+
+	if (!WarriorCharacter || !WarriorCharacter->GetInventoryComponent()) return;
+
+	for ( FInventoryStruct& Item: WarriorCharacter->GetInventoryComponent()->InventoryItems)
+	{
+
+		if (Item.ItemTypes == EItemTypes::Pot)
+		{
+			if (ItemType == EItemTypes::Pot)
+			{
+				Item.StackCounter += 1;
+				WarriorCharacter->PlayItemPickupNameAnim(ItemName);
+				WarriorCharacter->Attributes->PotStack = Item.StackCounter;
+				this->Destroy();
+			}
+			
+			if (ItemType == EItemTypes::Pot) return;
+		
+		}
+
+		else if (Item.ItemName.IsEmpty()) 
+		     {
+			
+			    
+				AGameModeBase* GameMode = GetWorld()->GetAuthGameMode();
+				AArenaGameMode* ArenaGameMode = Cast<AArenaGameMode>(GameMode);
+				if (ArenaGameMode && Item.ItemTypes != EItemTypes::Pot)
+				{
+					ArenaGameMode->AddedItems.Add(ItemID);
+				}
+
+				FInventoryStruct NewItem;
+				NewItem.ItemName = ItemName;				
+				NewItem.ItemIcon = ItemIcon;
+				NewItem.EquipmentSlot = EEquipmentSlot::Weapon;
+				NewItem.ItemClass = this->GetClass();
+				NewItem.ItemStaticMesh = ItemMesh->GetStaticMesh();
+				NewItem.ItemTypes = ItemType;
+				NewItem.ItemSocketName = ItemSocketName;
+				NewItem.EquipmentSlot = ItemEquipmentSlot;
+				NewItem.Defense = Defense;
+				NewItem.Damage = Damage;
+				if (ItemType == EItemTypes::Pot) WarriorCharacter->Attributes->PotStack = 1;
+				
+				WarriorCharacter->GetInventoryComponent()->AddItem(NewItem);
+				if (QuestItem && WarriorCharacter->CurrentQuest.QuestItemName == ItemName)
+				{
+					WarriorCharacter->CompleteCurrentQuest();
+
+				}
+
+				this->Destroy();
+				break;			
+		}
+
+		else if(Item.ItemTypes != EItemTypes::Pot && ItemType != EItemTypes::Pot)
+		{
+
+			WarriorCharacter->GetInventoryComponent()->InventoryFullText();
+		}
+	}
+
+	
+
+
+}
+
+// Called when the game starts or when spawned
+void ABaseItem::BeginPlay()
+{
+	Super::BeginPlay();
+	ItemID = GetName();
+	if (Sphere)
+	{
+		Sphere->OnComponentBeginOverlap.AddDynamic(this, &ABaseItem::OnSphereOverlap);
+		Sphere->OnComponentEndOverlap.AddDynamic(this, &ABaseItem::OnSphereEndOverlap);
+
+	}
+
+	
+	
+}
+
+void ABaseItem::OnSphereOverlap(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult)
+{
+	AWarriorCharacter* WarriorCharacter = Cast<AWarriorCharacter>(UGameplayStatics::GetPlayerCharacter(GetWorld(), 0));
+	IPickUpInterface* ItemActorInterface = Cast<IPickUpInterface>(OtherActor);
+	if (ItemActorInterface)
+	{
+
+		ItemActorInterface->SetOverlappingItem(this);
+	}
+
+	if (ItemInteraction)
+	{
+		ItemInteraction->SetVisibility(true);
+
+	}
+
+	UUserWidget* UserWidget = ItemInteraction->GetUserWidgetObject();
+	if (UserWidget)
+	{
+		UItemInteractionWidget* ItemInteractWidget = Cast<UItemInteractionWidget>(UserWidget);
+		if (ItemInteractWidget)
+		{
+			if (ItemType == EItemTypes::Weapon)
+			{
+				ItemInteractWidget->SetInteractionValues(ItemName, Damage, ItemType);
+
+			}
+			else
+			{
+				ItemInteractWidget->SetInteractionValues(ItemName, Defense, ItemType);
+
+			}
+
+		}
+	}
+}
+
+void ABaseItem::OnSphereEndOverlap(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex)
+{
+	IPickUpInterface* ItemActorInterface = Cast<IPickUpInterface>(OtherActor);
+	if (ItemActorInterface)
+	{
+		ItemActorInterface->SetOverlappingItem(nullptr);
+
+	}
+	if (ItemInteraction)
+	{
+		ItemInteraction->SetVisibility(false);
+
+	}
+
+
+
+
+}
+
+// Called every frame
+void ABaseItem::Tick(float DeltaTime)
+{
+	Super::Tick(DeltaTime);
+
+}
+

@@ -1,0 +1,229 @@
+// Fill out your copyright notice in the Description page of Project Settings.
+
+
+#include "Components/AttributeComponent.h"
+#include"Interfaces\CombatStateInterFace.h"
+
+// Sets default values for this component's properties
+UAttributeComponent::UAttributeComponent()
+{
+	// Set this component to be initialized when the game starts, and to be ticked every frame.  You can turn these features
+	// off to improve performance if you don't need them.
+	PrimaryComponentTick.bCanEverTick = false;
+	MaxExperiencePoint = 100;
+	// ...
+}
+
+
+// Called when the game starts
+void UAttributeComponent::BeginPlay()
+{
+	Super::BeginPlay();
+
+	// ...
+
+	
+}
+
+
+void UAttributeComponent::ShieldRegenerateTimer()
+{
+	GetWorld()->GetTimerManager().SetTimer(Timer, this, &UAttributeComponent::RegenerateShield, 0.5f, false);
+
+}
+
+void UAttributeComponent::StaminaTimer()
+{
+	GetWorld()->GetTimerManager().SetTimer(StaminaTimers, this, &UAttributeComponent::RegenerateStamina, 0.5f, false);
+
+}
+
+
+
+void UAttributeComponent::AddExperience(float NumberOfExperience)
+{
+	ExperiencePoint += NumberOfExperience;
+}
+
+void UAttributeComponent::AddGold(int32 GoldAmmount)
+{
+	Gold += GoldAmmount;
+
+}
+
+void UAttributeComponent::AddHealth(float HealthAmmount)
+{
+	if (Health >= MaxHealth)
+	{
+		Health = MaxHealth;
+	}
+	else if (Health + HealthAmmount >= MaxHealth)
+	{
+		Health = MaxHealth;
+	}
+	else
+	{
+		Health += HealthAmmount;
+
+	}
+}
+
+
+
+void UAttributeComponent::ReciveDamage(float Damage)
+{
+   
+	if (Defense == 0)
+	{
+		Damage = Damage * 1.f;
+	}
+	else if (Defense < 25)
+	{
+		Damage = Damage * (1.0f - 0.20);
+
+	}
+	else if(Defense < 50)
+	{
+		Damage = Damage * (1.0f - 0.30);
+	}
+
+	else if(Defense < 75)
+	{
+		Damage = Damage * (1.f - 0.45);
+	}
+	else 
+	{
+		Damage = Damage * (1.f - 0.60);
+	}
+
+	Health = FMath::Clamp(Health - Damage, 0.f, MaxHealth);
+
+}
+
+void UAttributeComponent::ReciveStamina(float Damage)
+{
+	Stamina = FMath::Clamp(Stamina - Damage, 0.f, MaxStamina);
+}
+
+void UAttributeComponent::ReciveShieldDamage(float damage)
+{
+	Shield = FMath::Clamp(Shield - damage, 0.f, MaxShield);
+}
+
+
+
+float UAttributeComponent::HealthPercent()
+{
+	return Health / MaxHealth;
+}
+
+float UAttributeComponent::StaminaPercent()
+{
+	return Stamina / MaxStamina;
+}
+
+float UAttributeComponent::LevelBarPercent()
+{
+	return ExperiencePoint / MaxExperiencePoint;
+}
+
+void UAttributeComponent::LevelUp()
+{
+	if (!GetOwner()->ActorHasTag("WarriorCharacter")) return;
+	
+	if (ExperiencePoint >= MaxExperiencePoint)
+	{
+		Level = ++ Level;
+		
+		ExperiencePoint -= MaxExperiencePoint;
+		MaxExperiencePoint += MaxExperiencePoint *0.5;
+
+		while (ExperiencePoint >= MaxExperiencePoint)
+		{
+			Level++;
+			ExperiencePoint -= MaxExperiencePoint;
+			MaxExperiencePoint += MaxExperiencePoint * 0.5;
+		}
+	}
+	
+
+}
+
+
+
+float UAttributeComponent::ShieldPercent()
+{
+	return Shield / MaxShield;
+}
+
+
+bool UAttributeComponent::IsAlive()
+{
+	return Health > 0.f;
+}
+
+bool UAttributeComponent::IsShieldAlive()
+{
+	return Shield > 0.f;
+}
+
+void UAttributeComponent::RegenerateShield()
+{
+	if (Shield < MaxShield)
+	{
+		Shield += ShieldRegenRate;
+		
+		Shield = FMath::Clamp(Shield,0.f,MaxShield);
+		ShieldRegenerateTimer();
+		if (Shield >= MaxShield)
+		{
+			GetWorld()->GetTimerManager().ClearTimer(Timer);
+			GEngine->AddOnScreenDebugMessage(1, 1.5, FColor::Red, TEXT("Health regeneration stopped"));
+		}
+	
+		
+	}
+}
+
+void UAttributeComponent::RegenerateStamina()
+{
+	if (Stamina < MaxStamina)
+	{
+
+		Stamina += StaminaRegenRate;
+		Stamina = FMath::Clamp(Stamina, 0.f, MaxStamina);
+		StaminaTimer();
+		if (Stamina >= MaxStamina)
+		{
+
+			GetWorld()->GetTimerManager().ClearTimer(StaminaTimers);
+			AActor* OwnerActor = GetOwner();
+			if (OwnerActor && OwnerActor->Implements<UCombatStateInterFace>())
+			{
+				ICombatStateInterFace::Execute_SetEnemyState(OwnerActor, EEnemyState::EES_NoState);
+			}
+		}
+
+
+	}
+}
+
+
+
+
+
+
+// Called every frame
+void UAttributeComponent::TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction)
+{
+	Super::TickComponent(DeltaTime, TickType, ThisTickFunction);
+
+	// ...
+
+}
+
+void UAttributeComponent::RegenStamina(float DeltaTime)
+{
+	Stamina = FMath::Clamp(Stamina + StaminaRegenRate * DeltaTime, 0.f, MaxStamina);
+}
+
