@@ -17,19 +17,18 @@ public:
 
 	virtual void Tick(float DeltaTime) override;
 
-	
+	// Combat sistemine enemy ekler.
 	void RegisterEnemy(AEnemy* Enemy);
 
+	// Enemy öldüðünde veya oyuncudan uzaklaþtýðýnda tamamen kaldýrýr.
 	void ReleaseAttacker(AEnemy* Enemy);
 
+	// Saldýrý bitince yalnýzca saldýrý sýrasýný deðiþtirir.
+	void ReleaseAttackPermission(AEnemy* Enemy);
 
-	void SelectAttackers();
+	void SelectAttacker();
 	
-	void ReleaseAttackSlot(AEnemy* Enemy);
-	
-	bool HasAttackPermission(const AEnemy* Enemy)const;
-
-
+	void SelectNextAttacker();
 
 	FVector GetSurroundLocation(AEnemy* Enemy) const;
 
@@ -39,19 +38,8 @@ public:
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Combat")
 	AEnemy* OldAttacker = nullptr;
 
-	UPROPERTY()
-	TArray <AEnemy*> ActiveAttackers;
-	int32 nextAttackerIndex;
-
-	UPROPERTY()
-	float DoubleAttackChance = 0.4f;
-
-	UPROPERTY()
-	int32 MaxAttackers = 2;
-	
-
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Combat")
-
+	AEnemy* CurrentAttacker = nullptr;
 
 	AWarriorCharacter* WarriorRef;
 
@@ -68,11 +56,11 @@ private:
 	float SurroundRotationSpeed = 15.f;
 
 	UPROPERTY(EditAnywhere, Category = "Combat|Surround")
-	float CombatUpdateInterval = 0.1f;
+	float CombatUpdateInterval = 1.f;
 
 	float SurroundAngleOffset = 0.f;
 
 	FTimerHandle UpdateCombatTimer;
 	 
-	
+	int32 AttackerDirection = 1;
 };

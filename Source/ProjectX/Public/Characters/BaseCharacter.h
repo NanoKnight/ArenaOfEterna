@@ -89,7 +89,7 @@ protected:
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Inventory")
 	UInventoryComponent* InventoryComponent;
 	
-	UPROPERTY(EditAnywhere,BlueprintReadWrite, Category = Combat)
+	UPROPERTY(EditAnywhere,BlueprintReadOnly, Category = Combat)
 	AActor* CombatTarget;
 
 	UPROPERTY(EditAnywhere,Category = Combat)
@@ -100,9 +100,6 @@ protected:
 
 	UPROPERTY(VisibleAnywhere)
 	int32 HoldingComboCounts = 0;
-
-	UPROPERTY(EditDefaultsOnly, Category = Montages)
-	UAnimMontage* AttackMontage;
 
 	UPROPERTY(BlueprintReadOnly)
 	TEnumAsByte<EDeadPose>DeadPose;
@@ -139,7 +136,8 @@ private:
 	UPROPERTY(EditAnywhere,Category = VFX)
 	UNiagaraSystem* ShieldNiagara;
 
-	
+	UPROPERTY(EditDefaultsOnly, Category = Montages)
+	UAnimMontage* AttackMontage;	
 	
 	UPROPERTY(EditDefaultsOnly, Category = Montages)
 	UAnimMontage* SpecialAttackMontage;

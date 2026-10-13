@@ -5,8 +5,6 @@
 #include "Enemy/Enemy.h"
 #include "Components\SkeletalMeshComponent.h"
 #include"Perception\PawnSensingComponent.h"
-#include"BehaviorTree\BlackboardComponent.h"
-#include"AIController.h"
 #include"GameFramework/CharacterMovementComponent.h"
 #include"ProjectX\DebugMacros.h"	
 #include"Components/AttributeComponent.h"
@@ -47,8 +45,6 @@ AEnemy::AEnemy()
 	bUseControllerRotationPitch = false;
 	bUseControllerRotationRoll = false;
 	bUseControllerRotationYaw = false;
-	GetCharacterMovement()->bUseRVOAvoidance = true;
-	GetCharacterMovement()->AvoidanceConsiderationRadius = 250.f;
 
 
 }
@@ -66,8 +62,6 @@ void AEnemy::BeginPlay()
 
 	 //InitializeEquipItems();
 	EnemyName = GetName();
-	
-	
 	if (PawnSensing)
 	{
 		PawnSensing->OnSeePawn.AddDynamic(this, &AEnemy::PawnSeen);
@@ -262,16 +256,12 @@ void AEnemy::SpawnExperience()
 
 void AEnemy::Attack()
 {
-	UAnimInstance* AnimInstance = GetMesh()->GetAnimInstance();
 
-	if (!HasAttackPermission())
-	{
-		return;
-	}
+	PlayerCantParry();
 
 	if (IsDead() ||
 		EnemyState == EEnemyState::EAS_Stun ||
-		EnemyState == EEnemyState::EAS_Freezed ||!CanAttack())
+		EnemyState == EEnemyState::EAS_Freezed)
 	{
 		return;
 	}
@@ -284,6 +274,12 @@ void AEnemy::Attack()
 
 	AWarriorCharacter* WarChar =
 		Cast<AWarriorCharacter>(CombatTarget);
+
+	if (!IsValid(WarChar))
+	{
+		EnemyState = EEnemyState::EES_NoState;
+		return;
+	}
 
 	if (WarChar->UnTouchable)
 	{
@@ -299,12 +295,8 @@ void AEnemy::Attack()
 
 	EnemyState = EEnemyState::EES_Engaged;
 	PlayAttackMontage();
+
 	
-	bAttackM = AnimInstance->Montage_IsPlaying(AttackMontage);
-	EnemyState = EEnemyState::EES_Attacking;
-
-
-
 }
 
 void AEnemy::PlayerCantParry()
@@ -320,12 +312,6 @@ void AEnemy::PlayerCantParry()
 void AEnemy::AttackEnd()
 {
 	EnemyState = EEnemyState::EES_NoState;
-
-	if (CombatDirector)
-	{
-		CombatDirector->ReleaseAttackSlot(this);
-	}
-
 	CheckCombatTarget();
 
 }
@@ -368,7 +354,7 @@ void AEnemy::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
 	
-	
+	/*
 	if (EnemyState != EEnemyState::EES_Patrolling )
 	{
 		CheckCombatTarget();
@@ -389,7 +375,7 @@ void AEnemy::Tick(float DeltaTime)
 			BackPatrol();
 		}
 
-	}
+	}*/
 
 	if (Ragdoll)
 	{
@@ -445,7 +431,7 @@ float AEnemy::TakeDamage(float DamageAmount, FDamageEvent const & DamageEvent, A
 		{
 			Die();
 		}
-		/*
+
 		if (CombatDirector->CurrentAttacker != this)
 		{
 			CombatDirector->CurrentAttacker = this;
@@ -460,19 +446,24 @@ float AEnemy::TakeDamage(float DamageAmount, FDamageEvent const & DamageEvent, A
 
 			if (TakedHit >= 2)
 			{
-			CombatDirector->SelectNextAttacker();
+				CombatDirector->SelectNextAttacker();
 				FVector deneme = CombatTarget->GetActorLocation() -
 					CombatTarget->GetActorForwardVector() * 150;
 				MoveToSurroundLocation(deneme);
 			
 			}
 			GetWorld()->GetTimerManager().SetTimer(HitCountTimer, this, &AEnemy::ResetTakedHit, 3.f);
-			*/
 			
+
 		}
 		return DamageAmount;
 	}
-
+	else
+	{
+		return 0.f;
+	}
+	
+}
 
 void AEnemy::ResetTakedHit()
 {
@@ -590,24 +581,18 @@ void AEnemy::BackPatrol()
 
 void AEnemy::MoveToSurroundLocation(const FVector& Location)
 {
-	if (!EnemyController)
+	/*************CONTROLS******/
+	if (!IsValid(EnemyController))
 	{
 		return;
 	}
+	/*****************************/
 
-	if (CombatTarget)
-	{
-		EnemyController->SetFocus(CombatTarget);
-	}
 
-	GetCharacterMovement()->bOrientRotationToMovement = false;
-	GetCharacterMovement()->bUseControllerDesiredRotation = true;
-	GetCharacterMovement()->RotationRate = FRotator(0.f, 300.f, 0.f);
 
 	FAIMoveRequest MoveRequest;
 	MoveRequest.SetGoalLocation(Location);
-	MoveRequest.SetAcceptanceRadius(100.f);
-	MoveRequest.SetCanStrafe(true);
+	MoveRequest.SetAcceptanceRadius(50.f);
 
 	EnemyController->MoveTo(MoveRequest);
 }
@@ -616,12 +601,12 @@ void AEnemy::MoveToSurroundLocation(const FVector& Location)
 void AEnemy::ResetEnemyState()
 {
 	EnemyState = EEnemyState::EES_NoState;
-	bAttackM = false;
+
+
 	if (CombatTarget)
 	{
 		ChaseTarget();
 	}
-	AttackEnd();
 
 
 }
@@ -629,18 +614,15 @@ void AEnemy::ResetEnemyState()
 void AEnemy::GetParried()
 {
 	if (IsDead())return;
-	//ClearAttackTimer();
-	//ClearPatrolTimer();
-	//StopAttackMontage();
+	ClearAttackTimer();
+	ClearPatrolTimer();
+	StopAttackMontage();
 	SetWeaponCollisionEnabled(ECollisionEnabled::NoCollision);
 	if (EnemyController)
 	{
 		EnemyController->StopMovement();
 	}
-	if (CombatDirector && HasAttackPermission())
-	{
-		CombatDirector->ReleaseAttackSlot(this);
-	}
+
 
 	CanParry = false;
 	if (ParryWidget)
@@ -648,7 +630,6 @@ void AEnemy::GetParried()
 		ParryWidget->SetVisibility(false);
 	}
 	EnemyState = EEnemyState::EAS_Stun;
-
 	GetWorldTimerManager().ClearTimer(ParryResetTimer);
 
 	GetWorld()->GetTimerManager().SetTimer(ParryResetTimer, this, &AEnemy::EndParried, 2.f);
@@ -666,6 +647,7 @@ void AEnemy::GetHit_Implementation(const FVector& ImpactPoint,AActor* Hitter)
 	GetWorldTimerManager().ClearTimer(RecoveryHitTimer);
 	PlayerCantParry();
 	bRecoveringFromHit = true;
+	
 	GetWorld()->GetTimerManager().SetTimer
 	(RecoveryHitTimer, this, &AEnemy::EndRecoveryHit, 0.7f);
 
@@ -676,15 +658,6 @@ void AEnemy::GetHit_Implementation(const FVector& ImpactPoint,AActor* Hitter)
 	ClearAttackTimer();
 	SetWeaponCollisionEnabled(ECollisionEnabled::NoCollision);
 	StopAttackMontage();
-
-	if (CombatDirector && HasAttackPermission())
-	{
-		CombatDirector->ReleaseAttackSlot(this);
-	}
-
-	EnemyState = EEnemyState::EES_NoState;
-	CheckCombatTarget();
-
 	FVector Distance = GetActorLocation() - Hitter->GetActorLocation();
 	Distance.Normalize(0.1);
 	FVector LaunchLoc = FVector(Distance.X, Distance.Y, 0.f) *500;
@@ -771,9 +744,10 @@ void AEnemy::CheckCombatTarget()
 		if (!IsEngaged()) StartPatrolling();
 
 	}
-	else if (IsOutsideAttackRadius())
+	else if (IsOutsideAttackRadius() && !IsChasing())
 	{
 		ClearAttackTimer();
+		EnemyState = EEnemyState::EES_NoState;
 
 		if (!IsEngaged()) ChaseTarget();
 		
@@ -842,7 +816,6 @@ void AEnemy::EndParried()
 	CanParry = false;
 	EnemyState = EEnemyState::EES_NoState;
 
-	/*
 	if (IsValid(CombatTarget))
 	{
 		CheckCombatTarget();
@@ -850,15 +823,14 @@ void AEnemy::EndParried()
 	else
 	{
 		StartPatrolling();
-	}*/
+	}
 }
 
 void AEnemy::ChaseTarget()
 {	
-	
-	 ///////////////////FUNCTION DISABLED//////////////////////
-	//////////////////////   CONTROLS  //////////////////////////////
-	
+
+
+	/****************    CONTROLS   ***********************/
     if (Attributes->GetStamina() <= 0 && EnemyType == EEnemyType::EET_Boss ) EnemyState = EEnemyState::EAS_Stun;
 	if (EnemyState == EEnemyState::EAS_Stun || EnemyState == EEnemyState::EAS_Freezed 
 		|| EnemyState == EEnemyState::EES_Attacking) return;
@@ -867,15 +839,11 @@ void AEnemy::ChaseTarget()
 		CombatTarget = nullptr;
 		MoveToTarget(PatrolTarget);
 	}
+	if (!CombatTarget || !CombatDirector->CurrentAttacker) return;
 
-	////////////////////////////////////////////////////////////////
+	/************************************************************/
 
-	if (!IsValid(CombatTarget) || !IsValid(CombatDirector))
-	{
-		return;
-	}
-
-	if (HasAttackPermission())
+	if (CombatDirector->CurrentAttacker == this)
 	{
 		EnemyState = EEnemyState::EES_Chasing;
 		GetCharacterMovement()->MaxWalkSpeed = RunSpeed;
@@ -883,10 +851,21 @@ void AEnemy::ChaseTarget()
 	}
 	else
 	{
-		EnemyState = EEnemyState::EES_Surround;
+
+		//EnemyState = EEnemyState::EES_Surround;
+		EnemyState = EEnemyState::EES_NoState;
+		GetCharacterMovement()->MaxWalkSpeed = RunSpeed;
+		FVector TargetLoc = CombatDirector->CurrentAttacker->GetActorLocation() -
+		CombatDirector->CurrentAttacker->GetActorForwardVector() * 200;
+		MoveToSurroundLocation(TargetLoc);
+		
+		
+
+
+	
 	}
 	
-
+	
 
 }
 
@@ -943,13 +922,14 @@ void AEnemy::ClearPatrolTimer()
 void AEnemy::StartAttackTimer()
 {
 
-	if (HasAttackPermission())
+	if (CombatDirector->CurrentAttacker == this)
 	{
 		if (GetWorldTimerManager().IsTimerActive(AttackTimer))
 		{
 			return;
 		}
 
+		EnemyState = EEnemyState::EES_Attacking;
 		const float AttackTime = FMath::RandRange(AttackMin, AttackMax);
 	
 		GetWorldTimerManager().SetTimer(ParryStartTimer, this, &AEnemy::PlayerCanParry, AttackTime / 2);
@@ -973,12 +953,8 @@ void AEnemy::StartAttackTimer()
 
 void AEnemy::PlayerCanParry()
 {
-	if (CanParry == false)
-	{
 		CanParry = true;
 		ParryWidget->SetVisibility(true);
-	}
-	
 }
 
 
@@ -1032,7 +1008,7 @@ bool AEnemy::HasAttackPermission() const
 {
 	
 	return CombatDirector &&
-		CombatDirector->HasAttackPermission(this);
+		CombatDirector->CurrentAttacker == this;
 }
 
 void AEnemy::MoveToTarget(AActor* Target)
@@ -1123,23 +1099,14 @@ void AEnemy::PawnSeen(APawn* SeenPawn)
 	{
 
 		CombatTarget = SeenPawn;
+		ClearPatrolTimer();
+		ChaseTarget();
 
-		AAIController* AIController = Cast<AAIController>(GetController());
-		if (AIController)
-		{
-			UBlackboardComponent* BlackBoard = AIController->GetBlackboardComponent();
-			if (BlackBoard)
-			{
-				BlackBoard->SetValueAsObject(TEXT("CombatTarget"), CombatTarget);
-				UE_LOG(LogTemp,Warning,TEXT("Combat target setted"))
-		
-			}
-		}
 
 		if (CombatDirector)
 		{
 			CombatDirector->RegisteredEnemies.AddUnique(this);
-			CombatDirector->SelectAttackers();
+			CombatDirector->SelectAttacker();
 
 
 			if (!GetWorldTimerManager().IsTimerActive(UpdateCombatTimer))
@@ -1149,22 +1116,16 @@ void AEnemy::PawnSeen(APawn* SeenPawn)
 			}
 
 			//UpdateCombatMovement();
-
+			
 		}
-
-		//ClearPatrolTimer();
-		//ChaseTarget();
-
-
-		
-		if (!Chased)
+		/*if (!Chased)
 		{
 			if (ICombatSoundInterface* CombatInterface = Cast<ICombatSoundInterface>(SeenPawn))
 			{
 				CombatInterface->EnemyStartChasing();
 				Chased = true;
 			}
-		}
+		}*/
 
 	}
 

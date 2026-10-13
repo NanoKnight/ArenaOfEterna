@@ -9,7 +9,6 @@
 /**
  * 
  */
-class AEnemy;
 UCLASS()
 class PROJECTX_API AEnemyAIController : public AAIController
 {
@@ -21,7 +20,5 @@ public:
 
 	virtual void BeginPlay() override;
 
-	UPROPERTY(BlueprintReadOnly)
-	AEnemy* Enemy;
 		
 };

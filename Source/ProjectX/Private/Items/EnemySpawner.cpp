@@ -89,10 +89,8 @@ void AEnemySpawner::BeginPlay()
        }
     }
 
-	TArray<UStaticMeshComponent*> AllMeshes;
-     GetComponents<UStaticMeshComponent>(AllMeshes);
-     SpawnerLocations.Empty();
-        for (UStaticMeshComponent* SpawnerLoc : AllMeshes)
+     GetComponents<UStaticMeshComponent>(SpawnerLocations);
+        for (UStaticMeshComponent* SpawnerLoc : SpawnerLocations)
         {
             if (SpawnerLocation && SpawnerLoc->GetName().Contains(TEXT("SpawnerLoc")))
             {
@@ -115,58 +113,74 @@ void AEnemySpawner::Tick(float DeltaTime)
 void AEnemySpawner::SpawnEnemy(int32 NumbwerOfEnemies)
 {
 
-
-    if (!EnemyClass || SpawnerLocations.Num() == 0)
+    if (SpawnEnemiesLoc.IsZero())
     {
-        return;
-    }
-    FActorSpawnParameters SpawnParams;
-    SpawnParams.SpawnCollisionHandlingOverride =
-        ESpawnActorCollisionHandlingMethod::AdjustIfPossibleButAlwaysSpawn;
+     
 
+        float offset = 50.f;
+        float Radius = 50.f;
+        float AngelStep = 5.f / NumbwerOfEnemies;
 
-    for (int32 i = 0; i < NumbwerOfEnemies; i++)
-    {
-        
-        const int32 SpawnPointIndex =
-            i % SpawnerLocations.Num();
-
-        UStaticMeshComponent* SpawnPoint =
-            SpawnerLocations[SpawnPointIndex];
-
-        if (!IsValid(SpawnPoint))
+        for (int32 i = 0; i < NumbwerOfEnemies; i++)
         {
-            continue;
-        }
+            //float Angle = i * AngelStep;
+            //float x = SpawnLocation.X + Radius * FMath::Cos(FMath::DegreesToRadians(Angle));
+            //float y = SpawnLocation.Y + Radius * FMath::Sin(FMath::DegreesToRadians(Angle));
 
-        const FVector SpawnLocation =
-            SpawnPoint->GetComponentLocation();
-
-        AEnemy* SpawnedEnemy =
-            GetWorld()->SpawnActor<AEnemy>(
-                EnemyClass,
-                SpawnLocation,
-                FRotator::ZeroRotator,
-                SpawnParams
-            );
-
-        if (SpawnedEnemy)
-        {
+           // FVector NewspawnLocation(x, y, SpawnLocation.Z);
+            //FVector NearestSpawnerLoc = GetActorLocation();
+            //SpawnLocation.X += 100.f;
+            //SpawnLocation.Y += 50.f;
+            int32 MaxSpawnPointCount = SpawnerLocations.Num() - 1;
+            int32 SelectedSpawnPoint = FMath::RandRange(0, MaxSpawnPointCount);
+            FVector SpawnLocation = SpawnerLocations[SelectedSpawnPoint]->GetComponentLocation();
+            AEnemy* SpawnedEnemy = GetWorld()->SpawnActor<AEnemy>(EnemyClass, SpawnLocation, FRotator::ZeroRotator);
             EnemyAlive++;
+            
+
+        }
+        if (WaveCount > 0)
+        {
+            WaveCount--;
+
         }
     }
+   
 
-    if (WaveCount > 0)
+    if (!SpawnEnemiesLoc.IsZero())
     {
-        WaveCount--;
+        int32 MaxSpawnPointCount = SpawnerLocations.Num() - 1;
+        int32 SelectedSpawnPoint = FMath::RandRange(0, MaxSpawnPointCount);
+        FVector SpawnLocation = SpawnerLocations[SelectedSpawnPoint]->GetComponentLocation();
+
+        float offset = 300.f;
+        float Radius = 400.f;
+        float AngelStep = 260.f / NumbwerOfEnemies;
+
+        for (int32 i = 0; i < NumbwerOfEnemies; i++)
+        {
+            //float Angle = i * AngelStep;
+            //float x = SpawnLocation.X + Radius * FMath::Cos(FMath::DegreesToRadians(Angle));
+            //float y = SpawnLocation.Y + Radius * FMath::Sin(FMath::DegreesToRadians(Angle));
+
+            //FVector NewspawnLocation(x, y, SpawnLocation.Z);
+            //FVector NearestSpawnerLoc = GetActorLocation();
+            AEnemy* SpawnedEnemy = GetWorld()->SpawnActor<AEnemy>(EnemyClass, SpawnLocation, FRotator::ZeroRotator);
+            EnemyAlive++;
+
+        }
     }
+  
+   
+
 
     for (UBoxComponent* Box : CollisionBoxes)
     {
-        if (IsValid(Box) &&
-            Box->GetName().Contains(TEXT("BlockBox")))
+        if (BlockBox && Box->GetName().Contains(TEXT("BlockBox")))
         {
+
             Box->SetCollisionResponseToAllChannels(ECR_Block);
+
         }
     }
 }
