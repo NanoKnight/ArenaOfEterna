@@ -54,7 +54,7 @@ void AEnemy::BeginPlay()
 	Super::BeginPlay();
 
 	CombatDirector = Cast<ACombatDirector>(UGameplayStatics::GetActorOfClass(GetWorld(),
-		ACombatDirector::StaticClass()));
+	ACombatDirector::StaticClass()));
 
 
 
@@ -257,6 +257,7 @@ void AEnemy::SpawnExperience()
 void AEnemy::Attack()
 {
 
+
 	PlayerCantParry();
 
 	if (IsDead() ||
@@ -295,6 +296,7 @@ void AEnemy::Attack()
 
 	EnemyState = EEnemyState::EES_Engaged;
 	PlayAttackMontage();
+	UE_LOG(LogTemp, Warning, TEXT("Enemy Attack callded "));
 
 	
 }
@@ -327,7 +329,8 @@ bool AEnemy::CanAttack()
 		!bRecoveringFromHit &&
 		!IsDead();
 
-	  
+	UE_LOG(LogTemp, Warning, TEXT("CanAttack: %s"), bCanAttack ? TEXT("true") : TEXT("false"));
+
 
 	return bCanAttack;
 }
@@ -354,7 +357,7 @@ void AEnemy::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
 	
-	/*
+	
 	if (EnemyState != EEnemyState::EES_Patrolling )
 	{
 		CheckCombatTarget();
@@ -375,7 +378,7 @@ void AEnemy::Tick(float DeltaTime)
 			BackPatrol();
 		}
 
-	}*/
+	}
 
 	if (Ragdoll)
 	{
@@ -734,6 +737,7 @@ void AEnemy::CheckCombatTarget()
 {
 	if (IsDead()) return;
 	if (EnemyState == EEnemyState::EAS_Stun) return;
+
 	
 
 	if (IsOutsideCombatRadius())
@@ -743,6 +747,7 @@ void AEnemy::CheckCombatTarget()
 		CheckCombatMusic();
 		if (!IsEngaged()) StartPatrolling();
 
+
 	}
 	else if (IsOutsideAttackRadius() && !IsChasing())
 	{
@@ -750,14 +755,19 @@ void AEnemy::CheckCombatTarget()
 		EnemyState = EEnemyState::EES_NoState;
 
 		if (!IsEngaged()) ChaseTarget();
-		
+
 		
 	}
-
+	
 	else if(CanAttack())
 	{
 		StartAttackTimer();
-		
+
+	}
+	else
+	{
+		UE_LOG(LogTemp, Warning, TEXT("cant attack "));
+
 	}
 }
 
@@ -832,8 +842,10 @@ void AEnemy::ChaseTarget()
 
 	/****************    CONTROLS   ***********************/
     if (Attributes->GetStamina() <= 0 && EnemyType == EEnemyType::EET_Boss ) EnemyState = EEnemyState::EAS_Stun;
-	if (EnemyState == EEnemyState::EAS_Stun || EnemyState == EEnemyState::EAS_Freezed 
-		|| EnemyState == EEnemyState::EES_Attacking) return;
+	if (EnemyState == EEnemyState::EAS_Stun || 
+		EnemyState == EEnemyState::EAS_Freezed ||
+		EnemyState == EEnemyState::EES_Attacking ||
+		!CombatDirector ) return;
 
 	if (CombatTarget && CombatTarget->ActorHasTag(FName("Dead"))) {
 		CombatTarget = nullptr;
@@ -1093,6 +1105,7 @@ void AEnemy::PawnSeen(APawn* SeenPawn)
 	const bool bShouldChaseTarget =
 		EnemyState != EEnemyState::EES_Dead &&
 		EnemyState != EEnemyState::EES_Chasing &&
+		SeenPawnRef &&
 		SeenPawn->ActorHasTag(FName("WarriorCharacter"));
 
 	if (bShouldChaseTarget)
